@@ -19,6 +19,23 @@ if (Test-Path -LiteralPath $compiler) {
     Write-Output $compiler
     return
 }
+# /DIR alone does not isolate the official installer's AppId. Never relocate an
+# existing current-user Inno installation just to prepare this project's compiler.
+$existingKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\Inno Setup 6_is1'
+if (Test-Path -LiteralPath $existingKey) {
+    $existing = Get-ItemProperty -LiteralPath $existingKey
+    $existingDir = [System.IO.Path]::GetFullPath($existing.InstallLocation).TrimEnd('\','/')
+    if ($existingDir -ne ([System.IO.Path]::GetFullPath($toolRoot).TrimEnd('\','/'))) {
+        if ($existing.DisplayVersion -ne '6.7.4' -or -not (Test-Path -LiteralPath (Join-Path $existingDir 'ISCC.exe'))) {
+            throw 'An existing current-user Inno Setup 6 installation was found. It is not version 6.7.4; this script will not relocate or replace it. Upgrade that compiler or prepare artifacts/tools/inno-6.7.4 separately.'
+        }
+        New-Item -ItemType Directory -Path $toolRoot -Force | Out-Null
+        Get-ChildItem -LiteralPath $existingDir -Force | Where-Object { $_.Name -notlike 'unins*' } | Copy-Item -Destination $toolRoot -Recurse -Force
+        Ensure-ChineseTranslation
+        Write-Output $compiler
+        return
+    }
+}
 $downloadRoot = Join-Path $projectRoot 'artifacts/tools/downloads'
 New-Item -ItemType Directory -Path $downloadRoot -Force | Out-Null
 $installer = Join-Path $downloadRoot 'innosetup-6.7.4.exe'

@@ -22,7 +22,13 @@ with sync_playwright() as p:
     page.on('filechooser', lambda chooser: file_choosers.append(chooser))
     page.goto(URL)
     expect(page.locator('#demo-button')).to_be_enabled()
-    page.locator('#demo-button').click()
+    # A preceding suite may already have 12 wires. Wait for this load's response
+    # before snapshotting IDs; the count alone does not prove it has completed.
+    with page.expect_response(lambda response: response.url.endswith('/api/command')
+                              and response.request.post_data_json.get('action') == 'demo') as loaded:
+        page.locator('#demo-button').click()
+    assert loaded.value.ok
+    loaded.value.finished()
     expect(page.locator('#wire-count')).to_have_text('12')
     before = page.request.get(URL + '/api/state').json()
     opener = page.locator('#schematic-button')
