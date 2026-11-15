@@ -1,4 +1,5 @@
 """Run the distributed native engine, catching failures invisible in source tests."""
+import base64
 import json
 from pathlib import Path
 import socket
@@ -38,7 +39,37 @@ try:
         time.sleep(.1)
     else:raise RuntimeError('Packaged engine did not execute UART reply')
     command('pause')
-    print('PASS: packaged engine startup + real Keil execution + OLED + serial reply')
+    assert s['adc']['sampleCount']>0 and s['adc']['value']==2048,s['adc']
+    assert s['flash']['lastCommand'] is not None,s['flash']
+    command('adc_voltage',voltage=3.3)
+    command('run')
+    for _ in range(100):
+        s=state()
+        assert s['status']!='faulted',s['diagnostics']
+        if s['adc']['value']==4095:break
+        time.sleep(.1)
+    else:raise RuntimeError('Packaged ADC did not sample the changed voltage')
+    command('serial_mode',mode='rs232')
+    command('serial',channel='rs232',data='TA==')
+    for _ in range(100):
+        s=state()
+        if any(r['channel']=='rs232' and r['direction']=='tx' and 'ACK L' in r['text'] for r in s['serial']):break
+        time.sleep(.1)
+    else:raise RuntimeError('Packaged H6 mode switch did not route firmware output')
+    command('pause')
+    for ext in ('hex','bin'):
+        before=state()['flash']
+        firmware=package/'firmware'/f'spiflash_probe.{ext}'
+        command('load',filename=firmware.name,data=base64.b64encode(firmware.read_bytes()).decode())
+        command('run')
+        for _ in range(100):
+            s=state()
+            assert s['status']!='faulted',s['diagnostics']
+            if s['flash']['writeCount']>=before['writeCount']+2 and s['flash']['eraseCount']>=before['eraseCount']+2:break
+            time.sleep(.1)
+        else:raise RuntimeError('Packaged SPI Flash probe did not program and erase')
+        command('pause')
+    print('PASS: packaged engine + Keil HEX/BIN + OLED + UART + ADC + H6 switch + SPI Flash program/erase')
 finally:
     if process.poll() is None:
         if sys.platform=='win32':subprocess.run(['taskkill','/PID',str(process.pid),'/T','/F'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)

@@ -9,7 +9,7 @@ board={'schemaVersion':1,'id':'cimc-v1','name':'CIMC GD32F470VET6 V1.0','verifie
  'coordinates':'Schematic connection diagram; not a photograph or PCB placement. Header numbers follow the V1.0 PDF.',
  'notes':['V1.0 原理图四页已取得；本版显示原理图接线视图，不用 V2 照片代替 V1。',
  '已核对 U2/U3、H2/H3、OLED1、H6/H7 的脚序及网络；完整芯片外设和模拟电路未仿真。',
- 'H6 通过跳帽选择 USART1 的 RS485 或 RS232；H7 通过跳帽连接 CH340。跳帽也是新增导线，不是固定铜线。'],
+ '固定外设引脚不可改接。H7 固定接通，H6 只能使用原图允许的 RS232/RS485 模式开关。'],
  'pins':[],'leds':[],'keys':[],'fixedNets':[],'defaultAddedWires':[],
  'oled':{'width':128,'height':32,'address':60,'scl':'PB8','sda':'PB9','controller':'SSD1306-compatible command subset','evidence':'V1 p1/p2 pins; resolution/address from local driver'},
  'uart_channels':{'ch340':'USART0','rs485':'USART1','rs232':'USART1','ttl':'USART2'},
@@ -75,11 +75,27 @@ for n,net in enumerate(['DGND','USART2_TX','USART2_RX'],1):
  text(897,424+(n-1)*25,['GND','TX','RX'][n-1],11,anchor='start')
 text(910,395,'TTL · CN1',13,'#d7e6f8')
 for name,nodes in {'OLED_CLK':['PB8','OLED_CLK'],'OLED_DAT':['PB9','OLED_DAT'],'USART0_TX':['PA9','USART0_TX'],'USART0_RX':['PA10','USART0_RX'],'USART1_TX':['PA2','USART1_TX'],'USART1_RX':['PA3','USART1_RX'],'USART2_TX':['PB10','USART2_TX'],'USART2_RX':['PB11','USART2_RX'],'485_CS':['PA1','485_CS'],'ground':['DGND','AGND','GND']}.items():fixed(name,*nodes)
+for a,b in [('PB12','FLASH_CS'),('PB13','SPI_SCK'),('PB14','SPI_MISO'),('PB15','SPI_MOSI'),('PC0','ADC')]:fixed(b,a,b,page=2)
+board['adc']={'pin':'PC0','channel':10,'referenceVoltage':3.3,'component':'VR1','resistanceOhms':10000,'locked':True}
+board['flash']={'model':'GD25Q40E','capacityBytes':524288,'peripheral':'SPI1','cs':'PB12','sck':'PB13','miso':'PB14','mosi':'PB15','locked':True}
+board['fixedPulls']=[{'net':'FLASH_CS','level':1,'resistanceOhms':10000}]
 board['preservedUnimplementedFixedNets']=[{'nodes':n,'simulated':False,'locked':True} for n in [
  ['PE2','SD_CD'],['PC8','SD_DAT0'],['PC9','SD_DAT1'],['PC10','SD_DAT2'],['PC11','SD_DAT3'],['PC12','SD_CLK'],['PD2','SD_CMD'],
- ['PB12','FLASH_CS'],['PB13','SPI_SCK'],['PB14','SPI_MISO'],['PB15','SPI_MOSI'],['PC0','ADC'],['PA0','WK_UP'],['PA13','SWDIO'],['PA14','SWCLK'],['PB2','BOOT1']]]
+ ['PA0','WK_UP'],['PA13','SWDIO'],['PA14','SWCLK'],['PB2','BOOT1']]]
 for item in board['preservedUnimplementedFixedNets']:fixed(item['nodes'][1],*item['nodes'])
-board['defaultAddedWires'] += [{'id':'usb-tx','a':'H7.1','b':'H7.3'},{'id':'usb-rx','a':'H7.2','b':'H7.4'}, {'id':'rs485-tx','a':'H6.1','b':'H6.3'},{'id':'rs485-rx','a':'H6.2','b':'H6.4'}]
+board['serialJumperPatterns']={'ch340':[['H7.1','H7.3'],['H7.2','H7.4']], 'rs485':[['H6.1','H6.3'],['H6.2','H6.4']], 'rs232':[['H6.3','H6.5'],['H6.4','H6.6']]}
+board['fixedVisualWires']=[
+ {'id':'fixed-oled-gnd','from':'OLED.1','to':'U2.33','color':'#a5b5c9','label':'OLED GND · 原板固定线','locked':True,'points':[[120,405],[170,405],[170,570],[655,570],[655,480],[685,480]]},
+ {'id':'fixed-oled-vcc','from':'OLED.2','to':'U2.34','color':'#e99291','label':'OLED 3V3 · 原板固定线','locked':True,'points':[[120,430],[150,430],[150,590],[765,590],[765,480],[715,480]]},
+ {'id':'fixed-oled-scl','from':'OLED.3','to':'PB8','color':'#63d6c7','label':'OLED SCL · 原板固定线','locked':True,'points':[[120,455],[235,455],[235,520],[285,520]]},
+ {'id':'fixed-oled-sda','from':'OLED.4','to':'PB9','color':'#cab1ed','label':'OLED SDA · 原板固定线','locked':True,'points':[[120,480],[205,480],[205,550],[335,550],[335,520],[315,520]]}]
+# These paths only illustrate existing copper. They never add simulated edges.
+reserved={node for net in board['fixedNets'] for node in net['nodes']}
+for p in board['pins']:
+ if p['net'] in reserved or p['net']=='3V3' or p['group'] in ('H6','H7','OLED1','CN1'):
+  p['connectable']=False
+  p['lockedReason']='原板固定网络，不允许改接' if p['group'] not in ('H6','H7') else '系统固定跳帽；使用串口模式开关'
+board['notes'].append('只有空闲 GPIO、LED 和 KEY 端点开放用户跳线；专用外设端点和系统跳帽只读。')
 svg.append('</svg>')
 (ROOT/'web/board-v1.json').write_text(json.dumps(board,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 (ROOT/'web/assets/board-v1.svg').write_text('\n'.join(svg),encoding='utf-8')

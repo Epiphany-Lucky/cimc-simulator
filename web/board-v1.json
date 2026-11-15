@@ -15,7 +15,8 @@
   "notes": [
     "V1.0 原理图四页已取得；本版显示原理图接线视图，不用 V2 照片代替 V1。",
     "已核对 U2/U3、H2/H3、OLED1、H6/H7 的脚序及网络；完整芯片外设和模拟电路未仿真。",
-    "H6 通过跳帽选择 USART1 的 RS485 或 RS232；H7 通过跳帽连接 CH340。跳帽也是新增导线，不是固定铜线。"
+    "固定外设引脚不可改接。H7 固定接通，H6 只能使用原图允许的 RS232/RS485 模式开关。",
+    "只有空闲 GPIO、LED 和 KEY 端点开放用户跳线；专用外设端点和系统跳帽只读。"
   ],
   "pins": [
     {
@@ -26,10 +27,11 @@
       "number": 1,
       "x": 285,
       "y": 160,
-      "connectable": true,
+      "connectable": false,
       "kind": "gpio",
       "verified": true,
-      "evidence": "V1.0 schematic page 1, U3 pin 1"
+      "evidence": "V1.0 schematic page 1, U3 pin 1",
+      "lockedReason": "原板固定网络，不允许改接"
     },
     {
       "id": "PB13",
@@ -39,10 +41,11 @@
       "number": 2,
       "x": 315,
       "y": 160,
-      "connectable": true,
+      "connectable": false,
       "kind": "gpio",
       "verified": true,
-      "evidence": "V1.0 schematic page 1, U3 pin 2"
+      "evidence": "V1.0 schematic page 1, U3 pin 2",
+      "lockedReason": "原板固定网络，不允许改接"
     },
     {
       "id": "PB14",
@@ -52,10 +55,11 @@
       "number": 3,
       "x": 285,
       "y": 180,
-      "connectable": true,
+      "connectable": false,
       "kind": "gpio",
       "verified": true,
-      "evidence": "V1.0 schematic page 1, U3 pin 3"
+      "evidence": "V1.0 schematic page 1, U3 pin 3",
+      "lockedReason": "原板固定网络，不允许改接"
     },
     {
       "id": "PB15",
@@ -65,10 +69,11 @@
       "number": 4,
       "x": 315,
       "y": 180,
-      "connectable": true,
+      "connectable": false,
       "kind": "gpio",
       "verified": true,
-      "evidence": "V1.0 schematic page 1, U3 pin 4"
+      "evidence": "V1.0 schematic page 1, U3 pin 4",
+      "lockedReason": "原板固定网络，不允许改接"
     },
     {
       "id": "PD8",
@@ -208,10 +213,11 @@
       "number": 15,
       "x": 285,
       "y": 300,
-      "connectable": true,
+      "connectable": false,
       "kind": "gpio",
       "verified": true,
-      "evidence": "V1.0 schematic page 1, U3 pin 15"
+      "evidence": "V1.0 schematic page 1, U3 pin 15",
+      "lockedReason": "原板固定网络，不允许改接"
     },
     {
       "id": "PC9",
@@ -221,10 +227,11 @@
       "number": 16,
       "x": 315,
       "y": 300,
-      "connectable": true,
+      "connectable": false,
       "kind": "gpio",
       "verified": true,
-      "evidence": "V1.0 schematic page 1, U3 pin 16"
+      "evidence": "V1.0 schematic page 1, U3 pin 16",
+      "lockedReason": "原板固定网络，不允许改接"
     },
     {
       "id": "PA8",
@@ -286,10 +293,11 @@
       "number": 21,
       "x": 285,
       "y": 360,
-      "connectable": true,
+      "connectable": false,
       "kind": "gpio",
       "verified": true,
-      "evidence": "V1.0 schematic page 1, U3 pin 21"
+      "evidence": "V1.0 schematic page 1, U3 pin 21",
+      "lockedReason": "原板固定网络，不允许改接"
     },
     {
       "id": "PC11",
@@ -299,10 +307,11 @@
       "number": 22,
       "x": 315,
       "y": 360,
-      "connectable": true,
+      "connectable": false,
       "kind": "gpio",
       "verified": true,
-      "evidence": "V1.0 schematic page 1, U3 pin 22"
+      "evidence": "V1.0 schematic page 1, U3 pin 22",
+      "lockedReason": "原板固定网络，不允许改接"
     },
     {
       "id": "PC12",
@@ -312,10 +321,11 @@
       "number": 23,
       "x": 285,
       "y": 380,
-      "connectable": true,
+      "connectable": false,
       "kind": "gpio",
       "verified": true,
-      "evidence": "V1.0 schematic page 1, U3 pin 23"
+      "evidence": "V1.0 schematic page 1, U3 pin 23",
+      "lockedReason": "原板固定网络，不允许改接"
     },
     {
       "id": "PD0",
@@ -351,10 +361,11 @@
       "number": 26,
       "x": 315,
       "y": 400,
-      "connectable": true,
+      "connectable": false,
       "kind": "gpio",
       "verified": true,
-      "evidence": "V1.0 schematic page 1, U3 pin 26"
+      "evidence": "V1.0 schematic page 1, U3 pin 26",
+      "lockedReason": "原板固定网络，不允许改接"
     },
     {
       "id": "PD3",
@@ -494,10 +505,11 @@
       "number": 37,
       "x": 285,
       "y": 520,
-      "connectable": true,
+      "connectable": false,
       "kind": "gpio",
       "verified": true,
-      "evidence": "V1.0 schematic page 1, U3 pin 37"
+      "evidence": "V1.0 schematic page 1, U3 pin 37",
+      "lockedReason": "原板固定网络，不允许改接"
     },
     {
       "id": "PB9",
@@ -507,10 +519,11 @@
       "number": 38,
       "x": 315,
       "y": 520,
-      "connectable": true,
+      "connectable": false,
       "kind": "gpio",
       "verified": true,
-      "evidence": "V1.0 schematic page 1, U3 pin 38"
+      "evidence": "V1.0 schematic page 1, U3 pin 38",
+      "lockedReason": "原板固定网络，不允许改接"
     },
     {
       "id": "PE0",
@@ -546,10 +559,11 @@
       "number": 1,
       "x": 685,
       "y": 160,
-      "connectable": true,
+      "connectable": false,
       "kind": "gpio",
       "verified": true,
-      "evidence": "V1.0 schematic page 1, U2 pin 1"
+      "evidence": "V1.0 schematic page 1, U2 pin 1",
+      "lockedReason": "原板固定网络，不允许改接"
     },
     {
       "id": "PE3",
@@ -624,10 +638,11 @@
       "number": 7,
       "x": 685,
       "y": 220,
-      "connectable": true,
+      "connectable": false,
       "kind": "gpio",
       "verified": true,
-      "evidence": "V1.0 schematic page 1, U2 pin 7"
+      "evidence": "V1.0 schematic page 1, U2 pin 7",
+      "lockedReason": "原板固定网络，不允许改接"
     },
     {
       "id": "PC1",
@@ -676,10 +691,11 @@
       "number": 11,
       "x": 685,
       "y": 260,
-      "connectable": true,
+      "connectable": false,
       "kind": "gpio",
       "verified": true,
-      "evidence": "V1.0 schematic page 1, U2 pin 11"
+      "evidence": "V1.0 schematic page 1, U2 pin 11",
+      "lockedReason": "原板固定网络，不允许改接"
     },
     {
       "id": "PA1",
@@ -689,10 +705,11 @@
       "number": 12,
       "x": 715,
       "y": 260,
-      "connectable": true,
+      "connectable": false,
       "kind": "gpio",
       "verified": true,
-      "evidence": "V1.0 schematic page 1, U2 pin 12"
+      "evidence": "V1.0 schematic page 1, U2 pin 12",
+      "lockedReason": "原板固定网络，不允许改接"
     },
     {
       "id": "PA4",
@@ -923,10 +940,11 @@
       "number": 30,
       "x": 715,
       "y": 440,
-      "connectable": true,
+      "connectable": false,
       "kind": "gpio",
       "verified": true,
-      "evidence": "V1.0 schematic page 1, U2 pin 30"
+      "evidence": "V1.0 schematic page 1, U2 pin 30",
+      "lockedReason": "原板固定网络，不允许改接"
     },
     {
       "id": "PB11",
@@ -936,10 +954,11 @@
       "number": 31,
       "x": 685,
       "y": 460,
-      "connectable": true,
+      "connectable": false,
       "kind": "gpio",
       "verified": true,
-      "evidence": "V1.0 schematic page 1, U2 pin 31"
+      "evidence": "V1.0 schematic page 1, U2 pin 31",
+      "lockedReason": "原板固定网络，不允许改接"
     },
     {
       "id": "U2.32",
@@ -962,10 +981,11 @@
       "number": 33,
       "x": 685,
       "y": 480,
-      "connectable": true,
+      "connectable": false,
       "kind": "power",
       "verified": true,
-      "evidence": "V1.0 schematic page 1, U2 pin 33"
+      "evidence": "V1.0 schematic page 1, U2 pin 33",
+      "lockedReason": "原板固定网络，不允许改接"
     },
     {
       "id": "U2.34",
@@ -975,10 +995,11 @@
       "number": 34,
       "x": 715,
       "y": 480,
-      "connectable": true,
+      "connectable": false,
       "kind": "power",
       "verified": true,
-      "evidence": "V1.0 schematic page 1, U2 pin 34"
+      "evidence": "V1.0 schematic page 1, U2 pin 34",
+      "lockedReason": "原板固定网络，不允许改接"
     },
     {
       "id": "U2.35",
@@ -988,10 +1009,11 @@
       "number": 35,
       "x": 685,
       "y": 500,
-      "connectable": true,
+      "connectable": false,
       "kind": "power",
       "verified": true,
-      "evidence": "V1.0 schematic page 1, U2 pin 35"
+      "evidence": "V1.0 schematic page 1, U2 pin 35",
+      "lockedReason": "原板固定网络，不允许改接"
     },
     {
       "id": "U2.36",
@@ -1001,10 +1023,11 @@
       "number": 36,
       "x": 715,
       "y": 500,
-      "connectable": true,
+      "connectable": false,
       "kind": "power",
       "verified": true,
-      "evidence": "V1.0 schematic page 1, U2 pin 36"
+      "evidence": "V1.0 schematic page 1, U2 pin 36",
+      "lockedReason": "原板固定网络，不允许改接"
     },
     {
       "id": "U2.37",
@@ -1014,10 +1037,11 @@
       "number": 37,
       "x": 685,
       "y": 520,
-      "connectable": true,
+      "connectable": false,
       "kind": "power",
       "verified": true,
-      "evidence": "V1.0 schematic page 1, U2 pin 37"
+      "evidence": "V1.0 schematic page 1, U2 pin 37",
+      "lockedReason": "原板固定网络，不允许改接"
     },
     {
       "id": "U2.38",
@@ -1027,10 +1051,11 @@
       "number": 38,
       "x": 715,
       "y": 520,
-      "connectable": true,
+      "connectable": false,
       "kind": "power",
       "verified": true,
-      "evidence": "V1.0 schematic page 1, U2 pin 38"
+      "evidence": "V1.0 schematic page 1, U2 pin 38",
+      "lockedReason": "原板固定网络，不允许改接"
     },
     {
       "id": "U2.39",
@@ -1222,10 +1247,11 @@
       "number": 1,
       "x": 470,
       "y": 80,
-      "connectable": true,
+      "connectable": false,
       "kind": "signal",
       "verified": true,
-      "evidence": "V1.0 schematic page 4, H6 pin 1"
+      "evidence": "V1.0 schematic page 4, H6 pin 1",
+      "lockedReason": "系统固定跳帽；使用串口模式开关"
     },
     {
       "id": "H6.2",
@@ -1235,10 +1261,11 @@
       "number": 2,
       "x": 530,
       "y": 80,
-      "connectable": true,
+      "connectable": false,
       "kind": "signal",
       "verified": true,
-      "evidence": "V1.0 schematic page 4, H6 pin 2"
+      "evidence": "V1.0 schematic page 4, H6 pin 2",
+      "lockedReason": "系统固定跳帽；使用串口模式开关"
     },
     {
       "id": "H6.3",
@@ -1248,10 +1275,11 @@
       "number": 3,
       "x": 470,
       "y": 106,
-      "connectable": true,
+      "connectable": false,
       "kind": "signal",
       "verified": true,
-      "evidence": "V1.0 schematic page 4, H6 pin 3"
+      "evidence": "V1.0 schematic page 4, H6 pin 3",
+      "lockedReason": "系统固定跳帽；使用串口模式开关"
     },
     {
       "id": "H6.4",
@@ -1261,10 +1289,11 @@
       "number": 4,
       "x": 530,
       "y": 106,
-      "connectable": true,
+      "connectable": false,
       "kind": "signal",
       "verified": true,
-      "evidence": "V1.0 schematic page 4, H6 pin 4"
+      "evidence": "V1.0 schematic page 4, H6 pin 4",
+      "lockedReason": "系统固定跳帽；使用串口模式开关"
     },
     {
       "id": "H6.5",
@@ -1274,10 +1303,11 @@
       "number": 5,
       "x": 470,
       "y": 132,
-      "connectable": true,
+      "connectable": false,
       "kind": "signal",
       "verified": true,
-      "evidence": "V1.0 schematic page 4, H6 pin 5"
+      "evidence": "V1.0 schematic page 4, H6 pin 5",
+      "lockedReason": "系统固定跳帽；使用串口模式开关"
     },
     {
       "id": "H6.6",
@@ -1287,10 +1317,11 @@
       "number": 6,
       "x": 530,
       "y": 132,
-      "connectable": true,
+      "connectable": false,
       "kind": "signal",
       "verified": true,
-      "evidence": "V1.0 schematic page 4, H6 pin 6"
+      "evidence": "V1.0 schematic page 4, H6 pin 6",
+      "lockedReason": "系统固定跳帽；使用串口模式开关"
     },
     {
       "id": "H7.1",
@@ -1300,10 +1331,11 @@
       "number": 1,
       "x": 470,
       "y": 510,
-      "connectable": true,
+      "connectable": false,
       "kind": "signal",
       "verified": true,
-      "evidence": "V1.0 schematic page 4, H7 pin 1"
+      "evidence": "V1.0 schematic page 4, H7 pin 1",
+      "lockedReason": "系统固定跳帽；使用串口模式开关"
     },
     {
       "id": "H7.2",
@@ -1313,10 +1345,11 @@
       "number": 2,
       "x": 530,
       "y": 510,
-      "connectable": true,
+      "connectable": false,
       "kind": "signal",
       "verified": true,
-      "evidence": "V1.0 schematic page 4, H7 pin 2"
+      "evidence": "V1.0 schematic page 4, H7 pin 2",
+      "lockedReason": "系统固定跳帽；使用串口模式开关"
     },
     {
       "id": "H7.3",
@@ -1326,10 +1359,11 @@
       "number": 3,
       "x": 470,
       "y": 536,
-      "connectable": true,
+      "connectable": false,
       "kind": "signal",
       "verified": true,
-      "evidence": "V1.0 schematic page 4, H7 pin 3"
+      "evidence": "V1.0 schematic page 4, H7 pin 3",
+      "lockedReason": "系统固定跳帽；使用串口模式开关"
     },
     {
       "id": "H7.4",
@@ -1339,10 +1373,11 @@
       "number": 4,
       "x": 530,
       "y": 536,
-      "connectable": true,
+      "connectable": false,
       "kind": "signal",
       "verified": true,
-      "evidence": "V1.0 schematic page 4, H7 pin 4"
+      "evidence": "V1.0 schematic page 4, H7 pin 4",
+      "lockedReason": "系统固定跳帽；使用串口模式开关"
     },
     {
       "id": "OLED.1",
@@ -1352,10 +1387,11 @@
       "number": 1,
       "x": 120,
       "y": 405,
-      "connectable": true,
+      "connectable": false,
       "kind": "signal",
       "verified": true,
-      "evidence": "V1.0 schematic page 2, OLED1 pin 1"
+      "evidence": "V1.0 schematic page 2, OLED1 pin 1",
+      "lockedReason": "原板固定网络，不允许改接"
     },
     {
       "id": "OLED.2",
@@ -1365,10 +1401,11 @@
       "number": 2,
       "x": 120,
       "y": 430,
-      "connectable": true,
+      "connectable": false,
       "kind": "signal",
       "verified": true,
-      "evidence": "V1.0 schematic page 2, OLED1 pin 2"
+      "evidence": "V1.0 schematic page 2, OLED1 pin 2",
+      "lockedReason": "原板固定网络，不允许改接"
     },
     {
       "id": "OLED.3",
@@ -1378,10 +1415,11 @@
       "number": 3,
       "x": 120,
       "y": 455,
-      "connectable": true,
+      "connectable": false,
       "kind": "signal",
       "verified": true,
-      "evidence": "V1.0 schematic page 2, OLED1 pin 3"
+      "evidence": "V1.0 schematic page 2, OLED1 pin 3",
+      "lockedReason": "原板固定网络，不允许改接"
     },
     {
       "id": "OLED.4",
@@ -1391,10 +1429,11 @@
       "number": 4,
       "x": 120,
       "y": 480,
-      "connectable": true,
+      "connectable": false,
       "kind": "signal",
       "verified": true,
-      "evidence": "V1.0 schematic page 2, OLED1 pin 4"
+      "evidence": "V1.0 schematic page 2, OLED1 pin 4",
+      "lockedReason": "原板固定网络，不允许改接"
     },
     {
       "id": "CN1.1",
@@ -1404,10 +1443,11 @@
       "number": 1,
       "x": 880,
       "y": 420,
-      "connectable": true,
+      "connectable": false,
       "kind": "signal",
       "verified": true,
-      "evidence": "V1.0 schematic page 4, CN1 pin 1"
+      "evidence": "V1.0 schematic page 4, CN1 pin 1",
+      "lockedReason": "原板固定网络，不允许改接"
     },
     {
       "id": "CN1.2",
@@ -1417,10 +1457,11 @@
       "number": 2,
       "x": 880,
       "y": 445,
-      "connectable": true,
+      "connectable": false,
       "kind": "signal",
       "verified": true,
-      "evidence": "V1.0 schematic page 4, CN1 pin 2"
+      "evidence": "V1.0 schematic page 4, CN1 pin 2",
+      "lockedReason": "原板固定网络，不允许改接"
     },
     {
       "id": "CN1.3",
@@ -1430,10 +1471,11 @@
       "number": 3,
       "x": 880,
       "y": 470,
-      "connectable": true,
+      "connectable": false,
       "kind": "signal",
       "verified": true,
-      "evidence": "V1.0 schematic page 4, CN1 pin 3"
+      "evidence": "V1.0 schematic page 4, CN1 pin 3",
+      "lockedReason": "原板固定网络，不允许改接"
     }
   ],
   "leds": [
@@ -1623,6 +1665,51 @@
       "evidence": "V1 schematic p1"
     },
     {
+      "name": "FLASH_CS",
+      "nodes": [
+        "PB12",
+        "FLASH_CS"
+      ],
+      "locked": true,
+      "evidence": "V1 schematic p2"
+    },
+    {
+      "name": "SPI_SCK",
+      "nodes": [
+        "PB13",
+        "SPI_SCK"
+      ],
+      "locked": true,
+      "evidence": "V1 schematic p2"
+    },
+    {
+      "name": "SPI_MISO",
+      "nodes": [
+        "PB14",
+        "SPI_MISO"
+      ],
+      "locked": true,
+      "evidence": "V1 schematic p2"
+    },
+    {
+      "name": "SPI_MOSI",
+      "nodes": [
+        "PB15",
+        "SPI_MOSI"
+      ],
+      "locked": true,
+      "evidence": "V1 schematic p2"
+    },
+    {
+      "name": "ADC",
+      "nodes": [
+        "PC0",
+        "ADC"
+      ],
+      "locked": true,
+      "evidence": "V1 schematic p2"
+    },
+    {
       "name": "SD_CD",
       "nodes": [
         "PE2",
@@ -1681,51 +1768,6 @@
       "nodes": [
         "PD2",
         "SD_CMD"
-      ],
-      "locked": true,
-      "evidence": "V1 schematic p1"
-    },
-    {
-      "name": "FLASH_CS",
-      "nodes": [
-        "PB12",
-        "FLASH_CS"
-      ],
-      "locked": true,
-      "evidence": "V1 schematic p1"
-    },
-    {
-      "name": "SPI_SCK",
-      "nodes": [
-        "PB13",
-        "SPI_SCK"
-      ],
-      "locked": true,
-      "evidence": "V1 schematic p1"
-    },
-    {
-      "name": "SPI_MISO",
-      "nodes": [
-        "PB14",
-        "SPI_MISO"
-      ],
-      "locked": true,
-      "evidence": "V1 schematic p1"
-    },
-    {
-      "name": "SPI_MOSI",
-      "nodes": [
-        "PB15",
-        "SPI_MOSI"
-      ],
-      "locked": true,
-      "evidence": "V1 schematic p1"
-    },
-    {
-      "name": "ADC",
-      "nodes": [
-        "PC0",
-        "ADC"
       ],
       "locked": true,
       "evidence": "V1 schematic p1"
@@ -1827,26 +1869,6 @@
       "id": "key6",
       "a": "PE12",
       "b": "KEY6"
-    },
-    {
-      "id": "usb-tx",
-      "a": "H7.1",
-      "b": "H7.3"
-    },
-    {
-      "id": "usb-rx",
-      "a": "H7.2",
-      "b": "H7.4"
-    },
-    {
-      "id": "rs485-tx",
-      "a": "H6.1",
-      "b": "H6.3"
-    },
-    {
-      "id": "rs485-rx",
-      "a": "H6.2",
-      "b": "H6.4"
     }
   ],
   "oled": {
@@ -1927,6 +1949,31 @@
       "executable": false
     }
   },
+  "adc": {
+    "pin": "PC0",
+    "channel": 10,
+    "referenceVoltage": 3.3,
+    "component": "VR1",
+    "resistanceOhms": 10000,
+    "locked": true
+  },
+  "flash": {
+    "model": "GD25Q40E",
+    "capacityBytes": 524288,
+    "peripheral": "SPI1",
+    "cs": "PB12",
+    "sck": "PB13",
+    "miso": "PB14",
+    "mosi": "PB15",
+    "locked": true
+  },
+  "fixedPulls": [
+    {
+      "net": "FLASH_CS",
+      "level": 1,
+      "resistanceOhms": 10000
+    }
+  ],
   "preservedUnimplementedFixedNets": [
     {
       "nodes": [
@@ -1986,46 +2033,6 @@
     },
     {
       "nodes": [
-        "PB12",
-        "FLASH_CS"
-      ],
-      "simulated": false,
-      "locked": true
-    },
-    {
-      "nodes": [
-        "PB13",
-        "SPI_SCK"
-      ],
-      "simulated": false,
-      "locked": true
-    },
-    {
-      "nodes": [
-        "PB14",
-        "SPI_MISO"
-      ],
-      "simulated": false,
-      "locked": true
-    },
-    {
-      "nodes": [
-        "PB15",
-        "SPI_MOSI"
-      ],
-      "simulated": false,
-      "locked": true
-    },
-    {
-      "nodes": [
-        "PC0",
-        "ADC"
-      ],
-      "simulated": false,
-      "locked": true
-    },
-    {
-      "nodes": [
         "PA0",
         "WK_UP"
       ],
@@ -2055,6 +2062,168 @@
       ],
       "simulated": false,
       "locked": true
+    }
+  ],
+  "serialJumperPatterns": {
+    "ch340": [
+      [
+        "H7.1",
+        "H7.3"
+      ],
+      [
+        "H7.2",
+        "H7.4"
+      ]
+    ],
+    "rs485": [
+      [
+        "H6.1",
+        "H6.3"
+      ],
+      [
+        "H6.2",
+        "H6.4"
+      ]
+    ],
+    "rs232": [
+      [
+        "H6.3",
+        "H6.5"
+      ],
+      [
+        "H6.4",
+        "H6.6"
+      ]
+    ]
+  },
+  "fixedVisualWires": [
+    {
+      "id": "fixed-oled-gnd",
+      "from": "OLED.1",
+      "to": "U2.33",
+      "color": "#a5b5c9",
+      "label": "OLED GND · 原板固定线",
+      "locked": true,
+      "points": [
+        [
+          120,
+          405
+        ],
+        [
+          170,
+          405
+        ],
+        [
+          170,
+          570
+        ],
+        [
+          655,
+          570
+        ],
+        [
+          655,
+          480
+        ],
+        [
+          685,
+          480
+        ]
+      ]
+    },
+    {
+      "id": "fixed-oled-vcc",
+      "from": "OLED.2",
+      "to": "U2.34",
+      "color": "#e99291",
+      "label": "OLED 3V3 · 原板固定线",
+      "locked": true,
+      "points": [
+        [
+          120,
+          430
+        ],
+        [
+          150,
+          430
+        ],
+        [
+          150,
+          590
+        ],
+        [
+          765,
+          590
+        ],
+        [
+          765,
+          480
+        ],
+        [
+          715,
+          480
+        ]
+      ]
+    },
+    {
+      "id": "fixed-oled-scl",
+      "from": "OLED.3",
+      "to": "PB8",
+      "color": "#63d6c7",
+      "label": "OLED SCL · 原板固定线",
+      "locked": true,
+      "points": [
+        [
+          120,
+          455
+        ],
+        [
+          235,
+          455
+        ],
+        [
+          235,
+          520
+        ],
+        [
+          285,
+          520
+        ]
+      ]
+    },
+    {
+      "id": "fixed-oled-sda",
+      "from": "OLED.4",
+      "to": "PB9",
+      "color": "#cab1ed",
+      "label": "OLED SDA · 原板固定线",
+      "locked": true,
+      "points": [
+        [
+          120,
+          480
+        ],
+        [
+          205,
+          480
+        ],
+        [
+          205,
+          550
+        ],
+        [
+          335,
+          550
+        ],
+        [
+          335,
+          520
+        ],
+        [
+          315,
+          520
+        ]
+      ]
     }
   ]
 }

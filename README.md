@@ -2,7 +2,7 @@
 
 面向 CIMC 工业嵌入式训练的本地固件仿真工作台。第一版按用户最新选择使用 **GD32F470 V1.0**；Windows EXE 与 HTML 网页共用界面和本地执行内核。
 
-当前版本：**0.1.0，第一版开发预览**。确切支持范围、硬件证据及验证结果分别见 [硬件证据](docs/hardware-evidence.md) 和 [验收记录](docs/validation-v0.1.md)。不能将开发预览视为全部 Keil 工程或官方评测的兼容证明。
+当前版本：**0.2.0，开发预览**。确切支持范围、硬件证据及验证结果分别见 [硬件证据](docs/hardware-evidence.md) 和 [验收记录](docs/validation-v0.2.md)。不能将开发预览视为全部 Keil 工程或官方评测的兼容证明。
 
 ![V1.0 工作台](docs/ui-preview.png)
 
@@ -31,7 +31,7 @@ HTML 源码位于 `web/index.html`，不依赖 CDN。**浏览器与桌面版运�
 - 测试：`.venv/Scripts/python.exe -m unittest discover -s tests -v`。
 - 打包：`powershell -File scripts/build.ps1`。
 
-Windows 打包还需 Visual Studio C++ 构建工具。脚本会按 PyInstaller 官方说明为 Unicorn 重新编译本项目的 bootloader（`--no-cfg`），不修改系统安全设置。发行包另有真实运行检查：`.venv/Scripts/python.exe tests/package_smoke.py artifacts/CIMC-Studio-0.1.0-html-local`。
+Windows 打包还需 Visual Studio C++ 构建工具。脚本会按 PyInstaller 官方说明为 Unicorn 重新编译本项目的 bootloader（`--no-cfg`），不修改系统安全设置。发行包另有真实运行检查：`.venv/Scripts/python.exe tests/package_smoke.py artifacts/CIMC-Studio-0.2.0-html-local`。
 
 示例固件源代码及实际构建信息保存在 `firmware/`。示例输出也必须经过 ARM 机器码执行路径，界面不生成预设成功回复。
 
@@ -39,9 +39,13 @@ Windows 打包还需 Visual Studio C++ 构建工具。脚本会按 PyInstaller �
 
 原板固定网络与用户新增跳线分开保存。用户只可增删自己的跳线；不能拆改底板线路或重映射 MCU。网络映射必须有原图、板卡丝印或驱动证据，未知信息保持明确标记。所有硬件资料的证据范围见 `docs/hardware-evidence.md`。
 
-V1 的 RS232 和 RS485 通过 H6 选择，共用 USART1。切换终端页签不改变接线。CH340 还需连接 H7 跳帽。详细步骤见 [使用说明](docs/quick-start.md)。当前界面为原理图接线视图，未冒用其他版本的实物图。
+V1 的 RS232 和 RS485 通过模式开关自动按原图切换 H6，共用 USART1。切换终端页签不改变接线。CH340 的 H7 由系统固定连接。OLED、ADC、SPI Flash 及串口等固定端点在界面与内核均禁止改接；LED/KEY 仍通过空闲 GPIO 手动添加跳线。详细步骤见 [使用说明](docs/quick-start.md)。当前界面为原理图接线视图，未冒用其他版本的实物图。
 
-已验证范围：Keil HEX/BIN、GPIO、LED/KEY、软件 I²C OLED、轮询串口、基础 SysTick。UART 中断、DMA、硬件 I²C、定时器、ADC、SD、SPI Flash 和 RTOS 尚未通过兼容性验收；不是逐周期或电气仿真。
+已验证范围：Keil HEX/BIN、GPIO、LED/KEY、软件 I²C OLED、轮询串口、基础 SysTick、PC0 软件触发单通道 ADC，以及 SPI1 上 GD25Q40E 的轮询读写/擦除子集。新增 ADC 旋钮可调 0–3.3 V，采样值只在固件实际转换后更新。Flash 为 512 KiB，MCU 复位保留内容，关闭服务后清空。UART/ADC/SPI 中断、DMA、硬件 I²C、定时器、SD 和 RTOS 尚未通过兼容性验收；不是逐周期或电气仿真。
+
+Windows 窗口根据显示器工作区与 DPI 自动限制尺寸，网页适配短屏笔记本；核心操作、OLED 和 ADC 在小尺寸视口保持可见。
+
+左侧“原理图”可查看 V1.0 原始四页图面，支持翻页、缩放及下载原 PDF。OLED 的 SCL/SDA/3V3/GND 四条原板固定线在接线视图中直接显示，并保持只读。
 
 ## 版本迭代
 
@@ -49,7 +53,7 @@ V1 的 RS232 和 RS485 通过 H6 选择，共用 USART1。切换终端页签不�
 - `feature/...`：后续功能分支，经验证后合并。
 - `v0.x.y`：对应 Releases 的版本标签。
 - [CHANGELOG](CHANGELOG.md)：记录新增、修复及已知限制。
-- [实施设计](docs/implementation-v0.1.md)：本次开发依据。
+- [实施设计](docs/implementation-v0.2.md)：本次开发依据。
 - GitHub Actions 在推送与 PR 时执行测试并构建 Windows 宿主。
 
 不提交虚拟环境、密钥、生成日志或无关个人资料。大体积发行文件放在 Releases，不塞进 Git 历史。

@@ -78,12 +78,7 @@ class EngineTests(unittest.TestCase):
             self.s.command({'action':'serial','channel':channel,'data':base64.b64encode(b'L').decode()})
             self.until(lambda:any(r['channel']==channel and r['direction']=='tx' and 'ACK L' in r['text'] for r in self.s.logs))
             self.assertTrue(any(r['channel']==channel and r['direction']=='tx' and 'ACK L' in r['text'] for r in self.s.logs))
-        # Move only added H6 jumpers; the board copper remains unchanged.
-        for w in list(self.s.wires):
-            if w['from'].startswith('H6.'):
-                self.s.command({'action':'wire_remove','id':w['id']})
-        for a,b in [('H6.3','H6.5'),('H6.4','H6.6')]:
-            self.s.command({'action':'wire_add','from':a,'to':b})
+        self.s.command({'action':'serial_mode','mode':'rs232'})
         self.s.command({'action':'serial','channel':'rs232','data':'TA=='})
         self.until(lambda:any(r['channel']=='rs232' and r['direction']=='tx' and 'ACK L' in r['text'] for r in self.s.logs))
 
@@ -93,12 +88,10 @@ class EngineTests(unittest.TestCase):
         self.assertFalse(self.s.rx['USART0'])
         self.assertEqual(self.s._read(UART['USART0']),0)
 
-    def test_removed_serial_jumper_blocks_data(self):
+    def test_inactive_serial_mode_blocks_data(self):
         self.demo()
-        wire=next(w for w in self.s.wires if w['from']=='H7.2')
-        self.s.command({'action':'wire_remove','id':wire['id']})
-        self.s.command({'action':'serial','channel':'ch340','data':'TA=='})
-        self.assertFalse(self.s.rx['USART0'])
+        self.s.command({'action':'serial','channel':'rs232','data':'TA=='})
+        self.assertFalse(self.s.rx['USART1'])
         self.assertTrue(any('线路未接通' in d['message'] for d in self.s.diagnostics))
 
     def test_v1_connector_and_copper_mapping(self):
@@ -112,7 +105,9 @@ class EngineTests(unittest.TestCase):
         self.assertNotIn('PD10',self.s.connected('LED1'))
 
     def test_dynamic_conflict_after_key_press_stops(self):
-        self.s.command({'action':'wire_add','from':'U2.34','to':'KEY1'})
+        self.s._write(GPIO['PE']+20,1<<13)
+        self.s._write(GPIO['PE'],1<<26)
+        self.s.command({'action':'wire_add','from':'PE13','to':'KEY1'})
         self.assertNotEqual(self.s.status,'faulted')
         self.s.command({'action':'key','index':0,'pressed':True})
         self.assertEqual(self.s.status,'faulted')
@@ -156,7 +151,10 @@ class EngineTests(unittest.TestCase):
         with self.assertRaises(ValueError):self.s.command({'action':'wire_add','from':nc['id'],'to':'KEY1'})
         power=next(p for p in self.s.board['pins'] if p['net']=='3V3')
         ground=next(p for p in self.s.board['pins'] if p['net'] in ('GND','DGND'))
-        self.s.command({'action':'wire_add','from':power['id'],'to':ground['id']})
+        with self.assertRaises(ValueError):self.s.command({'action':'wire_add','from':power['id'],'to':ground['id']})
+        self.s._write(GPIO['PE']+20,1<<13)
+        self.s._write(GPIO['PE'],(1<<26)|(1<<28))
+        self.s.command({'action':'wire_add','from':'PE13','to':'PE14'})
         self.assertTrue(any('冲突' in d['message'] for d in self.s.diagnostics))
 
     def test_i2c_ack_is_driven_on_ninth_clock(self):

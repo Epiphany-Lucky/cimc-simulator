@@ -8,6 +8,9 @@
   let activePanel = 'serial', channel = 'ch340', pendingFile = null, busy = false;
   let toastTimer, pollTimer, pollInProgress = false, serialCutoff = -1, diagnosticCutoff = 0;
   let lastWires = '', lastSerial = '', lastDiagnostics = '', lastOled = '';
+  let adcPreview = 1.65, adcPending = null, adcSending = false, adcDragging = false, adcDragOrigin = null;
+  let schematicPage = 1, schematicReturnFocus = null;
+  const schematicTitles = ['MCU 与排针','板载外设','电源','串口通信'];
   const heldKeys = new Set();
   const preferences = readStorage('cimc.studio.preferences', { labels: false, motion: false, shortcuts: true });
 
@@ -75,6 +78,11 @@
     $('step-button').disabled = !connected || !hasFirmware() || isRunning() || busy;
     $('run-button').disabled = !connected || !hasFirmware() || state?.status === 'faulted' || busy;
     $('serial-send').disabled = !connected || !hasFirmware() || !channelMapping(channel) || busy;
+    $('serial-mode').disabled = !connected || busy;
+    const adcReady = connected && !!state?.adc;
+    $('adc-slider').disabled = !adcReady;
+    $('adc-knob').setAttribute('aria-disabled',String(!adcReady));
+    $('adc-knob').tabIndex = adcReady ? 0 : -1;
     document.querySelectorAll('[data-channel]').forEach(b => { b.disabled = !channelMapping(b.dataset.channel); b.title = b.disabled ? `${b.dataset.channel.toUpperCase()} 固定映射待 V1 原理图核验` : ''; });
     document.querySelectorAll('.key').forEach(b => b.disabled = !connected || !hasFirmware());
     document.querySelectorAll('.pin').forEach(b => b.disabled = !connected || b.dataset.connectable === 'false');
@@ -107,6 +115,9 @@
     renderLeds(next.leds || []);
     (next.keys || []).forEach((pressed, i) => { const key = $('keys').children[i]; if (key) key.classList.toggle('pressed', !!(typeof pressed === 'object' ? pressed.pressed : pressed)); });
     renderOled(next.oled);
+    renderAdc(next.adc);
+    renderFlash(next.flash);
+    if (['rs485','rs232'].includes(next.serialMode)) $('serial-mode').value = next.serialMode;
     renderWires(next.wires || []);
     renderSerial();
     renderDiagnostics();
@@ -117,8 +128,7 @@
   function updateChannelNote() {
     const mapping = channelMapping(channel);
     $('serial-mode-label').textContent = typeof mapping === 'string' ? mapping : mapping?.uart || '待核验';
-    const details = board?.uart?.[channel];
-    const message = details?.jumpers?.length ? details.jumpers.join('，') + (channel.startsWith('rs') ? '。RS232 与 RS485 共用 USART1，请只连接一种收发器。' : '。请按图连接 H7 跳帽。') : 'CN1 · USART2：PB10 TX / PB11 RX，TTL 调试通道。';
+    const message = channel.startsWith('rs') ? `H6 当前选择 ${(state?.serialMode || 'rs485').toUpperCase()}。RS232 / RS485 共用 USART1；通过右侧接口选择切换，页签只切换终端视图。` : channel === 'ch340' ? 'H7 · CH340 固定连接 USART0，无需手动接线。' : 'CN1 · USART2：PB10 TX / PB11 RX，TTL 调试通道。';
     $('channel-note').textContent = message;
     $('channel-note').hidden = !message;
   }
@@ -144,9 +154,10 @@
       b.style.left = `${(pin.x - viewBox[0]) / viewBox[2] * 100}%`;
       b.style.top = `${(pin.y - viewBox[1]) / viewBox[3] * 100}%`;
       b.dataset.pin = pin.id; b.dataset.label = pin.label || pin.id;
-      b.dataset.connectable = pin.connectable === false ? 'false' : 'true';
+      b.dataset.connectable = pin.connectable === false || pin.locked ? 'false' : 'true';
+      b.dataset.locked = pin.lockedReason ? 'true' : 'false';
       b.setAttribute('aria-label', `排针 ${pin.group || ''} ${pin.label || pin.id}${pin.net ? '，网络 ' + pin.net : ''}`);
-      b.title = `${pin.group || ''} · ${pin.label || pin.id}${pin.net ? ' → ' + pin.net : ''}${pin.connectable === false ? '（不可连接）' : ''}`;
+      b.title = `${pin.group || ''} · ${pin.label || pin.id}${pin.net ? ' → ' + pin.net : ''}${pin.lockedReason ? '（' + pin.lockedReason + '）' : pin.connectable === false ? '（不可连接）' : ''}`;
       b.addEventListener('click', () => choosePin(pin));
       $('pin-layer').append(b);
     }
@@ -157,7 +168,7 @@
   }
 
   async function choosePin(pin) {
-    if (!connected || pin.connectable === false) return;
+    if (!connected || pin.connectable === false || pin.locked) return;
     if (!selectedPin) {
       selectedPin = pin.id;
       document.querySelectorAll('.pin').forEach(b => b.classList.toggle('selected', b.dataset.pin === selectedPin));
@@ -177,39 +188,55 @@
     selectedPin = null;
     document.querySelectorAll('.pin.selected').forEach(b => b.classList.remove('selected'));
     $('wiring-hint').classList.remove('selecting');
-    $('wiring-hint').lastElementChild.textContent = '点击两个排针引脚，连接一条跳线';
+    $('wiring-hint').lastElementChild.textContent = '选择空闲 GPIO 与 LED / KEY 排针，添加跳线';
   }
 
   function renderWires(wires) {
-    const signature = JSON.stringify(wires) + (board?.id || '');
+    const managed = state?.managedWires || [];
+    const fixed = board?.fixedVisualWires || [];
+    const signature = JSON.stringify([wires,managed,fixed]) + (board?.id || '');
     if (signature === lastWires) return;
     lastWires = signature;
     $('wire-count').textContent = wires.length;
     $('wire-layer').replaceChildren();
     $('wire-list').replaceChildren();
     const pins = new Map((board?.pins || []).map(p => [p.id, p]));
-    wires.forEach((w, index) => {
+    [...fixed.map(w=>({...w,locked:true,fixedVisual:true})),...managed.map(w=>({...w,locked:true})),...wires].forEach((w, index) => {
       const from = w.from ?? w.a ?? w.fromPin, to = w.to ?? w.b ?? w.toPin;
       const a = pins.get(from), b = pins.get(to), color = /^#[0-9a-f]{3,8}$/i.test(w.color || '') ? w.color : '#43a5ff';
       if (a && b) {
         const height = Math.min(125, Math.max(35, Math.abs(b.x - a.x) * .22 + Math.abs(b.y - a.y) * .12));
-        const path = `M ${a.x} ${a.y} C ${a.x} ${a.y-height}, ${b.x} ${b.y-height}, ${b.x} ${b.y}`;
-        const hit = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        hit.setAttribute('d', path); hit.setAttribute('class', 'wire-hit');
-        hit.addEventListener('click', () => { activatePanel('wires'); $('console-card').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); });
+        const points = w.fixedVisual && Array.isArray(w.points) && w.points.length > 1 && w.points.every(p=>Array.isArray(p) && p.length === 2 && p.every(Number.isFinite)) ? w.points : null;
+        const path = points ? points.map((p,i)=>`${i ? 'L' : 'M'} ${p[0]} ${p[1]}`).join(' ') : `M ${a.x} ${a.y} C ${a.x} ${a.y-height}, ${b.x} ${b.y-height}, ${b.x} ${b.y}`;
+        if (!w.fixedVisual) {
+          const hit = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          hit.setAttribute('d', path); hit.setAttribute('class', 'wire-hit');
+          hit.addEventListener('click', () => { activatePanel('wires'); $('console-card').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); });
+          $('wire-layer').append(hit);
+        }
         const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         line.setAttribute('d', path); line.setAttribute('stroke', color); line.setAttribute('stroke-width', '4');
-        $('wire-layer').append(hit, line);
+        if (w.fixedVisual) {
+          line.setAttribute('class','fixed-board-wire'); line.dataset.wireId = w.id; line.dataset.from = from; line.dataset.to = to;
+          line.setAttribute('aria-label',`${w.label || '原板固定线'}：${from} 至 ${to}`);
+        } else if (w.locked) { line.setAttribute('stroke-width','2.5'); line.setAttribute('stroke-dasharray','5 4'); }
+        $('wire-layer').append(line);
       }
-      const row = node('div', 'wire-row');
+      const row = node('div', w.fixedVisual ? 'wire-row fixed-wire-row' : 'wire-row');
+      if (w.fixedVisual) row.dataset.wireId = w.id;
       const swatch = node('span', 'wire-swatch'); swatch.style.background = color;
-      const del = node('button', 'icon-button'); del.innerHTML = svg('trash'); del.title = '删除这条用户跳线'; del.setAttribute('aria-label', `删除跳线 ${from} 至 ${to}`);
-      del.addEventListener('click', async () => { if (await command('wire_remove', { id: w.id ?? index })) toast('已删除用户跳线，原板固定连线保持不变。'); });
       row.append(swatch, node('code', '', from), node('span', 'wire-arrow', '→'), node('code', '', to));
       if (w.demo || w.source === 'demo') row.append(node('small', '', '示例跳线'));
-      row.append(del); $('wire-list').append(row);
+      if (w.fixedVisual) row.append(node('small','fixed-wire-label',w.label || '原板固定线'));
+      else if (w.locked) row.append(node('small','managed-wire-label','系统连接 · 已锁定'));
+      else {
+        const del = node('button', 'icon-button'); del.innerHTML = svg('trash'); del.title = '删除这条用户跳线'; del.setAttribute('aria-label', `删除跳线 ${from} 至 ${to}`);
+        del.addEventListener('click', async () => { if (await command('wire_remove', { id: w.id ?? index - fixed.length - managed.length })) toast('已删除用户跳线，原板固定连线保持不变。'); });
+        row.append(del);
+      }
+      $('wire-list').append(row);
     });
-    if (!wires.length) $('wire-list').append(empty('wire', '还没有添加跳线', '在开发板上点击两个排针端点，即可连接。'));
+    if (!wires.length) $('wire-list').append(empty('wire', '还没有添加用户跳线', '选择未占用 GPIO 与 LED / KEY 排针，添加连接。'));
   }
 
   function buildHardwareControls(keyCount, ledCount) {
@@ -261,6 +288,61 @@
     ctx.putImageData(bitmap, 0, 0); $('oled-size').textContent = `${width} × ${height}`;
   }
 
+  function showAdcInput(voltage) {
+    const limit = Number(state?.adc?.referenceVoltage) || 3.3;
+    const value = Math.max(0,Math.min(limit,Number(voltage) || 0));
+    adcPreview = value;
+    $('adc-voltage').textContent = `${value.toFixed(3)} V`;
+    $('adc-slider').max = String(limit);
+    $('adc-slider').value = String(value);
+    $('adc-knob').setAttribute('aria-valuemax',String(limit));
+    $('adc-knob').setAttribute('aria-valuenow',value.toFixed(3));
+    $('adc-knob').setAttribute('aria-valuetext',`${value.toFixed(3)} V`);
+    $('adc-needle').style.transform = `rotate(${-135 + value / limit * 270}deg)`;
+  }
+
+  function renderAdc(adc) {
+    if (!adc) return;
+    if (!adcDragging && !adcSending && adcPending === null) showAdcInput(adc.voltage);
+    const sampled = Number(adc.sampleCount) > 0 && adc.value !== null && adc.value !== undefined;
+    $('adc-sample').textContent = sampled ? `采样 ${adc.value} / ${2 ** (adc.bits || 12) - 1}` : '待固件采样';
+    $('adc-sample').title = sampled ? `固件最近一次 ADC 转换结果；已转换 ${adc.sampleCount} 次` : '输入电压已设置，等待 MCU 固件发起 ADC 转换';
+  }
+
+  async function sendAdcInput() {
+    if (adcSending || adcPending === null) return;
+    adcSending = true;
+    try {
+      while (adcPending !== null) {
+        const voltage = adcPending;
+        adcPending = null;
+        if (!await command('adc_voltage',{voltage})) { adcPending = null; break; }
+      }
+    } finally {
+      adcSending = false;
+      if (!adcDragging && state?.adc) renderAdc(state.adc);
+    }
+  }
+
+  function setAdcInput(voltage) {
+    if (!connected || !state?.adc) return;
+    showAdcInput(Math.round(voltage * 1000) / 1000);
+    adcPending = adcPreview;
+    void sendAdcInput();
+  }
+
+  function renderFlash(flash) {
+    if (!flash) return;
+    const command = flash.lastCommand;
+    $('flash-command').textContent = typeof command === 'number' ? `CMD 0x${command.toString(16).padStart(2,'0').toUpperCase()}` : command || '—';
+    const status = flash.status;
+    $('flash-state').textContent = command === null || command === undefined ? '等待固件访问' : typeof status === 'number' ? (status & 1 ? '操作中' : status & 2 ? '写使能' : '就绪') : status === 'busy' ? '操作中' : status === 'deep-power-down' ? '深度休眠' : flash.writeEnabled ? '写使能' : '就绪';
+    $('flash-state').title = typeof status === 'number' ? `状态寄存器 0x${status.toString(16).padStart(2,'0').toUpperCase()}` : String(status || '');
+    $('flash-reads').textContent = `${Number(flash.readCount || 0).toLocaleString('en-US')} B`;
+    $('flash-writes').textContent = `${Number(flash.writeCount || 0).toLocaleString('en-US')} 次`;
+    $('flash-erases').textContent = `${Number(flash.eraseCount || 0).toLocaleString('en-US')} 次`;
+  }
+
   function empty(icon, title, subtitle) { const e = node('div','empty-state'); const i = node('span','empty-icon'); i.innerHTML = svg(icon); e.append(i,node('p','',title),node('span','',subtitle)); return e; }
   function logTime(value) { if (!value) return '—'; if (typeof value === 'string' && /^\d\d:\d\d/.test(value)) return value; const date = new Date(typeof value === 'number' && value < 1e12 ? value * 1000 : value); return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleTimeString('en-GB', { hour12:false }); }
   function serialEntries() { return (state?.serial || []).filter((entry,index) => (entry.channel || 'ch340').toLowerCase() === channel && (Number(entry.id) || index) > serialCutoff); }
@@ -308,7 +390,7 @@
     busy = true; updateEnabled();
     const result = await command('demo');
     busy = false; serialCutoff = -1; diagnosticCutoff = 0; updateEnabled();
-    if (result) toast('示例固件与 16 条跳线已载入：LED/KEY、H7 CH340、H6 RS485。点击运行。');
+    if (result) toast(`示例固件与 ${state?.wires?.length || 0} 条 LED/KEY 跳线已载入，板载连接保持固定。点击运行。`);
   }
 
   function prepareFile(file) {
@@ -366,6 +448,28 @@
   $('oled-capture').addEventListener('click',() => { const a = node('a'); a.href = $('oled-canvas').toDataURL('image/png'); a.download = `oled-${stamp()}.png`; a.click(); toast('OLED 像素截图已保存。'); });
   document.querySelectorAll('[data-panel]').forEach(b => b.addEventListener('click',() => activatePanel(b.dataset.panel)));
   document.querySelectorAll('[data-channel]').forEach(b => b.addEventListener('click',() => { channel = b.dataset.channel; document.querySelectorAll('[data-channel]').forEach(x => x.classList.toggle('active',x === b)); updateEnabled(); updateChannelNote(); renderSerial(true); }));
+  $('serial-mode').addEventListener('change',async e => {
+    const mode = e.target.value;
+    if (await command('serial_mode',{mode})) toast(`H6 已选择 ${mode.toUpperCase()}，板载固定连线保持不变。`);
+    else e.target.value = state?.serialMode || 'rs485';
+  });
+  $('adc-slider').addEventListener('input',e=>setAdcInput(Number(e.target.value)));
+  $('adc-knob').addEventListener('pointerdown',e=>{
+    if ($('adc-knob').getAttribute('aria-disabled') === 'true') return;
+    e.preventDefault(); $('adc-knob').focus(); $('adc-knob').setPointerCapture(e.pointerId);
+    adcDragging = true; adcDragOrigin = {x:e.clientX,y:e.clientY,voltage:adcPreview};
+  });
+  $('adc-knob').addEventListener('pointermove',e=>{
+    if (adcDragging && adcDragOrigin) setAdcInput(adcDragOrigin.voltage + ((e.clientX-adcDragOrigin.x) - (e.clientY-adcDragOrigin.y)) * .012);
+  });
+  function endAdcDrag() { adcDragging = false; adcDragOrigin = null; if (state?.adc) renderAdc(state.adc); }
+  for (const event of ['pointerup','pointercancel','lostpointercapture']) $('adc-knob').addEventListener(event,endAdcDrag);
+  $('adc-knob').addEventListener('keydown',e=>{
+    if ($('adc-knob').getAttribute('aria-disabled') === 'true') return;
+    const max = Number(state?.adc?.referenceVoltage) || 3.3;
+    const values = {ArrowUp:adcPreview+.01,ArrowRight:adcPreview+.01,ArrowDown:adcPreview-.01,ArrowLeft:adcPreview-.01,PageUp:adcPreview+.1,PageDown:adcPreview-.1,Home:0,End:max};
+    if (e.key in values) { e.preventDefault(); setAdcInput(values[e.key]); }
+  });
   $('serial-format').addEventListener('change',() => { $('serial-input').placeholder = $('serial-format').value === 'hex' ? '输入十六进制字节，例如 48 65 6C 6C 6F…' : '输入消息，按 Enter 发送…'; renderSerial(true); });
 
   document.querySelectorAll('[data-nav]').forEach(b => b.addEventListener('click',() => { document.querySelectorAll('[data-nav]').forEach(x => x.classList.toggle('active',x === b)); const target = b.dataset.nav; if (target === 'workbench') $('workbench').scrollIntoView({behavior:'smooth'}); else { activatePanel(target); $('console-card').scrollIntoView({behavior:'smooth',block:'start'}); } }));
@@ -374,12 +478,53 @@
   $('help-button').addEventListener('click',() => $('help-dialog').showModal());
   $('settings-button').addEventListener('click',() => $('settings-dialog').showModal());
 
+  function applySchematicZoom() {
+    const image = $('schematic-image'), zoom = $('schematic-zoom').value;
+    image.style.width = zoom === 'fit' ? '100%' : `${(image.naturalWidth || 3200) * Number(zoom) / 100}px`;
+  }
+  function showSchematicPage(page) {
+    schematicPage = Math.max(1,Math.min(schematicTitles.length,Number(page) || 1));
+    $('schematic-page-select').value = String(schematicPage);
+    $('schematic-page-count').textContent = `${schematicPage} / ${schematicTitles.length}`;
+    $('schematic-prev').disabled = schematicPage === 1;
+    $('schematic-next').disabled = schematicPage === schematicTitles.length;
+    const image = $('schematic-image');
+    image.hidden = true;
+    image.alt = `GD32F470 V1.0 原理图，第 ${schematicPage} 页：${schematicTitles[schematicPage-1]}`;
+    $('schematic-loading').textContent = '正在载入原理图…';
+    $('schematic-loading').hidden = false;
+    image.src = `assets/schematics/v1-page-${schematicPage}.png`;
+    $('schematic-viewport').scrollTo({top:0,left:0,behavior:'instant'});
+  }
+  $('schematic-image').addEventListener('load',()=>{applySchematicZoom();$('schematic-image').hidden=false;$('schematic-loading').hidden=true;});
+  $('schematic-image').addEventListener('error',()=>{$('schematic-loading').textContent='此页暂时无法显示，请打开原始 PDF。';});
+  $('schematic-button').addEventListener('click',()=>{
+    schematicReturnFocus = document.activeElement;
+    releaseKeys();
+    $('schematic-dialog').showModal();
+    document.body.classList.add('schematic-open');
+    $('schematic-button').setAttribute('aria-expanded','true');
+    $('schematic-button').classList.add('active');
+    showSchematicPage(schematicPage);
+    $('schematic-page-select').focus();
+  });
+  $('schematic-dialog').addEventListener('close',()=>{
+    document.body.classList.remove('schematic-open');
+    $('schematic-button').setAttribute('aria-expanded','false');
+    $('schematic-button').classList.remove('active');
+    schematicReturnFocus?.focus({preventScroll:true});
+  });
+  $('schematic-page-select').addEventListener('change',e=>showSchematicPage(e.target.value));
+  $('schematic-prev').addEventListener('click',()=>showSchematicPage(schematicPage-1));
+  $('schematic-next').addEventListener('click',()=>showSchematicPage(schematicPage+1));
+  $('schematic-zoom').addEventListener('change',()=>{applySchematicZoom();$('schematic-viewport').scrollTo({top:0,left:0,behavior:'instant'});});
+
   function showInfo(title, eyebrow, content) { $('info-title').textContent=title; $('info-eyebrow').textContent=eyebrow; $('info-content').replaceChildren(...content); $('info-dialog').showModal(); }
-  $('about-button').addEventListener('click',() => showInfo('CIMC Studio','PREVIEW 0.1',[node('p','','Windows 与浏览器共用的嵌入式仿真工作台。'),node('p','','载入 ARM 固件，探索程序与电路的每一次交互。'),node('p','','当前为功能预览版，具体外设支持范围以交付文档和运行诊断为准。CIMC Studio 为独立开发项目，非赛事官方软件。')]));
+  $('about-button').addEventListener('click',() => showInfo('CIMC Studio','PREVIEW 0.2',[node('p','','Windows 与浏览器共用的嵌入式仿真工作台。'),node('p','','载入 ARM 固件，探索程序与电路的每一次交互。'),node('p','','当前为功能预览版，具体外设支持范围以交付文档和运行诊断为准。CIMC Studio 为独立开发项目，非赛事官方软件。')]));
   $('board-info-button').addEventListener('click',() => {
     const content = [];
     for (const [label,value] of [['板卡',board?.name || 'GD32F470 V1.0'],['资料状态',board?.verified ? '已核验' : 'V1 原理图已核对；外设功能为子集'],['可见端点',String(board?.pins?.length || 0)],['线路规则','固定网络只读；仅增删自己的跳线']]) { const row=node('div','info-row');row.append(node('span','',label),node('strong','',value));content.push(row); }
-    if (board?.verified === false) content.push(node('p','','U2/U3、H2/H3、OLED、H6/H7 的连接已按 V1.0 原理图核对。视图表示接线拓扑，不表示 PCB 物理位置。SD、SPI Flash、ADC 等线路保留但外设功能尚未实现。'));
+    if (board?.verified === false) content.push(node('p','','连接按 V1.0 原理图核对。视图表示接线拓扑，不表示 PCB 物理位置。ADC 旋钮固定接 PC0；SPI Flash 固定接 PB12–PB15。被板载外设占用的引脚已锁定，用户只能从空闲 GPIO 给 LED/KEY 添加跳线。'));
     if (board?.notes?.length) content.push(node('p','',Array.isArray(board.notes) ? board.notes.join('\n') : board.notes));
     showInfo('开发板信息','BOARD PROFILE',content);
   });
@@ -392,9 +537,9 @@
 
   function applyPreferences(){document.body.classList.toggle('show-pin-labels',preferences.labels);document.body.classList.toggle('reduce-motion',preferences.motion);$('setting-labels').checked=preferences.labels;$('setting-motion').checked=preferences.motion;$('setting-shortcuts').checked=preferences.shortcuts;try{localStorage.setItem('cimc.studio.preferences',JSON.stringify(preferences));}catch{}}
   for(const [id,key] of [['setting-labels','labels'],['setting-motion','motion'],['setting-shortcuts','shortcuts']])$(id).addEventListener('change',e=>{preferences[key]=e.target.checked;applyPreferences();});
-  function editing(){return ['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)||document.querySelector('dialog[open]');}
-  window.addEventListener('keydown',e=>{if(e.key==='Escape'){clearPinSelection();$('board-card').classList.remove('expanded');}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='o'){e.preventDefault();$('firmware-file').click();return;}if(editing())return;if(e.code==='Space'&&document.activeElement?.tagName!=='BUTTON'){e.preventDefault();if(!e.repeat&&!$('run-button').disabled)$('run-button').click();}if(preferences.shortcuts&&/^[1-6]$/.test(e.key)&&!e.repeat){e.preventDefault();void pressKey(Number(e.key)-1,true);}});
-  window.addEventListener('keyup',e=>{if(/^[1-6]$/.test(e.key))void pressKey(Number(e.key)-1,false);});
+  function editing(){return ['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)||document.activeElement?.getAttribute('role')==='slider'||document.querySelector('dialog[open]');}
+  window.addEventListener('keydown',e=>{if(document.querySelector('dialog[open]')){if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='o')e.preventDefault();return;}if(e.key==='Escape'){clearPinSelection();$('board-card').classList.remove('expanded');}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='o'){e.preventDefault();$('firmware-file').click();return;}if(editing())return;if(e.code==='Space'&&document.activeElement?.tagName!=='BUTTON'){e.preventDefault();if(!e.repeat&&!$('run-button').disabled)$('run-button').click();}if(preferences.shortcuts&&/^[1-6]$/.test(e.key)&&!e.repeat){e.preventDefault();void pressKey(Number(e.key)-1,true);}});
+  window.addEventListener('keyup',e=>{if(document.querySelector('dialog[open]'))return;if(/^[1-6]$/.test(e.key))void pressKey(Number(e.key)-1,false);});
   window.addEventListener('blur',releaseKeys);
   document.addEventListener('visibilitychange',()=>{if(document.hidden)releaseKeys();});
 

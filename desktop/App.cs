@@ -3,8 +3,10 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Interop;
 using System.Windows.Media;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.Wpf;
@@ -34,15 +36,29 @@ public sealed class App : Application
             root = LocateRoot();
             int port = FindPort();
             string url = $"http://127.0.0.1:{port}/";
+            var workArea = SystemParameters.WorkArea;
             var window = new Window
             {
-                Title = "CIMC Studio · 0.1.0",
-                Width = 1480, Height = 960, MinWidth = 1080, MinHeight = 720,
+                Title = "CIMC Studio · 0.2.0",
+                Width = Math.Min(1280, Math.Max(320, workArea.Width - 32)),
+                Height = Math.Min(820, Math.Max(240, workArea.Height - 32)),
                 WindowStartupLocation = WindowStartupLocation.CenterScreen,
                 Background = new SolidColorBrush(Color.FromRgb(245, 245, 247)),
                 FontFamily = new FontFamily("Segoe UI")
             };
             MainWindow = window;
+            window.SourceInitialized += (_, _) =>
+            {
+                var source = HwndSource.FromHwnd(new WindowInteropHelper(window).Handle);
+                source?.AddHook((IntPtr hwnd, int message, IntPtr wParam, IntPtr lParam, ref bool handled) =>
+                {
+                    // Recheck after DPI, monitor/work-area changes, or a completed resize/move.
+                    if (message is 0x02E0 or 0x007E or 0x001A or 0x0232)
+                        window.Dispatcher.BeginInvoke(new Action(() => FitWindow(window, false)));
+                    return IntPtr.Zero;
+                });
+            };
+            window.Loaded += (_, _) => FitWindow(window, true);
             var loading = new StackPanel { VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center };
             loading.Children.Add(new TextBlock { Text = "CIMC Studio", FontSize = 32, FontWeight = FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Center });
             loading.Children.Add(new TextBlock { Text = "正在启动本地仿真内核…", FontSize = 14, Foreground = Brushes.Gray, Margin = new Thickness(0, 16, 0, 0), HorizontalAlignment = HorizontalAlignment.Center });
@@ -54,6 +70,7 @@ public sealed class App : Application
             bool ready = false;
             for (int i = 0; i < 120; i++)
             {
+                if (exiting) return;
                 if (engine?.HasExited == true) throw new InvalidOperationException("仿真内核未能启动。\n" + RecentLog());
                 try
                 {
@@ -67,7 +84,9 @@ public sealed class App : Application
             if (!ready) throw new TimeoutException("等待本地仿真内核超时。\n" + RecentLog());
             if (args.Contains("--web"))
             {
+                window.Tag = "service";
                 window.Width = 540; window.Height = 290; window.MinWidth = 480; window.MinHeight = 250;
+                FitWindow(window, true);
                 loading.Children.Clear();
                 loading.Children.Add(new TextBlock { Text = "网页版已准备好", FontSize = 26, FontWeight = FontWeights.SemiBold });
                 loading.Children.Add(new TextBlock { Text = url, FontSize = 15, Margin = new Thickness(0, 12, 0, 20) });
@@ -109,6 +128,42 @@ public sealed class App : Application
             StopEngine(); Shutdown(1);
         }
     }
+
+    private static void FitWindow(Window window, bool center)
+    {
+        if (!window.IsVisible || window.WindowState != WindowState.Normal) return;
+        var handle = new WindowInteropHelper(window).Handle;
+        var info = new MonitorInfo { Size = Marshal.SizeOf<MonitorInfo>() };
+        if (!GetMonitorInfo(MonitorFromWindow(handle, 2), ref info) || !GetWindowRect(handle, out var bounds)) return;
+        var dpi = GetDpiForWindow(handle);
+        double scale = dpi == 0 ? 1 : dpi / 96.0;
+        var work = info.Work;
+        int margin = Math.Min(16, Math.Max(0, Math.Min(work.Right - work.Left, work.Bottom - work.Top) / 40));
+        double maxWidth = Math.Max(1, (work.Right - work.Left - 2 * margin) / scale);
+        double maxHeight = Math.Max(1, (work.Bottom - work.Top - 2 * margin) / scale);
+        bool serviceWindow = Equals(window.Tag, "service");
+        window.MinWidth = Math.Min(serviceWindow ? 480 : 760, maxWidth);
+        window.MinHeight = Math.Min(serviceWindow ? 250 : 480, maxHeight);
+        window.Width = Math.Clamp(window.Width, window.MinWidth, maxWidth);
+        window.Height = Math.Clamp(window.Height, window.MinHeight, maxHeight);
+        int width = (int)Math.Round(window.Width * scale);
+        int height = (int)Math.Round(window.Height * scale);
+        int left = center ? work.Left + (work.Right - work.Left - width) / 2
+                          : Math.Clamp(bounds.Left, work.Left + margin, work.Right - margin - width);
+        int top = center ? work.Top + (work.Bottom - work.Top - height) / 2
+                         : Math.Clamp(bounds.Top, work.Top + margin, work.Bottom - margin - height);
+        SetWindowPos(handle, IntPtr.Zero, left, top, width, height, 0x0004 | 0x0010);
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct NativeRect { public int Left, Top, Right, Bottom; }
+    [StructLayout(LayoutKind.Sequential)]
+    private struct MonitorInfo { public int Size; public NativeRect Monitor, Work; public uint Flags; }
+    [DllImport("user32.dll")] private static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint flags);
+    [DllImport("user32.dll", CharSet = CharSet.Auto)] private static extern bool GetMonitorInfo(IntPtr monitor, ref MonitorInfo info);
+    [DllImport("user32.dll")] private static extern uint GetDpiForWindow(IntPtr hwnd);
+    [DllImport("user32.dll")] private static extern bool GetWindowRect(IntPtr hwnd, out NativeRect rect);
+    [DllImport("user32.dll")] private static extern bool SetWindowPos(IntPtr hwnd, IntPtr after, int x, int y, int width, int height, uint flags);
 
     private void StartEngine(int port)
     {

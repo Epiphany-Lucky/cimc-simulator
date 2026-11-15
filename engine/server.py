@@ -50,7 +50,7 @@ def main():
             path=urlparse(self.path).path
             if path=='/api/state':return self._send(200,simulator.state())
             if path=='/api/project':return self._send(200,simulator.project())
-            if path=='/api/health':return self._send(200,{'ok':True,'version':'0.1.0'})
+            if path=='/api/health':return self._send(200,{'ok':True,'version':'0.2.0'})
             if path=='/api/demo':
                 p=args.root/'firmware'/'demo.hex'
                 return self._send(200,p.read_bytes(),'application/octet-stream')
@@ -75,7 +75,7 @@ def main():
 
     server=ThreadingHTTPServer(('127.0.0.1',args.port),Handler)
     args.port=server.server_address[1]
-    print(f'CIMC Lab 0.1.0 http://127.0.0.1:{args.port}',flush=True)
+    print(f'CIMC Lab 0.2.0 http://127.0.0.1:{args.port}',flush=True)
     if args.open_browser:
         threading.Timer(0.35,lambda:webbrowser.open(f'http://127.0.0.1:{args.port}/')).start()
     try:server.serve_forever()

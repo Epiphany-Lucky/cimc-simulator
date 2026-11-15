@@ -8,6 +8,7 @@ import base64
 from collections import deque
 import hashlib
 import json
+import math
 from pathlib import Path
 import struct
 import threading
@@ -16,6 +17,8 @@ import uuid
 
 from unicorn import Uc, UcError, UC_ARCH_ARM, UC_MODE_THUMB, UC_MODE_MCLASS, UC_HOOK_CODE, UC_HOOK_MEM_READ, UC_HOOK_MEM_WRITE, UC_HOOK_MEM_INVALID, UC_HOOK_INTR, UC_PROT_READ, UC_PROT_WRITE, UC_PROT_EXEC
 from unicorn.arm_const import *
+from adc import AdcDevice
+from spiflash import SpiFlashDevice
 
 FLASH = 0x08000000
 FLASH_SIZE = 0x80000
@@ -160,6 +163,7 @@ class Simulator:
         self.uc=None
         self.image=None
         self.wires=[]
+        self.serial_mode='rs485'
         self._connection_cache={}
         self.logs=[]
         self.diagnostics=[]
@@ -167,6 +171,8 @@ class Simulator:
         self.closed=False
         self.board=self._load_board()
         self.keys=[False]*len(self.board.get('keyMappings',[]))
+        self.adc=AdcDevice(self)
+        self.flash=SpiFlashDevice(self)
         self._reset_devices()
         self.worker=threading.Thread(target=self._worker,daemon=True)
         self.worker.start()
@@ -192,6 +198,7 @@ class Simulator:
         raise FileNotFoundError('Missing verified V1 board profile: '+str(p))
 
     def _reset_devices(self):
+        if hasattr(self, 'instructions'):self.flash.state()
         self.regs={}
         self.instructions=0
         self.start_time=time.monotonic()
@@ -208,6 +215,8 @@ class Simulator:
         self._conflicts=set()
         self._floating={}
         self._warned=set()
+        self.adc.reset()
+        self.flash.reset()
 
     def diagnose(self,message,level='error',**details):
         self.sequence+=1
@@ -311,6 +320,8 @@ class Simulator:
         return 0
 
     def _read(self,a):
+        if self.adc.contains(a):return self.adc.read(a)
+        if self.flash.contains(a):return self.flash.read(a)
         for port,b in GPIO.items():
             if b<=a<b+0x400:
                 g=self.gpio_state[port];o=a-b
@@ -361,6 +372,8 @@ class Simulator:
         previous=self.regs.get(a,0)
         v=((previous&~mask)|(v&mask))&0xFFFFFFFF
         self.regs[a]=v
+        if self.adc.contains(a):return self.adc.write(a,v,size,byte_offset)
+        if self.flash.contains(a):return self.flash.write(a,v,size,byte_offset)
         for port,b in GPIO.items():
             if b<=a<b+0x400:
                 g=self.gpio_state[port];o=a-b
@@ -373,6 +386,7 @@ class Simulator:
                 elif o not in (8,28,32,36):return self._unsupported(a,'写入')
                 oled=self.board.get('oled',{})
                 if port in (oled.get('scl','')[:2],oled.get('sda','')[:2]):self._i2c_edges()
+                self.flash.on_gpio_changed(port)
                 return
         for uart,b in UART.items():
             if b<=a<b+0x20:
@@ -388,7 +402,10 @@ class Simulator:
                     self.diagnose(f'{uart} DMA 模式尚未实现')
                 elif o not in (0,8,12,16,20,24):return self._unsupported(a,'写入')
                 return
-        if 0x40023800<=a<=0x40023898:return
+        if 0x40023800<=a<=0x40023898:
+            self.adc.notify_rcu_write(a,v)
+            if a==0x40023820 and v&(1<<14):self.flash.reset(controller_only=True)
+            return
         if a in (0x40023C00,0x40007000,0x40007004):return
         if a==0xE000E010:self.systick['ctrl']=v&7;return
         if a==0xE000E014:self.systick['reload']=v&0xFFFFFF;return
@@ -464,6 +481,7 @@ class Simulator:
         if net in self._connection_cache:return self._connection_cache[net]
         reached={net}
         edges=[(self._pin_net(w['from']),self._pin_net(w['to'])) for w in self.wires]
+        edges.extend((self._pin_net(w['from']),self._pin_net(w['to'])) for w in self.managed_wires())
         for edge in self.board.get('fixedConnections',[]):
             if isinstance(edge,dict):
                 a,b=edge.get('from',edge.get('a')),edge.get('to',edge.get('b'))
@@ -494,6 +512,8 @@ class Simulator:
                 if i<len(self.keys) and self.keys[i]:strong.append(k.get('active',0))
                 elif 'idle' in k:weak.append(k['idle'])
         o=self.board.get('oled',{})
+        for pull in self.board.get('fixedPulls',[]):
+            if pull['net'] in nets:weak.append(pull['level'])
         if include_device and self.i2c['ack'] and self.i2c.get('ack_drive') and o.get('sda') in nets:strong.append(0)
         if o.get('sda') in nets or o.get('scl') in nets:weak.append(1)
         if 0 in strong and 1 in strong:
@@ -542,13 +562,17 @@ class Simulator:
             self.load(raw,data.get('filename','firmware.bin'),a)
         elif action=='demo':
             p=self.root/'firmware'/'demo.hex';self.load(p.read_bytes(),'CIMC Lab · Keil demo.hex')
+            self.serial_mode='rs485'
+            self._connection_cache.clear()
             self.wires=[]
             for w in self.board.get('defaultAddedWires',[]):
                 self.command({'action':'wire_add','from':w['a'],'to':w['b'],'color':'#0071e3' if 'led' in w['id'] else '#a855f7'})
             self.diagnose(f"已载入真实 Keil 示例固件与 {len(self.wires)} 条可删除示例跳线；原板固定网络未改变",'info')
         else:
             with self.lock:
-                if action=='run':
+                if action=='adc_voltage':self.adc.set_voltage(data.get('voltage'))
+                elif action=='serial_mode':self.set_serial_mode(data.get('mode'))
+                elif action=='run':
                     if not self.uc:raise ValueError('请先载入固件')
                     if self.status=='faulted':raise ValueError('请先复位或载入其他固件')
                     self.status='running'
@@ -577,30 +601,72 @@ class Simulator:
                         self.diagnose(f'{uart} 尚未启用接收，本次输入未送入 MCU','warning')
                     else:self.rx[uart].extend(raw)
                 elif action=='wire_add':
-                    ids={p['id'] for p in self.board.get('pins',[]) if p.get('connectable',True)}
-                    a,b=data.get('from'),data.get('to')
-                    if a not in ids or b not in ids or a==b:raise ValueError('只能连接两个实际存在的排针端点')
-                    if any({w['from'],w['to']}=={a,b} for w in self.wires):raise ValueError('这两个端点已经有用户跳线')
-                    if self._pin_net(a)==self._pin_net(b):raise ValueError('两个端点本来就属于同一固定网络')
-                    self.wires.append({'id':str(uuid.uuid4())[:8],'from':a,'to':b,'color':data.get('color','#0071e3')})
+                    wire=self.validate_wire(data,self.wires)
+                    self.wires.append(wire)
                     self._connection_cache.clear()
-                    self.net_level(a)
-                elif action=='wire_remove':self.wires=[w for w in self.wires if w['id']!=data.get('id')];self._connection_cache.clear()
+                    self.net_level(wire['from'])
+                elif action=='wire_remove':
+                    if not any(w['id']==data.get('id') for w in self.wires):raise ValueError('只能删除用户添加的跳线，固定连线不可删除')
+                    self.wires=[w for w in self.wires if w['id']!=data.get('id')];self._connection_cache.clear()
                 elif action=='project_load':
-                    project=data.get('project',data)
-                    if project.get('format')!='cimc-lab-project' or project.get('version')!=1:raise ValueError('不支持的工程格式或版本')
-                    if project.get('boardId')!=self.board.get('id'):raise ValueError('工程板卡版本与当前板卡不一致')
-                    if not isinstance(project.get('wires'),list) or len(project['wires'])>200:raise ValueError('工程跳线列表无效')
-                    old=self.wires;self.wires=[]
-                    self._connection_cache.clear()
-                    try:
-                        for w in project['wires']:self.command({'action':'wire_add','from':w.get('from'),'to':w.get('to'),'color':w.get('color','#0071e3')})
-                    except Exception:self.wires=old;self._connection_cache.clear();raise
+                    self.load_project(data.get('project',data))
                 elif action=='clear_log':self.logs=[]
                 else:raise ValueError('未知操作：'+action)
         return self.state()
 
-    def project(self):return {'format':'cimc-lab-project','version':1,'boardId':self.board.get('id'),'wires':list(self.wires),'firmware':self.firmware}
+    def managed_wires(self):
+        patterns=self.board['serialJumperPatterns']
+        return [{'id':f'fixed-{kind}-{i}','from':a,'to':b,'color':'#8094ad','locked':True}
+                for kind in ('ch340',self.serial_mode) for i,(a,b) in enumerate(patterns[kind])]
+
+    def set_serial_mode(self,mode):
+        if mode not in ('rs485','rs232'):raise ValueError('串口模式只允许 RS485 或 RS232')
+        if mode!=self.serial_mode:
+            self._flush_uart()
+            self.serial_mode=mode
+            self.rx['USART1'].clear()
+            self._connection_cache.clear()
+
+    def validate_wire(self,data,wires):
+        ids={p['id'] for p in self.board['pins'] if p.get('connectable',True)}
+        a,b=data.get('from'),data.get('to')
+        if a not in ids or b not in ids or a==b:raise ValueError('固定外设引脚不可改接；请选择空闲 GPIO 或 LED/KEY 排针')
+        if len(wires)>=200:raise ValueError('用户跳线最多 200 条')
+        if any({w['from'],w['to']}=={a,b} for w in wires):raise ValueError('这两个端点已经有用户跳线')
+        if self._pin_net(a)==self._pin_net(b):raise ValueError('两个端点本来就属于同一固定网络')
+        return {'id':str(uuid.uuid4())[:8],'from':a,'to':b,'color':str(data.get('color','#0071e3'))}
+
+    def load_project(self,project):
+        if not isinstance(project,dict) or project.get('format')!='cimc-lab-project' or project.get('version') not in (1,2):raise ValueError('不支持的工程格式或版本')
+        if project.get('boardId')!=self.board['id']:raise ValueError('工程板卡版本与当前板卡不一致')
+        raw=project.get('wires')
+        if not isinstance(raw,list) or len(raw)>200 or any(not isinstance(w,dict) for w in raw):raise ValueError('工程跳线列表无效')
+        mode=project.get('serialMode','rs485')
+        if mode not in ('rs485','rs232'):raise ValueError('无效的串口模式')
+        voltage=project.get('adcVoltage',self.adc.voltage)
+        if isinstance(voltage,bool) or not isinstance(voltage,(int,float)) or not math.isfinite(voltage) or not 0<=voltage<=3.3:raise ValueError('工程 ADC 电压无效')
+        if project['version']==1:
+            patterns={k:{frozenset(pair) for pair in v} for k,v in self.board['serialJumperPatterns'].items()}
+            seen=set();remaining=[]
+            for w in raw:
+                pair=frozenset((w.get('from'),w.get('to')))
+                if pair in patterns['ch340']:continue
+                if pair in patterns['rs485'] or pair in patterns['rs232']:seen.add(pair)
+                else:remaining.append(w)
+            if seen:
+                inferred=next((k for k in ('rs485','rs232') if seen==patterns[k]),None)
+                if inferred is None:raise ValueError('旧工程的 H6 跳线不属于完整的 RS232/RS485 组合')
+                if 'serialMode' in project and mode!=inferred:raise ValueError('旧工程串口模式与跳线矛盾')
+                mode=inferred
+            raw=remaining
+        staged=[]
+        for w in raw:staged.append(self.validate_wire(w,staged))
+        self.set_serial_mode(mode)
+        self.adc.set_voltage(voltage)
+        self.wires=staged
+        self._connection_cache.clear()
+
+    def project(self):return {'format':'cimc-lab-project','version':2,'boardId':self.board.get('id'),'wires':list(self.wires),'firmware':self.firmware,'serialMode':self.serial_mode,'adcVoltage':self.adc.voltage}
 
     def state(self):
         with self.lock:
@@ -609,4 +675,4 @@ class Simulator:
             leds=[self.net_level(m.get('net',m.get('pin')))==m.get('active',1) for m in self.board.get('ledMappings',[])]
             pc=self.uc.reg_read(UC_ARM_REG_PC) if self.uc else 0
             sp=self.uc.reg_read(UC_ARM_REG_SP) if self.uc else 0
-            return {'status':self.status,'firmware':self.firmware,'cpu':{'pc':f'0x{pc:08X}','sp':f'0x{sp:08X}','instructions':self.instructions,'model':'Cortex-M4 / Unicorn 2.1.4'},'board':self.board,'leds':leds,'keys':list(self.keys),'oled':{'width':self.oled.width,'height':self.oled.height,'pixels':self.oled.pixels(),'on':self.oled.on},'wires':list(self.wires),'serial':list(self.logs),'diagnostics':list(self.diagnostics),'engine':{'version':'0.1.0','mode':'functional','cycleAccurate':False,'supported':'GPIO, polling USART, GPIO I2C OLED, basic SysTick'}}
+            return {'status':self.status,'firmware':self.firmware,'cpu':{'pc':f'0x{pc:08X}','sp':f'0x{sp:08X}','instructions':self.instructions,'model':'Cortex-M4 / Unicorn 2.1.4'},'board':self.board,'leds':leds,'keys':list(self.keys),'oled':{'width':self.oled.width,'height':self.oled.height,'pixels':self.oled.pixels(),'on':self.oled.on},'wires':list(self.wires),'managedWires':self.managed_wires(),'serialMode':self.serial_mode,'adc':self.adc.state(),'flash':self.flash.state(),'serial':list(self.logs),'diagnostics':list(self.diagnostics),'engine':{'version':'0.2.0','mode':'functional','cycleAccurate':False,'supported':'GPIO, polling USART, GPIO I2C OLED, basic SysTick, software ADC, SPI1 GD25Q40E'}}

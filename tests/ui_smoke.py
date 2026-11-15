@@ -15,7 +15,7 @@ with sync_playwright() as p:
     expect(page.locator('#demo-button')).to_be_enabled()
     expect(page.locator('.pin')).to_have_count(109)
     page.locator('#demo-button').click()
-    expect(page.locator('#wire-count')).to_have_text('16')
+    expect(page.locator('#wire-count')).to_have_text('12')
     page.locator('#run-button').click()
     expect(page.locator('#terminal')).to_contain_text('OLED READY',timeout=30000)
     page.wait_for_function("document.querySelector('#oled-live').classList.contains('on')")
@@ -35,17 +35,17 @@ with sync_playwright() as p:
     with page.expect_download() as event:page.locator('#save-project').click()
     saved=ROOT/'artifacts/ui-wiring.json';event.value.save_as(saved)
     project=json.loads(saved.read_text())
-    assert project['boardId']=='cimc-v1' and len(project['wires'])==16
+    assert project['boardId']=='cimc-v1' and len(project['wires'])==12 and project['version']==2
     page.locator('#wire-list .icon-button').first.click()
-    expect(page.locator('#wire-count')).to_have_text('15')
+    expect(page.locator('#wire-count')).to_have_text('11')
     page.locator('#project-file').set_input_files(str(saved))
-    expect(page.locator('#wire-count')).to_have_text('16')
+    expect(page.locator('#wire-count')).to_have_text('12')
     # Add by clicking two exposed pins, then delete just that added wire.
     page.locator('[data-pin="PD0"]').click()
     page.locator('[data-pin="PD1"]').click()
-    expect(page.locator('#wire-count')).to_have_text('17')
+    expect(page.locator('#wire-count')).to_have_text('13')
     page.locator('#wire-list .icon-button').last.click()
-    expect(page.locator('#wire-count')).to_have_text('16')
+    expect(page.locator('#wire-count')).to_have_text('12')
     # Exercise actual BIN file input and firmware reset.
     page.locator('#firmware-file').set_input_files(str(ROOT/'firmware/demo.bin'))
     page.locator('#import-confirm').click()
