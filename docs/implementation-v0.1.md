@@ -2,11 +2,11 @@
 
 状态：用户已授权实现。日期：2026-11-15。
 
-授权依据：用户“从现在开始写入，并且将第一版的文件存入GitHub中做好项目迭代工作……先进行第一版吧”；补充“也要提供HTML网页版的”；板卡选择“V2.0（优先）”。此授权承接上一轮需求审批，不另设重复确认。
+授权依据：用户“从现在开始写入，并且将第一版的文件存入GitHub中做好项目迭代工作……先进行第一版吧”；补充“也要提供HTML网页版的”；板卡最初选择“V2.0（优先）”，实施中用户明确改为“那你先使用V1的吧”，当前目标 V1.0。此授权承接上一轮需求审批，不另设重复确认。
 
 ## 复杂度
 
-计划文件清单（至少21个）：README.md、CHANGELOG.md、.gitignore、.ai-governance/capability-map.md、docs/requirements-approved.md、docs/implementation-v0.1.md、docs/validation-v0.1.md、web/index.html、web/styles.css、web/app.js、web/board-v2.json、engine/server.py、engine/simulator.py、engine/requirements.txt、desktop/CimcLab.csproj、desktop/App.cs、firmware/demo.c、firmware/linker.ld、tests/test_engine.py、scripts/build.ps1、.github/workflows/ci.yml。
+计划文件清单（至少21个）：README.md、CHANGELOG.md、.gitignore、.ai-governance/capability-map.md、docs/requirements-approved.md、docs/implementation-v0.1.md、docs/validation-v0.1.md、web/index.html、web/styles.css、web/app.js、web/board-v1.json、engine/server.py、engine/simulator.py、engine/requirements.txt、desktop/CimcLab.csproj、desktop/App.cs、firmware/demo.c、firmware/linker.ld、tests/test_engine.py、scripts/build.ps1、.github/workflows/ci.yml。
 
 | 条件 | 命中 | 依据 |
 |---|---|---|
@@ -19,7 +19,7 @@
 | H7 新依赖 | 是 | ARM引擎、WebView2、打包工具 |
 | H8 跨端协同 | 是 | HTML、Windows宿主、内核 |
 | H9 构建CI | 是 | 打包与GitHub Actions |
-| H10 未明口径 | 否 | 已确认V2.0和纯仿真；硬件未知项按证据待核验，不自行替换 |
+| H10 未明口径 | 否 | 已确认V1.0和纯仿真；硬件未知项按证据待核验，不自行替换 |
 
 判定：大。无降级。现状证据：Get-Command确认.NET10、Python、arm-none-eabi-gcc、Git与gh可用；新建目录前Test-Path为False；用户GitHub身份Epiphany-Lucky；没有现有同名仓库。
 
@@ -35,7 +35,7 @@
 
 ## 影响与风险
 
-影响仅限新项目目录和新私有GitHub仓库。原研究资料与其他项目保留。风险为V2原理图/原例程资料不完整、ARM外设支持子集、Windows运行时依赖。通过证据表、缺失外设诊断、可复现测试、明确发布说明处理；不伪造硬件验证结论。
+影响仅限新项目目录和新私有GitHub仓库。原研究资料与其他项目保留。V1四页原理图已找到并核对，风险为完整器件仿真尚未完成、ARM外设支持子集、Windows运行时依赖。通过证据表、缺失外设诊断、可复现测试、明确发布说明处理；不伪造硬件验证结论。
 
 ## 验收
 

@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>CIMC-Studio</AssemblyName>
+    <ApplicationIcon>../assets/app.ico</ApplicationIcon>
     <RootNamespace>CimcStudio</RootNamespace>
     <Version>0.1.0</Version>
     <Description>CIMC Studio — local embedded firmware workbench</Description>

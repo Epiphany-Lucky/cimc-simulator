@@ -18,3 +18,5 @@ test-results/
 .playwright/
 *.spec
 !engine/cimc-engine.spec
+
+firmware/*.o

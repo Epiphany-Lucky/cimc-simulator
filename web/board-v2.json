@@ -1,0 +1,2484 @@
+{
+  "schemaVersion": 1,
+  "id": "cimc-v2",
+  "name": "CIMC GD32F470VET6 V2.0",
+  "verified": false,
+  "evidenceStatus": "partial",
+  "viewBox": [
+    0,
+    0,
+    1000,
+    650
+  ],
+  "image": "assets/board-v2.jpg",
+  "imageNativeSize": [
+    640,
+    428
+  ],
+  "coordinates": "Measured approximate centers on official photograph scaled to 1000x650; header row order is verified. These are not PCB fabrication coordinates or manufacturer pin numbers.",
+  "notes": [
+    "V2.0 header labels are verified against official photographs. Full V2.0 schematic has not been located.",
+    "Do not infer V2.0 copper routing from the V1.0 schematic. V2 USART2 PD8/PD9 differs from V1 PB10/PB11.",
+    "LED and KEY terminals are independent connectors; demo GPIO mappings are visible added jumpers, never immutable board copper.",
+    "LED/KEY polarity, OLED MCU pins and unphotographed internal routing are code-supported model assumptions, not full V2 hardware verification.",
+    "NC terminals are disabled. Power pins are not GPIO."
+  ],
+  "pins": [
+    {
+      "id": "PB12",
+      "label": "PB12",
+      "net": "PB12",
+      "x": 343.75,
+      "y": 309.81,
+      "group": "U3",
+      "rowFromTop": 1,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PB13",
+      "label": "PB13",
+      "net": "PB13",
+      "x": 365.62,
+      "y": 309.81,
+      "group": "U3",
+      "rowFromTop": 1,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PB14",
+      "label": "PB14",
+      "net": "PB14",
+      "x": 343.75,
+      "y": 323.03,
+      "group": "U3",
+      "rowFromTop": 2,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PB15",
+      "label": "PB15",
+      "net": "PB15",
+      "x": 365.62,
+      "y": 323.03,
+      "group": "U3",
+      "rowFromTop": 2,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PD8",
+      "label": "PD8",
+      "net": "PD8",
+      "x": 343.75,
+      "y": 336.24,
+      "group": "U3",
+      "rowFromTop": 3,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PD9",
+      "label": "PD9",
+      "net": "PD9",
+      "x": 365.62,
+      "y": 336.24,
+      "group": "U3",
+      "rowFromTop": 3,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PD10",
+      "label": "PD10",
+      "net": "PD10",
+      "x": 343.75,
+      "y": 349.45,
+      "group": "U3",
+      "rowFromTop": 4,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PD11",
+      "label": "PD11",
+      "net": "PD11",
+      "x": 365.62,
+      "y": 349.45,
+      "group": "U3",
+      "rowFromTop": 4,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PD12",
+      "label": "PD12",
+      "net": "PD12",
+      "x": 343.75,
+      "y": 362.66,
+      "group": "U3",
+      "rowFromTop": 5,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PD13",
+      "label": "PD13",
+      "net": "PD13",
+      "x": 365.62,
+      "y": 362.66,
+      "group": "U3",
+      "rowFromTop": 5,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PD14",
+      "label": "PD14",
+      "net": "PD14",
+      "x": 343.75,
+      "y": 375.88,
+      "group": "U3",
+      "rowFromTop": 6,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PD15",
+      "label": "PD15",
+      "net": "PD15",
+      "x": 365.62,
+      "y": 375.88,
+      "group": "U3",
+      "rowFromTop": 6,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PC6",
+      "label": "PC6",
+      "net": "PC6",
+      "x": 343.75,
+      "y": 389.09,
+      "group": "U3",
+      "rowFromTop": 7,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PC7",
+      "label": "PC7",
+      "net": "PC7",
+      "x": 365.62,
+      "y": 389.09,
+      "group": "U3",
+      "rowFromTop": 7,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PC8",
+      "label": "PC8",
+      "net": "PC8",
+      "x": 343.75,
+      "y": 402.3,
+      "group": "U3",
+      "rowFromTop": 8,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PC9",
+      "label": "PC9",
+      "net": "PC9",
+      "x": 365.62,
+      "y": 402.3,
+      "group": "U3",
+      "rowFromTop": 8,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PA8",
+      "label": "PA8",
+      "net": "PA8",
+      "x": 343.75,
+      "y": 415.51,
+      "group": "U3",
+      "rowFromTop": 9,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PA11",
+      "label": "PA11",
+      "net": "PA11",
+      "x": 365.62,
+      "y": 415.51,
+      "group": "U3",
+      "rowFromTop": 9,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PA12",
+      "label": "PA12",
+      "net": "PA12",
+      "x": 343.75,
+      "y": 428.73,
+      "group": "U3",
+      "rowFromTop": 10,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PA15",
+      "label": "PA15",
+      "net": "PA15",
+      "x": 365.62,
+      "y": 428.73,
+      "group": "U3",
+      "rowFromTop": 10,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PC10",
+      "label": "PC10",
+      "net": "PC10",
+      "x": 343.75,
+      "y": 441.94,
+      "group": "U3",
+      "rowFromTop": 11,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PC11",
+      "label": "PC11",
+      "net": "PC11",
+      "x": 365.62,
+      "y": 441.94,
+      "group": "U3",
+      "rowFromTop": 11,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PC12",
+      "label": "PC12",
+      "net": "PC12",
+      "x": 343.75,
+      "y": 455.15,
+      "group": "U3",
+      "rowFromTop": 12,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PD0",
+      "label": "PD0",
+      "net": "PD0",
+      "x": 365.62,
+      "y": 455.15,
+      "group": "U3",
+      "rowFromTop": 12,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PD1",
+      "label": "PD1",
+      "net": "PD1",
+      "x": 343.75,
+      "y": 468.36,
+      "group": "U3",
+      "rowFromTop": 13,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PD2",
+      "label": "PD2",
+      "net": "PD2",
+      "x": 365.62,
+      "y": 468.36,
+      "group": "U3",
+      "rowFromTop": 13,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PD3",
+      "label": "PD3",
+      "net": "PD3",
+      "x": 343.75,
+      "y": 481.58,
+      "group": "U3",
+      "rowFromTop": 14,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PD4",
+      "label": "PD4",
+      "net": "PD4",
+      "x": 365.62,
+      "y": 481.58,
+      "group": "U3",
+      "rowFromTop": 14,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PD5",
+      "label": "PD5",
+      "net": "PD5",
+      "x": 343.75,
+      "y": 494.79,
+      "group": "U3",
+      "rowFromTop": 15,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PD6",
+      "label": "PD6",
+      "net": "PD6",
+      "x": 365.62,
+      "y": 494.79,
+      "group": "U3",
+      "rowFromTop": 15,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PD7",
+      "label": "PD7",
+      "net": "PD7",
+      "x": 343.75,
+      "y": 508.0,
+      "group": "U3",
+      "rowFromTop": 16,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PB3",
+      "label": "PB3",
+      "net": "PB3",
+      "x": 365.62,
+      "y": 508.0,
+      "group": "U3",
+      "rowFromTop": 16,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PB4",
+      "label": "PB4",
+      "net": "PB4",
+      "x": 343.75,
+      "y": 521.21,
+      "group": "U3",
+      "rowFromTop": 17,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PB5",
+      "label": "PB5",
+      "net": "PB5",
+      "x": 365.62,
+      "y": 521.21,
+      "group": "U3",
+      "rowFromTop": 17,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PB6",
+      "label": "PB6",
+      "net": "PB6",
+      "x": 343.75,
+      "y": 534.43,
+      "group": "U3",
+      "rowFromTop": 18,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PB7",
+      "label": "PB7",
+      "net": "PB7",
+      "x": 365.62,
+      "y": 534.43,
+      "group": "U3",
+      "rowFromTop": 18,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PB8",
+      "label": "PB8",
+      "net": "PB8",
+      "x": 343.75,
+      "y": 547.64,
+      "group": "U3",
+      "rowFromTop": 19,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PB9",
+      "label": "PB9",
+      "net": "PB9",
+      "x": 365.62,
+      "y": 547.64,
+      "group": "U3",
+      "rowFromTop": 19,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PE0",
+      "label": "PE0",
+      "net": "PE0",
+      "x": 343.75,
+      "y": 560.85,
+      "group": "U3",
+      "rowFromTop": 20,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PE1",
+      "label": "PE1",
+      "net": "PE1",
+      "x": 365.62,
+      "y": 560.85,
+      "group": "U3",
+      "rowFromTop": 20,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "U2_R01_L",
+      "label": "3V3",
+      "net": "3V3",
+      "x": 625.0,
+      "y": 309.81,
+      "group": "U2",
+      "rowFromTop": 1,
+      "column": "left",
+      "connectable": true,
+      "kind": "power",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "U2_R01_R",
+      "label": "DGND",
+      "net": "DGND",
+      "x": 646.88,
+      "y": 309.81,
+      "group": "U2",
+      "rowFromTop": 1,
+      "column": "right",
+      "connectable": true,
+      "kind": "power",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "U2_R02_L",
+      "label": "3V3",
+      "net": "3V3",
+      "x": 625.0,
+      "y": 323.03,
+      "group": "U2",
+      "rowFromTop": 2,
+      "column": "left",
+      "connectable": true,
+      "kind": "power",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "U2_R02_R",
+      "label": "DGND",
+      "net": "DGND",
+      "x": 646.88,
+      "y": 323.03,
+      "group": "U2",
+      "rowFromTop": 2,
+      "column": "right",
+      "connectable": true,
+      "kind": "power",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "U2_R03_L",
+      "label": "3V3",
+      "net": "3V3",
+      "x": 625.0,
+      "y": 336.24,
+      "group": "U2",
+      "rowFromTop": 3,
+      "column": "left",
+      "connectable": true,
+      "kind": "power",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "U2_R03_R",
+      "label": "DGND",
+      "net": "DGND",
+      "x": 646.88,
+      "y": 336.24,
+      "group": "U2",
+      "rowFromTop": 3,
+      "column": "right",
+      "connectable": true,
+      "kind": "power",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "U2_R04_L",
+      "label": "NC",
+      "net": null,
+      "x": 625.0,
+      "y": 349.45,
+      "group": "U2",
+      "rowFromTop": 4,
+      "column": "left",
+      "connectable": false,
+      "kind": "nc",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "U2_R04_R",
+      "label": "NC",
+      "net": null,
+      "x": 646.88,
+      "y": 349.45,
+      "group": "U2",
+      "rowFromTop": 4,
+      "column": "right",
+      "connectable": false,
+      "kind": "nc",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "U2_R05_L",
+      "label": "NC",
+      "net": null,
+      "x": 625.0,
+      "y": 362.66,
+      "group": "U2",
+      "rowFromTop": 5,
+      "column": "left",
+      "connectable": false,
+      "kind": "nc",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PB11",
+      "label": "PB11",
+      "net": "PB11",
+      "x": 646.88,
+      "y": 362.66,
+      "group": "U2",
+      "rowFromTop": 5,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PB10",
+      "label": "PB10",
+      "net": "PB10",
+      "x": 625.0,
+      "y": 375.88,
+      "group": "U2",
+      "rowFromTop": 6,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PE15",
+      "label": "PE15",
+      "net": "PE15",
+      "x": 646.88,
+      "y": 375.88,
+      "group": "U2",
+      "rowFromTop": 6,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PE14",
+      "label": "PE14",
+      "net": "PE14",
+      "x": 625.0,
+      "y": 389.09,
+      "group": "U2",
+      "rowFromTop": 7,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PE13",
+      "label": "PE13",
+      "net": "PE13",
+      "x": 646.88,
+      "y": 389.09,
+      "group": "U2",
+      "rowFromTop": 7,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PE12",
+      "label": "PE12",
+      "net": "PE12",
+      "x": 625.0,
+      "y": 402.3,
+      "group": "U2",
+      "rowFromTop": 8,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PE11",
+      "label": "PE11",
+      "net": "PE11",
+      "x": 646.88,
+      "y": 402.3,
+      "group": "U2",
+      "rowFromTop": 8,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PE10",
+      "label": "PE10",
+      "net": "PE10",
+      "x": 625.0,
+      "y": 415.51,
+      "group": "U2",
+      "rowFromTop": 9,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PE9",
+      "label": "PE9",
+      "net": "PE9",
+      "x": 646.88,
+      "y": 415.51,
+      "group": "U2",
+      "rowFromTop": 9,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PE8",
+      "label": "PE8",
+      "net": "PE8",
+      "x": 625.0,
+      "y": 428.73,
+      "group": "U2",
+      "rowFromTop": 10,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PE7",
+      "label": "PE7",
+      "net": "PE7",
+      "x": 646.88,
+      "y": 428.73,
+      "group": "U2",
+      "rowFromTop": 10,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PB1",
+      "label": "PB1",
+      "net": "PB1",
+      "x": 625.0,
+      "y": 441.94,
+      "group": "U2",
+      "rowFromTop": 11,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PB0",
+      "label": "PB0",
+      "net": "PB0",
+      "x": 646.88,
+      "y": 441.94,
+      "group": "U2",
+      "rowFromTop": 11,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PC5",
+      "label": "PC5",
+      "net": "PC5",
+      "x": 625.0,
+      "y": 455.15,
+      "group": "U2",
+      "rowFromTop": 12,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PC4",
+      "label": "PC4",
+      "net": "PC4",
+      "x": 646.88,
+      "y": 455.15,
+      "group": "U2",
+      "rowFromTop": 12,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PA7",
+      "label": "PA7",
+      "net": "PA7",
+      "x": 625.0,
+      "y": 468.36,
+      "group": "U2",
+      "rowFromTop": 13,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PA6",
+      "label": "PA6",
+      "net": "PA6",
+      "x": 646.88,
+      "y": 468.36,
+      "group": "U2",
+      "rowFromTop": 13,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PA5",
+      "label": "PA5",
+      "net": "PA5",
+      "x": 625.0,
+      "y": 481.58,
+      "group": "U2",
+      "rowFromTop": 14,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PA4",
+      "label": "PA4",
+      "net": "PA4",
+      "x": 646.88,
+      "y": 481.58,
+      "group": "U2",
+      "rowFromTop": 14,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PA1",
+      "label": "PA1",
+      "net": "PA1",
+      "x": 625.0,
+      "y": 494.79,
+      "group": "U2",
+      "rowFromTop": 15,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PA0",
+      "label": "PA0",
+      "net": "PA0",
+      "x": 646.88,
+      "y": 494.79,
+      "group": "U2",
+      "rowFromTop": 15,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PC3",
+      "label": "PC3",
+      "net": "PC3",
+      "x": 625.0,
+      "y": 508.0,
+      "group": "U2",
+      "rowFromTop": 16,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PC2",
+      "label": "PC2",
+      "net": "PC2",
+      "x": 646.88,
+      "y": 508.0,
+      "group": "U2",
+      "rowFromTop": 16,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PC1",
+      "label": "PC1",
+      "net": "PC1",
+      "x": 625.0,
+      "y": 521.21,
+      "group": "U2",
+      "rowFromTop": 17,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PC0",
+      "label": "PC0",
+      "net": "PC0",
+      "x": 646.88,
+      "y": 521.21,
+      "group": "U2",
+      "rowFromTop": 17,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PC13",
+      "label": "PC13",
+      "net": "PC13",
+      "x": 625.0,
+      "y": 534.43,
+      "group": "U2",
+      "rowFromTop": 18,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PE6",
+      "label": "PE6",
+      "net": "PE6",
+      "x": 646.88,
+      "y": 534.43,
+      "group": "U2",
+      "rowFromTop": 18,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PE5",
+      "label": "PE5",
+      "net": "PE5",
+      "x": 625.0,
+      "y": 547.64,
+      "group": "U2",
+      "rowFromTop": 19,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PE4",
+      "label": "PE4",
+      "net": "PE4",
+      "x": 646.88,
+      "y": 547.64,
+      "group": "U2",
+      "rowFromTop": 19,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PE3",
+      "label": "PE3",
+      "net": "PE3",
+      "x": 625.0,
+      "y": 560.85,
+      "group": "U2",
+      "rowFromTop": 20,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "PE2",
+      "label": "PE2",
+      "net": "PE2",
+      "x": 646.88,
+      "y": 560.85,
+      "group": "U2",
+      "rowFromTop": 20,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+    },
+    {
+      "id": "LED1",
+      "label": "LED1",
+      "net": "LED1",
+      "x": 125.0,
+      "y": 86.57,
+      "group": "H4",
+      "rowFromTop": 1,
+      "column": "single",
+      "connectable": true,
+      "kind": "led",
+      "verified": true,
+      "evidence": "S1/S2: separate V2 header terminal; LED2 label on product photo has a printing/legibility ambiguity"
+    },
+    {
+      "id": "LED2",
+      "label": "LED2",
+      "net": "LED2",
+      "x": 125.0,
+      "y": 99.47,
+      "group": "H4",
+      "rowFromTop": 2,
+      "column": "single",
+      "connectable": true,
+      "kind": "led",
+      "verified": true,
+      "evidence": "S1/S2: separate V2 header terminal; LED2 label on product photo has a printing/legibility ambiguity"
+    },
+    {
+      "id": "LED3",
+      "label": "LED3",
+      "net": "LED3",
+      "x": 125.0,
+      "y": 112.38,
+      "group": "H4",
+      "rowFromTop": 3,
+      "column": "single",
+      "connectable": true,
+      "kind": "led",
+      "verified": true,
+      "evidence": "S1/S2: separate V2 header terminal; LED2 label on product photo has a printing/legibility ambiguity"
+    },
+    {
+      "id": "LED4",
+      "label": "LED4",
+      "net": "LED4",
+      "x": 125.0,
+      "y": 125.29,
+      "group": "H4",
+      "rowFromTop": 4,
+      "column": "single",
+      "connectable": true,
+      "kind": "led",
+      "verified": true,
+      "evidence": "S1/S2: separate V2 header terminal; LED2 label on product photo has a printing/legibility ambiguity"
+    },
+    {
+      "id": "LED5",
+      "label": "LED5",
+      "net": "LED5",
+      "x": 125.0,
+      "y": 138.2,
+      "group": "H4",
+      "rowFromTop": 5,
+      "column": "single",
+      "connectable": true,
+      "kind": "led",
+      "verified": true,
+      "evidence": "S1/S2: separate V2 header terminal; LED2 label on product photo has a printing/legibility ambiguity"
+    },
+    {
+      "id": "LED6",
+      "label": "LED6",
+      "net": "LED6",
+      "x": 125.0,
+      "y": 151.11,
+      "group": "H4",
+      "rowFromTop": 6,
+      "column": "single",
+      "connectable": true,
+      "kind": "led",
+      "verified": true,
+      "evidence": "S1/S2: separate V2 header terminal; LED2 label on product photo has a printing/legibility ambiguity"
+    },
+    {
+      "id": "KEY1",
+      "label": "KEY1",
+      "net": "KEY1",
+      "x": 845.31,
+      "y": 290.07,
+      "group": "H3",
+      "rowFromTop": 1,
+      "column": "single",
+      "connectable": true,
+      "kind": "key",
+      "verified": true,
+      "evidence": "S1/S2: separate V2 header terminal; LED2 label on product photo has a printing/legibility ambiguity"
+    },
+    {
+      "id": "KEY2",
+      "label": "KEY2",
+      "net": "KEY2",
+      "x": 845.31,
+      "y": 304.04,
+      "group": "H3",
+      "rowFromTop": 2,
+      "column": "single",
+      "connectable": true,
+      "kind": "key",
+      "verified": true,
+      "evidence": "S1/S2: separate V2 header terminal; LED2 label on product photo has a printing/legibility ambiguity"
+    },
+    {
+      "id": "KEY3",
+      "label": "KEY3",
+      "net": "KEY3",
+      "x": 845.31,
+      "y": 318.01,
+      "group": "H3",
+      "rowFromTop": 3,
+      "column": "single",
+      "connectable": true,
+      "kind": "key",
+      "verified": true,
+      "evidence": "S1/S2: separate V2 header terminal; LED2 label on product photo has a printing/legibility ambiguity"
+    },
+    {
+      "id": "KEY4",
+      "label": "KEY4",
+      "net": "KEY4",
+      "x": 845.31,
+      "y": 331.99,
+      "group": "H3",
+      "rowFromTop": 4,
+      "column": "single",
+      "connectable": true,
+      "kind": "key",
+      "verified": true,
+      "evidence": "S1/S2: separate V2 header terminal; LED2 label on product photo has a printing/legibility ambiguity"
+    },
+    {
+      "id": "KEY5",
+      "label": "KEY5",
+      "net": "KEY5",
+      "x": 845.31,
+      "y": 345.96,
+      "group": "H3",
+      "rowFromTop": 5,
+      "column": "single",
+      "connectable": true,
+      "kind": "key",
+      "verified": true,
+      "evidence": "S1/S2: separate V2 header terminal; LED2 label on product photo has a printing/legibility ambiguity"
+    },
+    {
+      "id": "KEY6",
+      "label": "KEY6",
+      "net": "KEY6",
+      "x": 845.31,
+      "y": 359.93,
+      "group": "H3",
+      "rowFromTop": 6,
+      "column": "single",
+      "connectable": true,
+      "kind": "key",
+      "verified": true,
+      "evidence": "S1/S2: separate V2 header terminal; LED2 label on product photo has a printing/legibility ambiguity"
+    },
+    {
+      "id": "OLED_SDA",
+      "label": "SDA",
+      "net": "OLED_SDA",
+      "x": 206.25,
+      "y": 192.87,
+      "group": "OLED",
+      "rowFromTop": 1,
+      "connectable": true,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "S2: visible four contacts SDA/SCL/VCC/GND; MCU-side routing unverified for V2"
+    },
+    {
+      "id": "OLED_SCL",
+      "label": "SCL",
+      "net": "OLED_SCL",
+      "x": 206.25,
+      "y": 208.06,
+      "group": "OLED",
+      "rowFromTop": 2,
+      "connectable": true,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "S2: visible four contacts SDA/SCL/VCC/GND; MCU-side routing unverified for V2"
+    },
+    {
+      "id": "OLED_3V3",
+      "label": "3V3",
+      "net": "OLED_3V3",
+      "x": 206.25,
+      "y": 223.25,
+      "group": "OLED",
+      "rowFromTop": 3,
+      "connectable": true,
+      "kind": "power",
+      "verified": true,
+      "evidence": "S2: visible four contacts SDA/SCL/VCC/GND; MCU-side routing unverified for V2"
+    },
+    {
+      "id": "OLED_GND",
+      "label": "GND",
+      "net": "OLED_GND",
+      "x": 206.25,
+      "y": 238.43,
+      "group": "OLED",
+      "rowFromTop": 4,
+      "connectable": true,
+      "kind": "power",
+      "verified": true,
+      "evidence": "S2: visible four contacts SDA/SCL/VCC/GND; MCU-side routing unverified for V2"
+    }
+  ],
+  "leds": [
+    {
+      "id": "LED1",
+      "pin": null,
+      "terminal": "LED1",
+      "activeLow": false,
+      "polarityVerified": false,
+      "polarityEvidence": "S3 local firmware and S4 V1 schematic agree; not independently verified for V2",
+      "requiresJumper": true
+    },
+    {
+      "id": "LED2",
+      "pin": null,
+      "terminal": "LED2",
+      "activeLow": false,
+      "polarityVerified": false,
+      "polarityEvidence": "S3 local firmware and S4 V1 schematic agree; not independently verified for V2",
+      "requiresJumper": true
+    },
+    {
+      "id": "LED3",
+      "pin": null,
+      "terminal": "LED3",
+      "activeLow": false,
+      "polarityVerified": false,
+      "polarityEvidence": "S3 local firmware and S4 V1 schematic agree; not independently verified for V2",
+      "requiresJumper": true
+    },
+    {
+      "id": "LED4",
+      "pin": null,
+      "terminal": "LED4",
+      "activeLow": false,
+      "polarityVerified": false,
+      "polarityEvidence": "S3 local firmware and S4 V1 schematic agree; not independently verified for V2",
+      "requiresJumper": true
+    },
+    {
+      "id": "LED5",
+      "pin": null,
+      "terminal": "LED5",
+      "activeLow": false,
+      "polarityVerified": false,
+      "polarityEvidence": "S3 local firmware and S4 V1 schematic agree; not independently verified for V2",
+      "requiresJumper": true
+    },
+    {
+      "id": "LED6",
+      "pin": null,
+      "terminal": "LED6",
+      "activeLow": false,
+      "polarityVerified": false,
+      "polarityEvidence": "S3 local firmware and S4 V1 schematic agree; not independently verified for V2",
+      "requiresJumper": true
+    }
+  ],
+  "keys": [
+    {
+      "id": "KEY1",
+      "pin": null,
+      "terminal": "KEY1",
+      "activeLow": true,
+      "polarityVerified": false,
+      "polarityEvidence": "S3 local firmware and S4 V1 schematic agree; not independently verified for V2",
+      "requiresJumper": true
+    },
+    {
+      "id": "KEY2",
+      "pin": null,
+      "terminal": "KEY2",
+      "activeLow": true,
+      "polarityVerified": false,
+      "polarityEvidence": "S3 local firmware and S4 V1 schematic agree; not independently verified for V2",
+      "requiresJumper": true
+    },
+    {
+      "id": "KEY3",
+      "pin": null,
+      "terminal": "KEY3",
+      "activeLow": true,
+      "polarityVerified": false,
+      "polarityEvidence": "S3 local firmware and S4 V1 schematic agree; not independently verified for V2",
+      "requiresJumper": true
+    },
+    {
+      "id": "KEY4",
+      "pin": null,
+      "terminal": "KEY4",
+      "activeLow": true,
+      "polarityVerified": false,
+      "polarityEvidence": "S3 local firmware and S4 V1 schematic agree; not independently verified for V2",
+      "requiresJumper": true
+    },
+    {
+      "id": "KEY5",
+      "pin": null,
+      "terminal": "KEY5",
+      "activeLow": true,
+      "polarityVerified": false,
+      "polarityEvidence": "S3 local firmware and S4 V1 schematic agree; not independently verified for V2",
+      "requiresJumper": true
+    },
+    {
+      "id": "KEY6",
+      "pin": null,
+      "terminal": "KEY6",
+      "activeLow": true,
+      "polarityVerified": false,
+      "polarityEvidence": "S3 local firmware and S4 V1 schematic agree; not independently verified for V2",
+      "requiresJumper": true
+    }
+  ],
+  "oled": {
+    "scl": "PB8",
+    "sda": "PB9",
+    "sclTerminal": "OLED_SCL",
+    "sdaTerminal": "OLED_SDA",
+    "address": 60,
+    "width": 128,
+    "height": 32,
+    "verified": false,
+    "evidenceStatus": "code-supported",
+    "evidence": "S3 OLED.h:15-18; OLED.c:133; no V2 copper schematic",
+    "physicalRect": {
+      "x": 228,
+      "y": 184,
+      "width": 154,
+      "height": 45
+    }
+  },
+  "uart": {
+    "ch340": {
+      "instance": "USART0",
+      "tx": "PA9",
+      "rx": "PA10",
+      "verified": false,
+      "evidenceStatus": "photo-and-code-supported"
+    },
+    "rs485": {
+      "instance": "USART1",
+      "tx": "PA2",
+      "rx": "PA3",
+      "de": "PA1",
+      "verified": false,
+      "evidenceStatus": "code-supported"
+    },
+    "rs232": {
+      "instance": "USART1",
+      "tx": null,
+      "rx": null,
+      "verified": false,
+      "evidenceStatus": "unresolved-shared-selector"
+    },
+    "ttl": {
+      "instance": "USART2",
+      "tx": "PD8",
+      "rx": "PD9",
+      "verified": false,
+      "evidenceStatus": "photo-silkscreen-supported"
+    }
+  },
+  "fixedNets": [
+    {
+      "id": "header_PB12",
+      "nodes": [
+        "MCU.PB12",
+        "PB12"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PB13",
+      "nodes": [
+        "MCU.PB13",
+        "PB13"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PB14",
+      "nodes": [
+        "MCU.PB14",
+        "PB14"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PB15",
+      "nodes": [
+        "MCU.PB15",
+        "PB15"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PD8",
+      "nodes": [
+        "MCU.PD8",
+        "PD8"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PD9",
+      "nodes": [
+        "MCU.PD9",
+        "PD9"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PD10",
+      "nodes": [
+        "MCU.PD10",
+        "PD10"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PD11",
+      "nodes": [
+        "MCU.PD11",
+        "PD11"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PD12",
+      "nodes": [
+        "MCU.PD12",
+        "PD12"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PD13",
+      "nodes": [
+        "MCU.PD13",
+        "PD13"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PD14",
+      "nodes": [
+        "MCU.PD14",
+        "PD14"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PD15",
+      "nodes": [
+        "MCU.PD15",
+        "PD15"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PC6",
+      "nodes": [
+        "MCU.PC6",
+        "PC6"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PC7",
+      "nodes": [
+        "MCU.PC7",
+        "PC7"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PC8",
+      "nodes": [
+        "MCU.PC8",
+        "PC8"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PC9",
+      "nodes": [
+        "MCU.PC9",
+        "PC9"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PA8",
+      "nodes": [
+        "MCU.PA8",
+        "PA8"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PA11",
+      "nodes": [
+        "MCU.PA11",
+        "PA11"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PA12",
+      "nodes": [
+        "MCU.PA12",
+        "PA12"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PA15",
+      "nodes": [
+        "MCU.PA15",
+        "PA15"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PC10",
+      "nodes": [
+        "MCU.PC10",
+        "PC10"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PC11",
+      "nodes": [
+        "MCU.PC11",
+        "PC11"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PC12",
+      "nodes": [
+        "MCU.PC12",
+        "PC12"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PD0",
+      "nodes": [
+        "MCU.PD0",
+        "PD0"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PD1",
+      "nodes": [
+        "MCU.PD1",
+        "PD1"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PD2",
+      "nodes": [
+        "MCU.PD2",
+        "PD2"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PD3",
+      "nodes": [
+        "MCU.PD3",
+        "PD3"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PD4",
+      "nodes": [
+        "MCU.PD4",
+        "PD4"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PD5",
+      "nodes": [
+        "MCU.PD5",
+        "PD5"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PD6",
+      "nodes": [
+        "MCU.PD6",
+        "PD6"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PD7",
+      "nodes": [
+        "MCU.PD7",
+        "PD7"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PB3",
+      "nodes": [
+        "MCU.PB3",
+        "PB3"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PB4",
+      "nodes": [
+        "MCU.PB4",
+        "PB4"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PB5",
+      "nodes": [
+        "MCU.PB5",
+        "PB5"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PB6",
+      "nodes": [
+        "MCU.PB6",
+        "PB6"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PB7",
+      "nodes": [
+        "MCU.PB7",
+        "PB7"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PB8",
+      "nodes": [
+        "MCU.PB8",
+        "PB8"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PB9",
+      "nodes": [
+        "MCU.PB9",
+        "PB9"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PE0",
+      "nodes": [
+        "MCU.PE0",
+        "PE0"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PE1",
+      "nodes": [
+        "MCU.PE1",
+        "PE1"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PB11",
+      "nodes": [
+        "MCU.PB11",
+        "PB11"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PB10",
+      "nodes": [
+        "MCU.PB10",
+        "PB10"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PE15",
+      "nodes": [
+        "MCU.PE15",
+        "PE15"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PE14",
+      "nodes": [
+        "MCU.PE14",
+        "PE14"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PE13",
+      "nodes": [
+        "MCU.PE13",
+        "PE13"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PE12",
+      "nodes": [
+        "MCU.PE12",
+        "PE12"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PE11",
+      "nodes": [
+        "MCU.PE11",
+        "PE11"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PE10",
+      "nodes": [
+        "MCU.PE10",
+        "PE10"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PE9",
+      "nodes": [
+        "MCU.PE9",
+        "PE9"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PE8",
+      "nodes": [
+        "MCU.PE8",
+        "PE8"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PE7",
+      "nodes": [
+        "MCU.PE7",
+        "PE7"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PB1",
+      "nodes": [
+        "MCU.PB1",
+        "PB1"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PB0",
+      "nodes": [
+        "MCU.PB0",
+        "PB0"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PC5",
+      "nodes": [
+        "MCU.PC5",
+        "PC5"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PC4",
+      "nodes": [
+        "MCU.PC4",
+        "PC4"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PA7",
+      "nodes": [
+        "MCU.PA7",
+        "PA7"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PA6",
+      "nodes": [
+        "MCU.PA6",
+        "PA6"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PA5",
+      "nodes": [
+        "MCU.PA5",
+        "PA5"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PA4",
+      "nodes": [
+        "MCU.PA4",
+        "PA4"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PA1",
+      "nodes": [
+        "MCU.PA1",
+        "PA1"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PA0",
+      "nodes": [
+        "MCU.PA0",
+        "PA0"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PC3",
+      "nodes": [
+        "MCU.PC3",
+        "PC3"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PC2",
+      "nodes": [
+        "MCU.PC2",
+        "PC2"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PC1",
+      "nodes": [
+        "MCU.PC1",
+        "PC1"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PC0",
+      "nodes": [
+        "MCU.PC0",
+        "PC0"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PC13",
+      "nodes": [
+        "MCU.PC13",
+        "PC13"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PE6",
+      "nodes": [
+        "MCU.PE6",
+        "PE6"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PE5",
+      "nodes": [
+        "MCU.PE5",
+        "PE5"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PE4",
+      "nodes": [
+        "MCU.PE4",
+        "PE4"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PE3",
+      "nodes": [
+        "MCU.PE3",
+        "PE3"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    },
+    {
+      "id": "header_PE2",
+      "nodes": [
+        "MCU.PE2",
+        "PE2"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "S1/S2 printed MCU pin breakout"
+    }
+  ],
+  "provisionalFixedNets": [
+    {
+      "id": "OLED_SCL_MODEL",
+      "nodes": [
+        "PB8",
+        "OLED_SCL"
+      ],
+      "locked": true,
+      "verified": false,
+      "evidence": "S3 firmware; V2 copper unverified"
+    },
+    {
+      "id": "OLED_SDA_MODEL",
+      "nodes": [
+        "PB9",
+        "OLED_SDA"
+      ],
+      "locked": true,
+      "verified": false,
+      "evidence": "S3 firmware; V2 copper unverified"
+    },
+    {
+      "id": "OLED_POWER_MODEL",
+      "nodes": [
+        "3V3",
+        "OLED_3V3"
+      ],
+      "locked": true,
+      "verified": false,
+      "evidence": "V2 photo adjacent 3V3/GND labels and S4 historical schematic; full V2 power net unverified"
+    },
+    {
+      "id": "OLED_GROUND_MODEL",
+      "nodes": [
+        "DGND",
+        "OLED_GND"
+      ],
+      "locked": true,
+      "verified": false,
+      "evidence": "V2 photo adjacent 3V3/GND labels and S4 historical schematic; full V2 power net unverified"
+    }
+  ],
+  "defaultAddedWires": [
+    {
+      "id": "demo_led_1",
+      "a": "PD10",
+      "b": "LED1",
+      "fromPin": "PD10",
+      "toPin": "LED1",
+      "kind": "added-jumper",
+      "locked": false
+    },
+    {
+      "id": "demo_led_2",
+      "a": "PD11",
+      "b": "LED2",
+      "fromPin": "PD11",
+      "toPin": "LED2",
+      "kind": "added-jumper",
+      "locked": false
+    },
+    {
+      "id": "demo_led_3",
+      "a": "PD12",
+      "b": "LED3",
+      "fromPin": "PD12",
+      "toPin": "LED3",
+      "kind": "added-jumper",
+      "locked": false
+    },
+    {
+      "id": "demo_led_4",
+      "a": "PD13",
+      "b": "LED4",
+      "fromPin": "PD13",
+      "toPin": "LED4",
+      "kind": "added-jumper",
+      "locked": false
+    },
+    {
+      "id": "demo_led_5",
+      "a": "PD14",
+      "b": "LED5",
+      "fromPin": "PD14",
+      "toPin": "LED5",
+      "kind": "added-jumper",
+      "locked": false
+    },
+    {
+      "id": "demo_led_6",
+      "a": "PD15",
+      "b": "LED6",
+      "fromPin": "PD15",
+      "toPin": "LED6",
+      "kind": "added-jumper",
+      "locked": false
+    },
+    {
+      "id": "demo_key_1",
+      "a": "PE7",
+      "b": "KEY1",
+      "fromPin": "PE7",
+      "toPin": "KEY1",
+      "kind": "added-jumper",
+      "locked": false
+    },
+    {
+      "id": "demo_key_2",
+      "a": "PE8",
+      "b": "KEY2",
+      "fromPin": "PE8",
+      "toPin": "KEY2",
+      "kind": "added-jumper",
+      "locked": false
+    },
+    {
+      "id": "demo_key_3",
+      "a": "PE9",
+      "b": "KEY3",
+      "fromPin": "PE9",
+      "toPin": "KEY3",
+      "kind": "added-jumper",
+      "locked": false
+    },
+    {
+      "id": "demo_key_4",
+      "a": "PE10",
+      "b": "KEY4",
+      "fromPin": "PE10",
+      "toPin": "KEY4",
+      "kind": "added-jumper",
+      "locked": false
+    },
+    {
+      "id": "demo_key_5",
+      "a": "PE11",
+      "b": "KEY5",
+      "fromPin": "PE11",
+      "toPin": "KEY5",
+      "kind": "added-jumper",
+      "locked": false
+    },
+    {
+      "id": "demo_key_6",
+      "a": "PE12",
+      "b": "KEY6",
+      "fromPin": "PE12",
+      "toPin": "KEY6",
+      "kind": "added-jumper",
+      "locked": false
+    }
+  ],
+  "gpio_leds": [],
+  "gpio_keys": [],
+  "uart_channels": {
+    "ch340": "USART0",
+    "rs485": "USART1",
+    "ttl": "USART2",
+    "rs232": null
+  },
+  "sources": [
+    {
+      "id": "S1",
+      "title": "2026 CIMC official hardware tasks, page 1, right V2 photo",
+      "local": "D:\\desktop\\网页开发\\CIMC2026-research\\images\\official-hardware-photo-2.jpeg",
+      "url": "https://www.siemenscup-cimc.org.cn/Project/PorjectResourceDetail?id=18",
+      "sha256": "8ca3f668ed589dab41a72287bfc929556576e308ab830e496eea3fbc30696139"
+    },
+    {
+      "id": "S2",
+      "title": "Official GD32F470VET6 V2.0 product photo poster",
+      "local": "D:\\desktop\\网页开发\\CIMC2026-research\\images\\official-V2.0-product-photo-poster.png",
+      "url": "http://www.siemenscup-cimc.org.cn/Public/ProductMainImage/2026/3/be67f84eaed54436a777dc151bf169ba.png"
+    },
+    {
+      "id": "S3",
+      "title": "User local 2026 firmware, board version not explicit",
+      "local": "D:\\desktop\\CIMC2026\\2026343469\\2026343469-code\\APP\\Driver"
+    },
+    {
+      "id": "S4",
+      "title": "V1.0 schematic, historical reference ONLY; not V2",
+      "local": "D:\\desktop\\CIMC2026\\CIMC_V1\\GD32F470 Development Kit V1.0 原理图.pdf"
+    },
+    {
+      "id": "S5",
+      "title": "Official GD32F470VET6 exact part selector",
+      "url": "https://www.gigadevice.com.cn/product/mcu/mcus-product-selector/gd32f470vet6"
+    },
+    {
+      "id": "S6",
+      "title": "Keil GD32F470VE device and memory declaration, lines 18-25",
+      "local": "D:\\desktop\\CIMC2026\\2026343469\\2026343469-code\\APP\\project\\CIMC_GD32_LED_driver.uvprojx"
+    },
+    {
+      "id": "S7",
+      "title": "GD32F470xx Datasheet Rev2.1: physical page 64 TCM data-bus restriction; physical page 15 BKP SRAM memory map",
+      "url": "https://www.gd32mcu.com/data/documents/datasheet/GD32F470xx%20Datasheet_Rev2.1.pdf"
+    }
+  ],
+  "mcu": {
+    "part": "GD32F470VET6",
+    "core": "Cortex-M4F",
+    "maxClockHz": 240000000,
+    "verified": true,
+    "memory": [
+      {
+        "name": "FLASH",
+        "start": "0x08000000",
+        "size": "0x00080000",
+        "endInclusive": "0x0807FFFF",
+        "bytes": 524288,
+        "executable": true,
+        "writable": false
+      },
+      {
+        "name": "SRAM",
+        "start": "0x20000000",
+        "size": "0x00030000",
+        "endInclusive": "0x2002FFFF",
+        "bytes": 196608,
+        "executable": true,
+        "writable": true
+      },
+      {
+        "name": "TCM_SRAM",
+        "start": "0x10000000",
+        "size": "0x00010000",
+        "endInclusive": "0x1000FFFF",
+        "bytes": 65536,
+        "executable": false,
+        "writable": true
+      }
+    ],
+    "totalFlashBytes": 524288,
+    "totalSramBytes": 262144,
+    "evidence": "S5 official exact part selector + S6 local Keil GD32F470VE target CPU declaration",
+    "notes": [
+      "TCM SRAM is data-bus only; instruction fetch from TCM must be rejected.",
+      "Additional 4 KiB backup SRAM at 0x40024000 is a separate peripheral-domain resource, not main SRAM.",
+      "Flash program/erase writes require the flash controller; ordinary store instructions must not silently alter flash."
+    ]
+  }
+}

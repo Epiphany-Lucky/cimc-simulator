@@ -1,0 +1,23 @@
+Component: Arm Compiler for Embedded 6.22 Tool: armlink [5ee90200]
+
+==============================================================================
+
+Memory Map of the image
+
+  Image Entry point : 0x08000041
+
+  Load Region LR_IROM1 (Base: 0x08000000, Size: 0x0000006c, Max: 0x00080000, ABSOLUTE)
+
+    Execution Region ER_IROM1 (Base: 0x08000000, Size: 0x0000006c, Max: 0x00080000, ABSOLUTE)
+
+    Base Addr    Size         Type   Attr      Idx    E Section Name        Object
+
+    0x08000000   0x00000040   Data   RO            6    .isr_vector         systick.o
+    0x08000040   0x00000020   Code   RO            4  * .text.Reset_Handler  systick.o
+    0x08000060   0x0000000c   Code   RO            2    .text.Tick_Handler  systick.o
+
+
+    Execution Region RW_IRAM1 (Base: 0x20000000, Size: 0x00000000, Max: 0x00030000, ABSOLUTE)
+
+    **** No section assigned to this execution region ****
+

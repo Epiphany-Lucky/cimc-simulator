@@ -4,8 +4,8 @@
 
 | 能力 | 处理 | 入口 | 理由与边界 |
 |---|---|---|---|
-| 需求约束 | 复用 | docs/requirements-approved.md | 用户已授权第一版开发，新增 HTML 网页版与 V2.0 目标 |
-| 硬件资料 | 复用 | ../CIMC2026-research/资料索引.txt | 已有官方图片；完整连接映射仍须核验 |
+| 需求约束 | 复用 | docs/requirements-approved.md | 用户已授权第一版开发，新增 HTML 网页版与 V1.0 目标（用户最新修订） |
+| 硬件资料 | 复用 | ../CIMC2026-research/资料索引.txt | V1四页原理图已核对；固定网络和原排针脚号录入board-v1.json |
 | 共享界面 | 新增 | web/index.html, web/styles.css, web/app.js | 新项目没有可用的仿真工作台 |
 | 固件内核与外设 | 新增 | engine/ | 不以网页动画替代ARM机器码执行 |
 | 桌面容器 | 新增 | desktop/ | 同一HTML用于WebView2与浏览器 |

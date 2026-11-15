@@ -1,0 +1,2060 @@
+{
+  "schemaVersion": 1,
+  "id": "cimc-v1",
+  "name": "CIMC GD32F470VET6 V1.0",
+  "verified": false,
+  "evidenceStatus": "schematic-verified-scope",
+  "viewBox": [
+    0,
+    0,
+    1000,
+    650
+  ],
+  "image": "assets/board-v1.svg",
+  "coordinates": "Schematic connection diagram; not a photograph or PCB placement. Header numbers follow the V1.0 PDF.",
+  "notes": [
+    "V1.0 原理图四页已取得；本版显示原理图接线视图，不用 V2 照片代替 V1。",
+    "已核对 U2/U3、H2/H3、OLED1、H6/H7 的脚序及网络；完整芯片外设和模拟电路未仿真。",
+    "H6 通过跳帽选择 USART1 的 RS485 或 RS232；H7 通过跳帽连接 CH340。跳帽也是新增导线，不是固定铜线。"
+  ],
+  "pins": [
+    {
+      "id": "PB12",
+      "net": "PB12",
+      "label": "1 · PB12",
+      "group": "U3",
+      "number": 1,
+      "x": 285,
+      "y": 160,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 1"
+    },
+    {
+      "id": "PB13",
+      "net": "PB13",
+      "label": "2 · PB13",
+      "group": "U3",
+      "number": 2,
+      "x": 315,
+      "y": 160,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 2"
+    },
+    {
+      "id": "PB14",
+      "net": "PB14",
+      "label": "3 · PB14",
+      "group": "U3",
+      "number": 3,
+      "x": 285,
+      "y": 180,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 3"
+    },
+    {
+      "id": "PB15",
+      "net": "PB15",
+      "label": "4 · PB15",
+      "group": "U3",
+      "number": 4,
+      "x": 315,
+      "y": 180,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 4"
+    },
+    {
+      "id": "PD8",
+      "net": "PD8",
+      "label": "5 · PD8",
+      "group": "U3",
+      "number": 5,
+      "x": 285,
+      "y": 200,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 5"
+    },
+    {
+      "id": "PD9",
+      "net": "PD9",
+      "label": "6 · PD9",
+      "group": "U3",
+      "number": 6,
+      "x": 315,
+      "y": 200,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 6"
+    },
+    {
+      "id": "PD10",
+      "net": "PD10",
+      "label": "7 · PD10",
+      "group": "U3",
+      "number": 7,
+      "x": 285,
+      "y": 220,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 7"
+    },
+    {
+      "id": "PD11",
+      "net": "PD11",
+      "label": "8 · PD11",
+      "group": "U3",
+      "number": 8,
+      "x": 315,
+      "y": 220,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 8"
+    },
+    {
+      "id": "PD12",
+      "net": "PD12",
+      "label": "9 · PD12",
+      "group": "U3",
+      "number": 9,
+      "x": 285,
+      "y": 240,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 9"
+    },
+    {
+      "id": "PD13",
+      "net": "PD13",
+      "label": "10 · PD13",
+      "group": "U3",
+      "number": 10,
+      "x": 315,
+      "y": 240,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 10"
+    },
+    {
+      "id": "PD14",
+      "net": "PD14",
+      "label": "11 · PD14",
+      "group": "U3",
+      "number": 11,
+      "x": 285,
+      "y": 260,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 11"
+    },
+    {
+      "id": "PD15",
+      "net": "PD15",
+      "label": "12 · PD15",
+      "group": "U3",
+      "number": 12,
+      "x": 315,
+      "y": 260,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 12"
+    },
+    {
+      "id": "PC6",
+      "net": "PC6",
+      "label": "13 · PC6",
+      "group": "U3",
+      "number": 13,
+      "x": 285,
+      "y": 280,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 13"
+    },
+    {
+      "id": "PC7",
+      "net": "PC7",
+      "label": "14 · PC7",
+      "group": "U3",
+      "number": 14,
+      "x": 315,
+      "y": 280,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 14"
+    },
+    {
+      "id": "PC8",
+      "net": "PC8",
+      "label": "15 · PC8",
+      "group": "U3",
+      "number": 15,
+      "x": 285,
+      "y": 300,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 15"
+    },
+    {
+      "id": "PC9",
+      "net": "PC9",
+      "label": "16 · PC9",
+      "group": "U3",
+      "number": 16,
+      "x": 315,
+      "y": 300,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 16"
+    },
+    {
+      "id": "PA8",
+      "net": "PA8",
+      "label": "17 · PA8",
+      "group": "U3",
+      "number": 17,
+      "x": 285,
+      "y": 320,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 17"
+    },
+    {
+      "id": "PA11",
+      "net": "PA11",
+      "label": "18 · PA11",
+      "group": "U3",
+      "number": 18,
+      "x": 315,
+      "y": 320,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 18"
+    },
+    {
+      "id": "PA12",
+      "net": "PA12",
+      "label": "19 · PA12",
+      "group": "U3",
+      "number": 19,
+      "x": 285,
+      "y": 340,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 19"
+    },
+    {
+      "id": "PA15",
+      "net": "PA15",
+      "label": "20 · PA15",
+      "group": "U3",
+      "number": 20,
+      "x": 315,
+      "y": 340,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 20"
+    },
+    {
+      "id": "PC10",
+      "net": "PC10",
+      "label": "21 · PC10",
+      "group": "U3",
+      "number": 21,
+      "x": 285,
+      "y": 360,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 21"
+    },
+    {
+      "id": "PC11",
+      "net": "PC11",
+      "label": "22 · PC11",
+      "group": "U3",
+      "number": 22,
+      "x": 315,
+      "y": 360,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 22"
+    },
+    {
+      "id": "PC12",
+      "net": "PC12",
+      "label": "23 · PC12",
+      "group": "U3",
+      "number": 23,
+      "x": 285,
+      "y": 380,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 23"
+    },
+    {
+      "id": "PD0",
+      "net": "PD0",
+      "label": "24 · PD0",
+      "group": "U3",
+      "number": 24,
+      "x": 315,
+      "y": 380,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 24"
+    },
+    {
+      "id": "PD1",
+      "net": "PD1",
+      "label": "25 · PD1",
+      "group": "U3",
+      "number": 25,
+      "x": 285,
+      "y": 400,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 25"
+    },
+    {
+      "id": "PD2",
+      "net": "PD2",
+      "label": "26 · PD2",
+      "group": "U3",
+      "number": 26,
+      "x": 315,
+      "y": 400,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 26"
+    },
+    {
+      "id": "PD3",
+      "net": "PD3",
+      "label": "27 · PD3",
+      "group": "U3",
+      "number": 27,
+      "x": 285,
+      "y": 420,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 27"
+    },
+    {
+      "id": "PD4",
+      "net": "PD4",
+      "label": "28 · PD4",
+      "group": "U3",
+      "number": 28,
+      "x": 315,
+      "y": 420,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 28"
+    },
+    {
+      "id": "PD5",
+      "net": "PD5",
+      "label": "29 · PD5",
+      "group": "U3",
+      "number": 29,
+      "x": 285,
+      "y": 440,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 29"
+    },
+    {
+      "id": "PD6",
+      "net": "PD6",
+      "label": "30 · PD6",
+      "group": "U3",
+      "number": 30,
+      "x": 315,
+      "y": 440,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 30"
+    },
+    {
+      "id": "PD7",
+      "net": "PD7",
+      "label": "31 · PD7",
+      "group": "U3",
+      "number": 31,
+      "x": 285,
+      "y": 460,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 31"
+    },
+    {
+      "id": "PB3",
+      "net": "PB3",
+      "label": "32 · PB3",
+      "group": "U3",
+      "number": 32,
+      "x": 315,
+      "y": 460,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 32"
+    },
+    {
+      "id": "PB4",
+      "net": "PB4",
+      "label": "33 · PB4",
+      "group": "U3",
+      "number": 33,
+      "x": 285,
+      "y": 480,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 33"
+    },
+    {
+      "id": "PB5",
+      "net": "PB5",
+      "label": "34 · PB5",
+      "group": "U3",
+      "number": 34,
+      "x": 315,
+      "y": 480,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 34"
+    },
+    {
+      "id": "PB6",
+      "net": "PB6",
+      "label": "35 · PB6",
+      "group": "U3",
+      "number": 35,
+      "x": 285,
+      "y": 500,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 35"
+    },
+    {
+      "id": "PB7",
+      "net": "PB7",
+      "label": "36 · PB7",
+      "group": "U3",
+      "number": 36,
+      "x": 315,
+      "y": 500,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 36"
+    },
+    {
+      "id": "PB8",
+      "net": "PB8",
+      "label": "37 · PB8",
+      "group": "U3",
+      "number": 37,
+      "x": 285,
+      "y": 520,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 37"
+    },
+    {
+      "id": "PB9",
+      "net": "PB9",
+      "label": "38 · PB9",
+      "group": "U3",
+      "number": 38,
+      "x": 315,
+      "y": 520,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 38"
+    },
+    {
+      "id": "PE0",
+      "net": "PE0",
+      "label": "39 · PE0",
+      "group": "U3",
+      "number": 39,
+      "x": 285,
+      "y": 540,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 39"
+    },
+    {
+      "id": "PE1",
+      "net": "PE1",
+      "label": "40 · PE1",
+      "group": "U3",
+      "number": 40,
+      "x": 315,
+      "y": 540,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U3 pin 40"
+    },
+    {
+      "id": "PE2",
+      "net": "PE2",
+      "label": "1 · PE2",
+      "group": "U2",
+      "number": 1,
+      "x": 685,
+      "y": 160,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 1"
+    },
+    {
+      "id": "PE3",
+      "net": "PE3",
+      "label": "2 · PE3",
+      "group": "U2",
+      "number": 2,
+      "x": 715,
+      "y": 160,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 2"
+    },
+    {
+      "id": "PE4",
+      "net": "PE4",
+      "label": "3 · PE4",
+      "group": "U2",
+      "number": 3,
+      "x": 685,
+      "y": 180,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 3"
+    },
+    {
+      "id": "PE5",
+      "net": "PE5",
+      "label": "4 · PE5",
+      "group": "U2",
+      "number": 4,
+      "x": 715,
+      "y": 180,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 4"
+    },
+    {
+      "id": "PE6",
+      "net": "PE6",
+      "label": "5 · PE6",
+      "group": "U2",
+      "number": 5,
+      "x": 685,
+      "y": 200,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 5"
+    },
+    {
+      "id": "PC13",
+      "net": "PC13",
+      "label": "6 · PC13",
+      "group": "U2",
+      "number": 6,
+      "x": 715,
+      "y": 200,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 6"
+    },
+    {
+      "id": "PC0",
+      "net": "PC0",
+      "label": "7 · PC0",
+      "group": "U2",
+      "number": 7,
+      "x": 685,
+      "y": 220,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 7"
+    },
+    {
+      "id": "PC1",
+      "net": "PC1",
+      "label": "8 · PC1",
+      "group": "U2",
+      "number": 8,
+      "x": 715,
+      "y": 220,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 8"
+    },
+    {
+      "id": "PC2",
+      "net": "PC2",
+      "label": "9 · PC2",
+      "group": "U2",
+      "number": 9,
+      "x": 685,
+      "y": 240,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 9"
+    },
+    {
+      "id": "PC3",
+      "net": "PC3",
+      "label": "10 · PC3",
+      "group": "U2",
+      "number": 10,
+      "x": 715,
+      "y": 240,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 10"
+    },
+    {
+      "id": "PA0",
+      "net": "PA0",
+      "label": "11 · PA0",
+      "group": "U2",
+      "number": 11,
+      "x": 685,
+      "y": 260,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 11"
+    },
+    {
+      "id": "PA1",
+      "net": "PA1",
+      "label": "12 · PA1",
+      "group": "U2",
+      "number": 12,
+      "x": 715,
+      "y": 260,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 12"
+    },
+    {
+      "id": "PA4",
+      "net": "PA4",
+      "label": "13 · PA4",
+      "group": "U2",
+      "number": 13,
+      "x": 685,
+      "y": 280,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 13"
+    },
+    {
+      "id": "PA5",
+      "net": "PA5",
+      "label": "14 · PA5",
+      "group": "U2",
+      "number": 14,
+      "x": 715,
+      "y": 280,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 14"
+    },
+    {
+      "id": "PA6",
+      "net": "PA6",
+      "label": "15 · PA6",
+      "group": "U2",
+      "number": 15,
+      "x": 685,
+      "y": 300,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 15"
+    },
+    {
+      "id": "PA7",
+      "net": "PA7",
+      "label": "16 · PA7",
+      "group": "U2",
+      "number": 16,
+      "x": 715,
+      "y": 300,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 16"
+    },
+    {
+      "id": "PC4",
+      "net": "PC4",
+      "label": "17 · PC4",
+      "group": "U2",
+      "number": 17,
+      "x": 685,
+      "y": 320,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 17"
+    },
+    {
+      "id": "PC5",
+      "net": "PC5",
+      "label": "18 · PC5",
+      "group": "U2",
+      "number": 18,
+      "x": 715,
+      "y": 320,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 18"
+    },
+    {
+      "id": "PB0",
+      "net": "PB0",
+      "label": "19 · PB0",
+      "group": "U2",
+      "number": 19,
+      "x": 685,
+      "y": 340,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 19"
+    },
+    {
+      "id": "PB1",
+      "net": "PB1",
+      "label": "20 · PB1",
+      "group": "U2",
+      "number": 20,
+      "x": 715,
+      "y": 340,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 20"
+    },
+    {
+      "id": "PE7",
+      "net": "PE7",
+      "label": "21 · PE7",
+      "group": "U2",
+      "number": 21,
+      "x": 685,
+      "y": 360,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 21"
+    },
+    {
+      "id": "PE8",
+      "net": "PE8",
+      "label": "22 · PE8",
+      "group": "U2",
+      "number": 22,
+      "x": 715,
+      "y": 360,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 22"
+    },
+    {
+      "id": "PE9",
+      "net": "PE9",
+      "label": "23 · PE9",
+      "group": "U2",
+      "number": 23,
+      "x": 685,
+      "y": 380,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 23"
+    },
+    {
+      "id": "PE10",
+      "net": "PE10",
+      "label": "24 · PE10",
+      "group": "U2",
+      "number": 24,
+      "x": 715,
+      "y": 380,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 24"
+    },
+    {
+      "id": "PE11",
+      "net": "PE11",
+      "label": "25 · PE11",
+      "group": "U2",
+      "number": 25,
+      "x": 685,
+      "y": 400,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 25"
+    },
+    {
+      "id": "PE12",
+      "net": "PE12",
+      "label": "26 · PE12",
+      "group": "U2",
+      "number": 26,
+      "x": 715,
+      "y": 400,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 26"
+    },
+    {
+      "id": "PE13",
+      "net": "PE13",
+      "label": "27 · PE13",
+      "group": "U2",
+      "number": 27,
+      "x": 685,
+      "y": 420,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 27"
+    },
+    {
+      "id": "PE14",
+      "net": "PE14",
+      "label": "28 · PE14",
+      "group": "U2",
+      "number": 28,
+      "x": 715,
+      "y": 420,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 28"
+    },
+    {
+      "id": "PE15",
+      "net": "PE15",
+      "label": "29 · PE15",
+      "group": "U2",
+      "number": 29,
+      "x": 685,
+      "y": 440,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 29"
+    },
+    {
+      "id": "PB10",
+      "net": "PB10",
+      "label": "30 · PB10",
+      "group": "U2",
+      "number": 30,
+      "x": 715,
+      "y": 440,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 30"
+    },
+    {
+      "id": "PB11",
+      "net": "PB11",
+      "label": "31 · PB11",
+      "group": "U2",
+      "number": 31,
+      "x": 685,
+      "y": 460,
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 31"
+    },
+    {
+      "id": "U2.32",
+      "net": "NC",
+      "label": "32 · NC",
+      "group": "U2",
+      "number": 32,
+      "x": 715,
+      "y": 460,
+      "connectable": false,
+      "kind": "nc",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 32"
+    },
+    {
+      "id": "U2.33",
+      "net": "DGND",
+      "label": "33 · DGND",
+      "group": "U2",
+      "number": 33,
+      "x": 685,
+      "y": 480,
+      "connectable": true,
+      "kind": "power",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 33"
+    },
+    {
+      "id": "U2.34",
+      "net": "3V3",
+      "label": "34 · 3V3",
+      "group": "U2",
+      "number": 34,
+      "x": 715,
+      "y": 480,
+      "connectable": true,
+      "kind": "power",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 34"
+    },
+    {
+      "id": "U2.35",
+      "net": "DGND",
+      "label": "35 · DGND",
+      "group": "U2",
+      "number": 35,
+      "x": 685,
+      "y": 500,
+      "connectable": true,
+      "kind": "power",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 35"
+    },
+    {
+      "id": "U2.36",
+      "net": "3V3",
+      "label": "36 · 3V3",
+      "group": "U2",
+      "number": 36,
+      "x": 715,
+      "y": 500,
+      "connectable": true,
+      "kind": "power",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 36"
+    },
+    {
+      "id": "U2.37",
+      "net": "DGND",
+      "label": "37 · DGND",
+      "group": "U2",
+      "number": 37,
+      "x": 685,
+      "y": 520,
+      "connectable": true,
+      "kind": "power",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 37"
+    },
+    {
+      "id": "U2.38",
+      "net": "3V3",
+      "label": "38 · 3V3",
+      "group": "U2",
+      "number": 38,
+      "x": 715,
+      "y": 520,
+      "connectable": true,
+      "kind": "power",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 38"
+    },
+    {
+      "id": "U2.39",
+      "net": "NC",
+      "label": "39 · NC",
+      "group": "U2",
+      "number": 39,
+      "x": 685,
+      "y": 540,
+      "connectable": false,
+      "kind": "nc",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 39"
+    },
+    {
+      "id": "U2.40",
+      "net": "NC",
+      "label": "40 · NC",
+      "group": "U2",
+      "number": 40,
+      "x": 715,
+      "y": 540,
+      "connectable": false,
+      "kind": "nc",
+      "verified": true,
+      "evidence": "V1.0 schematic page 1, U2 pin 40"
+    },
+    {
+      "id": "LED1",
+      "net": "LED1",
+      "label": "6 · LED1",
+      "group": "H2",
+      "number": 6,
+      "x": 120,
+      "y": 175,
+      "connectable": true,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V1.0 schematic page 2, H2 pin 6"
+    },
+    {
+      "id": "KEY1",
+      "net": "FUN_KEY1",
+      "label": "6 · KEY1",
+      "group": "H3",
+      "number": 6,
+      "x": 880,
+      "y": 175,
+      "connectable": true,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V1.0 schematic page 2, H3 pin 6"
+    },
+    {
+      "id": "LED2",
+      "net": "LED2",
+      "label": "5 · LED2",
+      "group": "H2",
+      "number": 5,
+      "x": 120,
+      "y": 201,
+      "connectable": true,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V1.0 schematic page 2, H2 pin 5"
+    },
+    {
+      "id": "KEY2",
+      "net": "FUN_KEY2",
+      "label": "5 · KEY2",
+      "group": "H3",
+      "number": 5,
+      "x": 880,
+      "y": 201,
+      "connectable": true,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V1.0 schematic page 2, H3 pin 5"
+    },
+    {
+      "id": "LED3",
+      "net": "LED3",
+      "label": "4 · LED3",
+      "group": "H2",
+      "number": 4,
+      "x": 120,
+      "y": 227,
+      "connectable": true,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V1.0 schematic page 2, H2 pin 4"
+    },
+    {
+      "id": "KEY3",
+      "net": "FUN_KEY3",
+      "label": "4 · KEY3",
+      "group": "H3",
+      "number": 4,
+      "x": 880,
+      "y": 227,
+      "connectable": true,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V1.0 schematic page 2, H3 pin 4"
+    },
+    {
+      "id": "LED4",
+      "net": "LED4",
+      "label": "3 · LED4",
+      "group": "H2",
+      "number": 3,
+      "x": 120,
+      "y": 253,
+      "connectable": true,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V1.0 schematic page 2, H2 pin 3"
+    },
+    {
+      "id": "KEY4",
+      "net": "FUN_KEY4",
+      "label": "3 · KEY4",
+      "group": "H3",
+      "number": 3,
+      "x": 880,
+      "y": 253,
+      "connectable": true,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V1.0 schematic page 2, H3 pin 3"
+    },
+    {
+      "id": "LED5",
+      "net": "LED5",
+      "label": "2 · LED5",
+      "group": "H2",
+      "number": 2,
+      "x": 120,
+      "y": 279,
+      "connectable": true,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V1.0 schematic page 2, H2 pin 2"
+    },
+    {
+      "id": "KEY5",
+      "net": "FUN_KEY5",
+      "label": "2 · KEY5",
+      "group": "H3",
+      "number": 2,
+      "x": 880,
+      "y": 279,
+      "connectable": true,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V1.0 schematic page 2, H3 pin 2"
+    },
+    {
+      "id": "LED6",
+      "net": "LED6",
+      "label": "1 · LED6",
+      "group": "H2",
+      "number": 1,
+      "x": 120,
+      "y": 305,
+      "connectable": true,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V1.0 schematic page 2, H2 pin 1"
+    },
+    {
+      "id": "KEY6",
+      "net": "FUN_KEY6",
+      "label": "1 · KEY6",
+      "group": "H3",
+      "number": 1,
+      "x": 880,
+      "y": 305,
+      "connectable": true,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V1.0 schematic page 2, H3 pin 1"
+    },
+    {
+      "id": "H6.1",
+      "net": "485_RX",
+      "label": "1 · 485_RX",
+      "group": "H6",
+      "number": 1,
+      "x": 470,
+      "y": 80,
+      "connectable": true,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V1.0 schematic page 4, H6 pin 1"
+    },
+    {
+      "id": "H6.2",
+      "net": "485_TX",
+      "label": "2 · 485_TX",
+      "group": "H6",
+      "number": 2,
+      "x": 530,
+      "y": 80,
+      "connectable": true,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V1.0 schematic page 4, H6 pin 2"
+    },
+    {
+      "id": "H6.3",
+      "net": "USART1_TX",
+      "label": "3 · USART1_TX",
+      "group": "H6",
+      "number": 3,
+      "x": 470,
+      "y": 106,
+      "connectable": true,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V1.0 schematic page 4, H6 pin 3"
+    },
+    {
+      "id": "H6.4",
+      "net": "USART1_RX",
+      "label": "4 · USART1_RX",
+      "group": "H6",
+      "number": 4,
+      "x": 530,
+      "y": 106,
+      "connectable": true,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V1.0 schematic page 4, H6 pin 4"
+    },
+    {
+      "id": "H6.5",
+      "net": "232_RX",
+      "label": "5 · 232_RX",
+      "group": "H6",
+      "number": 5,
+      "x": 470,
+      "y": 132,
+      "connectable": true,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V1.0 schematic page 4, H6 pin 5"
+    },
+    {
+      "id": "H6.6",
+      "net": "232_TX",
+      "label": "6 · 232_TX",
+      "group": "H6",
+      "number": 6,
+      "x": 530,
+      "y": 132,
+      "connectable": true,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V1.0 schematic page 4, H6 pin 6"
+    },
+    {
+      "id": "H7.1",
+      "net": "USB_RX",
+      "label": "1 · USB_RX",
+      "group": "H7",
+      "number": 1,
+      "x": 470,
+      "y": 510,
+      "connectable": true,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V1.0 schematic page 4, H7 pin 1"
+    },
+    {
+      "id": "H7.2",
+      "net": "USB_TX",
+      "label": "2 · USB_TX",
+      "group": "H7",
+      "number": 2,
+      "x": 530,
+      "y": 510,
+      "connectable": true,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V1.0 schematic page 4, H7 pin 2"
+    },
+    {
+      "id": "H7.3",
+      "net": "USART0_TX",
+      "label": "3 · USART0_TX",
+      "group": "H7",
+      "number": 3,
+      "x": 470,
+      "y": 536,
+      "connectable": true,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V1.0 schematic page 4, H7 pin 3"
+    },
+    {
+      "id": "H7.4",
+      "net": "USART0_RX",
+      "label": "4 · USART0_RX",
+      "group": "H7",
+      "number": 4,
+      "x": 530,
+      "y": 536,
+      "connectable": true,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V1.0 schematic page 4, H7 pin 4"
+    },
+    {
+      "id": "OLED.1",
+      "net": "DGND",
+      "label": "1 · DGND",
+      "group": "OLED1",
+      "number": 1,
+      "x": 120,
+      "y": 405,
+      "connectable": true,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V1.0 schematic page 2, OLED1 pin 1"
+    },
+    {
+      "id": "OLED.2",
+      "net": "3V3",
+      "label": "2 · 3V3",
+      "group": "OLED1",
+      "number": 2,
+      "x": 120,
+      "y": 430,
+      "connectable": true,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V1.0 schematic page 2, OLED1 pin 2"
+    },
+    {
+      "id": "OLED.3",
+      "net": "OLED_CLK",
+      "label": "3 · OLED_CLK",
+      "group": "OLED1",
+      "number": 3,
+      "x": 120,
+      "y": 455,
+      "connectable": true,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V1.0 schematic page 2, OLED1 pin 3"
+    },
+    {
+      "id": "OLED.4",
+      "net": "OLED_DAT",
+      "label": "4 · OLED_DAT",
+      "group": "OLED1",
+      "number": 4,
+      "x": 120,
+      "y": 480,
+      "connectable": true,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V1.0 schematic page 2, OLED1 pin 4"
+    },
+    {
+      "id": "CN1.1",
+      "net": "DGND",
+      "label": "1 · DGND",
+      "group": "CN1",
+      "number": 1,
+      "x": 880,
+      "y": 420,
+      "connectable": true,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V1.0 schematic page 4, CN1 pin 1"
+    },
+    {
+      "id": "CN1.2",
+      "net": "USART2_TX",
+      "label": "2 · USART2_TX",
+      "group": "CN1",
+      "number": 2,
+      "x": 880,
+      "y": 445,
+      "connectable": true,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V1.0 schematic page 4, CN1 pin 2"
+    },
+    {
+      "id": "CN1.3",
+      "net": "USART2_RX",
+      "label": "3 · USART2_RX",
+      "group": "CN1",
+      "number": 3,
+      "x": 880,
+      "y": 470,
+      "connectable": true,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V1.0 schematic page 4, CN1 pin 3"
+    }
+  ],
+  "leds": [
+    {
+      "id": "led1",
+      "terminal": "LED1",
+      "activeLow": false,
+      "polarityVerified": true,
+      "resistorOhms": 2000
+    },
+    {
+      "id": "led2",
+      "terminal": "LED2",
+      "activeLow": false,
+      "polarityVerified": true,
+      "resistorOhms": 2000
+    },
+    {
+      "id": "led3",
+      "terminal": "LED3",
+      "activeLow": false,
+      "polarityVerified": true,
+      "resistorOhms": 2000
+    },
+    {
+      "id": "led4",
+      "terminal": "LED4",
+      "activeLow": false,
+      "polarityVerified": true,
+      "resistorOhms": 2000
+    },
+    {
+      "id": "led5",
+      "terminal": "LED5",
+      "activeLow": false,
+      "polarityVerified": true,
+      "resistorOhms": 2000
+    },
+    {
+      "id": "led6",
+      "terminal": "LED6",
+      "activeLow": false,
+      "polarityVerified": true,
+      "resistorOhms": 2000
+    }
+  ],
+  "keys": [
+    {
+      "id": "key1",
+      "terminal": "FUN_KEY1",
+      "activeLow": true,
+      "idle": 1,
+      "polarityVerified": true,
+      "pullUpOhms": 10000
+    },
+    {
+      "id": "key2",
+      "terminal": "FUN_KEY2",
+      "activeLow": true,
+      "idle": 1,
+      "polarityVerified": true,
+      "pullUpOhms": 10000
+    },
+    {
+      "id": "key3",
+      "terminal": "FUN_KEY3",
+      "activeLow": true,
+      "idle": 1,
+      "polarityVerified": true,
+      "pullUpOhms": 10000
+    },
+    {
+      "id": "key4",
+      "terminal": "FUN_KEY4",
+      "activeLow": true,
+      "idle": 1,
+      "polarityVerified": true,
+      "pullUpOhms": 10000
+    },
+    {
+      "id": "key5",
+      "terminal": "FUN_KEY5",
+      "activeLow": true,
+      "idle": 1,
+      "polarityVerified": true,
+      "pullUpOhms": 10000
+    },
+    {
+      "id": "key6",
+      "terminal": "FUN_KEY6",
+      "activeLow": true,
+      "idle": 1,
+      "polarityVerified": true,
+      "pullUpOhms": 10000
+    }
+  ],
+  "fixedNets": [
+    {
+      "name": "OLED_CLK",
+      "nodes": [
+        "PB8",
+        "OLED_CLK"
+      ],
+      "locked": true,
+      "evidence": "V1 schematic p1"
+    },
+    {
+      "name": "OLED_DAT",
+      "nodes": [
+        "PB9",
+        "OLED_DAT"
+      ],
+      "locked": true,
+      "evidence": "V1 schematic p1"
+    },
+    {
+      "name": "USART0_TX",
+      "nodes": [
+        "PA9",
+        "USART0_TX"
+      ],
+      "locked": true,
+      "evidence": "V1 schematic p1"
+    },
+    {
+      "name": "USART0_RX",
+      "nodes": [
+        "PA10",
+        "USART0_RX"
+      ],
+      "locked": true,
+      "evidence": "V1 schematic p1"
+    },
+    {
+      "name": "USART1_TX",
+      "nodes": [
+        "PA2",
+        "USART1_TX"
+      ],
+      "locked": true,
+      "evidence": "V1 schematic p1"
+    },
+    {
+      "name": "USART1_RX",
+      "nodes": [
+        "PA3",
+        "USART1_RX"
+      ],
+      "locked": true,
+      "evidence": "V1 schematic p1"
+    },
+    {
+      "name": "USART2_TX",
+      "nodes": [
+        "PB10",
+        "USART2_TX"
+      ],
+      "locked": true,
+      "evidence": "V1 schematic p1"
+    },
+    {
+      "name": "USART2_RX",
+      "nodes": [
+        "PB11",
+        "USART2_RX"
+      ],
+      "locked": true,
+      "evidence": "V1 schematic p1"
+    },
+    {
+      "name": "485_CS",
+      "nodes": [
+        "PA1",
+        "485_CS"
+      ],
+      "locked": true,
+      "evidence": "V1 schematic p1"
+    },
+    {
+      "name": "ground",
+      "nodes": [
+        "DGND",
+        "AGND",
+        "GND"
+      ],
+      "locked": true,
+      "evidence": "V1 schematic p1"
+    },
+    {
+      "name": "SD_CD",
+      "nodes": [
+        "PE2",
+        "SD_CD"
+      ],
+      "locked": true,
+      "evidence": "V1 schematic p1"
+    },
+    {
+      "name": "SD_DAT0",
+      "nodes": [
+        "PC8",
+        "SD_DAT0"
+      ],
+      "locked": true,
+      "evidence": "V1 schematic p1"
+    },
+    {
+      "name": "SD_DAT1",
+      "nodes": [
+        "PC9",
+        "SD_DAT1"
+      ],
+      "locked": true,
+      "evidence": "V1 schematic p1"
+    },
+    {
+      "name": "SD_DAT2",
+      "nodes": [
+        "PC10",
+        "SD_DAT2"
+      ],
+      "locked": true,
+      "evidence": "V1 schematic p1"
+    },
+    {
+      "name": "SD_DAT3",
+      "nodes": [
+        "PC11",
+        "SD_DAT3"
+      ],
+      "locked": true,
+      "evidence": "V1 schematic p1"
+    },
+    {
+      "name": "SD_CLK",
+      "nodes": [
+        "PC12",
+        "SD_CLK"
+      ],
+      "locked": true,
+      "evidence": "V1 schematic p1"
+    },
+    {
+      "name": "SD_CMD",
+      "nodes": [
+        "PD2",
+        "SD_CMD"
+      ],
+      "locked": true,
+      "evidence": "V1 schematic p1"
+    },
+    {
+      "name": "FLASH_CS",
+      "nodes": [
+        "PB12",
+        "FLASH_CS"
+      ],
+      "locked": true,
+      "evidence": "V1 schematic p1"
+    },
+    {
+      "name": "SPI_SCK",
+      "nodes": [
+        "PB13",
+        "SPI_SCK"
+      ],
+      "locked": true,
+      "evidence": "V1 schematic p1"
+    },
+    {
+      "name": "SPI_MISO",
+      "nodes": [
+        "PB14",
+        "SPI_MISO"
+      ],
+      "locked": true,
+      "evidence": "V1 schematic p1"
+    },
+    {
+      "name": "SPI_MOSI",
+      "nodes": [
+        "PB15",
+        "SPI_MOSI"
+      ],
+      "locked": true,
+      "evidence": "V1 schematic p1"
+    },
+    {
+      "name": "ADC",
+      "nodes": [
+        "PC0",
+        "ADC"
+      ],
+      "locked": true,
+      "evidence": "V1 schematic p1"
+    },
+    {
+      "name": "WK_UP",
+      "nodes": [
+        "PA0",
+        "WK_UP"
+      ],
+      "locked": true,
+      "evidence": "V1 schematic p1"
+    },
+    {
+      "name": "SWDIO",
+      "nodes": [
+        "PA13",
+        "SWDIO"
+      ],
+      "locked": true,
+      "evidence": "V1 schematic p1"
+    },
+    {
+      "name": "SWCLK",
+      "nodes": [
+        "PA14",
+        "SWCLK"
+      ],
+      "locked": true,
+      "evidence": "V1 schematic p1"
+    },
+    {
+      "name": "BOOT1",
+      "nodes": [
+        "PB2",
+        "BOOT1"
+      ],
+      "locked": true,
+      "evidence": "V1 schematic p1"
+    }
+  ],
+  "defaultAddedWires": [
+    {
+      "id": "led1",
+      "a": "PD10",
+      "b": "LED1"
+    },
+    {
+      "id": "key1",
+      "a": "PE7",
+      "b": "KEY1"
+    },
+    {
+      "id": "led2",
+      "a": "PD11",
+      "b": "LED2"
+    },
+    {
+      "id": "key2",
+      "a": "PE8",
+      "b": "KEY2"
+    },
+    {
+      "id": "led3",
+      "a": "PD12",
+      "b": "LED3"
+    },
+    {
+      "id": "key3",
+      "a": "PE9",
+      "b": "KEY3"
+    },
+    {
+      "id": "led4",
+      "a": "PD13",
+      "b": "LED4"
+    },
+    {
+      "id": "key4",
+      "a": "PE10",
+      "b": "KEY4"
+    },
+    {
+      "id": "led5",
+      "a": "PD14",
+      "b": "LED5"
+    },
+    {
+      "id": "key5",
+      "a": "PE11",
+      "b": "KEY5"
+    },
+    {
+      "id": "led6",
+      "a": "PD15",
+      "b": "LED6"
+    },
+    {
+      "id": "key6",
+      "a": "PE12",
+      "b": "KEY6"
+    },
+    {
+      "id": "usb-tx",
+      "a": "H7.1",
+      "b": "H7.3"
+    },
+    {
+      "id": "usb-rx",
+      "a": "H7.2",
+      "b": "H7.4"
+    },
+    {
+      "id": "rs485-tx",
+      "a": "H6.1",
+      "b": "H6.3"
+    },
+    {
+      "id": "rs485-rx",
+      "a": "H6.2",
+      "b": "H6.4"
+    }
+  ],
+  "oled": {
+    "width": 128,
+    "height": 32,
+    "address": 60,
+    "scl": "PB8",
+    "sda": "PB9",
+    "controller": "SSD1306-compatible command subset",
+    "evidence": "V1 p1/p2 pins; resolution/address from local driver"
+  },
+  "uart_channels": {
+    "ch340": "USART0",
+    "rs485": "USART1",
+    "rs232": "USART1",
+    "ttl": "USART2"
+  },
+  "uart": {
+    "ch340": {
+      "uart": "USART0",
+      "tx": "PA9",
+      "rx": "PA10",
+      "af": 7,
+      "txTerminal": "USB_RX",
+      "rxTerminal": "USB_TX",
+      "jumpers": [
+        "H7.1 ↔ H7.3",
+        "H7.2 ↔ H7.4"
+      ]
+    },
+    "rs485": {
+      "uart": "USART1",
+      "tx": "PA2",
+      "rx": "PA3",
+      "af": 7,
+      "txTerminal": "485_RX",
+      "rxTerminal": "485_TX",
+      "de": "PA1",
+      "jumpers": [
+        "H6.1 ↔ H6.3",
+        "H6.2 ↔ H6.4"
+      ]
+    },
+    "rs232": {
+      "uart": "USART1",
+      "tx": "PA2",
+      "rx": "PA3",
+      "af": 7,
+      "txTerminal": "232_RX",
+      "rxTerminal": "232_TX",
+      "jumpers": [
+        "H6.3 ↔ H6.5",
+        "H6.4 ↔ H6.6"
+      ]
+    },
+    "ttl": {
+      "uart": "USART2",
+      "tx": "PB10",
+      "rx": "PB11",
+      "af": 7,
+      "txTerminal": "USART2_TX",
+      "rxTerminal": "USART2_RX",
+      "jumpers": []
+    }
+  },
+  "memory": {
+    "flash": {
+      "base": "0x08000000",
+      "bytes": 524288
+    },
+    "sram": {
+      "base": "0x20000000",
+      "bytes": 196608
+    },
+    "tcm": {
+      "base": "0x10000000",
+      "bytes": 65536,
+      "executable": false
+    }
+  },
+  "preservedUnimplementedFixedNets": [
+    {
+      "nodes": [
+        "PE2",
+        "SD_CD"
+      ],
+      "simulated": false,
+      "locked": true
+    },
+    {
+      "nodes": [
+        "PC8",
+        "SD_DAT0"
+      ],
+      "simulated": false,
+      "locked": true
+    },
+    {
+      "nodes": [
+        "PC9",
+        "SD_DAT1"
+      ],
+      "simulated": false,
+      "locked": true
+    },
+    {
+      "nodes": [
+        "PC10",
+        "SD_DAT2"
+      ],
+      "simulated": false,
+      "locked": true
+    },
+    {
+      "nodes": [
+        "PC11",
+        "SD_DAT3"
+      ],
+      "simulated": false,
+      "locked": true
+    },
+    {
+      "nodes": [
+        "PC12",
+        "SD_CLK"
+      ],
+      "simulated": false,
+      "locked": true
+    },
+    {
+      "nodes": [
+        "PD2",
+        "SD_CMD"
+      ],
+      "simulated": false,
+      "locked": true
+    },
+    {
+      "nodes": [
+        "PB12",
+        "FLASH_CS"
+      ],
+      "simulated": false,
+      "locked": true
+    },
+    {
+      "nodes": [
+        "PB13",
+        "SPI_SCK"
+      ],
+      "simulated": false,
+      "locked": true
+    },
+    {
+      "nodes": [
+        "PB14",
+        "SPI_MISO"
+      ],
+      "simulated": false,
+      "locked": true
+    },
+    {
+      "nodes": [
+        "PB15",
+        "SPI_MOSI"
+      ],
+      "simulated": false,
+      "locked": true
+    },
+    {
+      "nodes": [
+        "PC0",
+        "ADC"
+      ],
+      "simulated": false,
+      "locked": true
+    },
+    {
+      "nodes": [
+        "PA0",
+        "WK_UP"
+      ],
+      "simulated": false,
+      "locked": true
+    },
+    {
+      "nodes": [
+        "PA13",
+        "SWDIO"
+      ],
+      "simulated": false,
+      "locked": true
+    },
+    {
+      "nodes": [
+        "PA14",
+        "SWCLK"
+      ],
+      "simulated": false,
+      "locked": true
+    },
+    {
+      "nodes": [
+        "PB2",
+        "BOOT1"
+      ],
+      "simulated": false,
+      "locked": true
+    }
+  ]
+}
