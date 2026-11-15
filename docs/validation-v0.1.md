@@ -18,7 +18,15 @@
 
 依据：[PyInstaller 官方说明](https://pyinstaller.org/en/stable/common-issues-and-pitfalls.html#windows-executables-and-control-flow-guard-cfg)、[Unicorn 上游问题 #2281](https://github.com/unicorn-engine/unicorn/issues/2281)。
 
-重新构建后的独立 EXE 运行、WebView2 与 HTML 发行包检查正在进行，结果将于发布前更新。构建成功不能替代发行包运行验收。
+重新构建后已通过以下检查：
+
+- `tests/package_smoke.py artifacts/CIMC-Studio-0.1.0-html-local`：独立 EXE 启动、真实 Keil 执行、OLED 像素和串口回复全部通过。使用随包内核，不调用开发虚拟环境作为运行内核。
+- `tests/ui_smoke.py http://127.0.0.1:8767`：对 HTML 发行包执行完整浏览器交互检查，通过。
+- 直接启动发行包 `CIMC-Studio.exe`，在实际 WPF WebView2 页面中载入/运行 Keil 示例，OLED 与串口启动输出通过。
+- 正常关闭桌面窗口后，其启动的内核端口停止监听；另一份独立运行的测试服务不受影响。
+- GitHub Actions 的 Windows `verify` 作业通过同一套 21 项测试和 .NET 宿主构建。
+
+发行包为 Windows x64，未对全新操作系统、所有 Edge 版本或杀毒软件策略进行矩阵验证。桌面依赖系统 WebView2 Runtime；缺少时的浏览器回退路径有实现，但本机已有运行时，未实际卸载后测试。
 
 ## 支持范围与限制
 
