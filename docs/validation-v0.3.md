@@ -44,6 +44,14 @@ sudo dpkg --remove cimc-studio
 - Windows11本机最新版：`installer-smoke-dbb506ebff2c/result.json`全部通过，包含原生WPF、真实固件、125%DPI、原图、覆盖安装和卸载保留用户文件。两ZIP CRC及源码/许可证/文档一致性通过；没有残留测试进程。本机与云端分别构建，安装器文件摘要以各自对应清单为准。
 - 公开前只读扫描：8个可达提交、2个旧标签、164个历史blob及当前跟踪文件未发现明显密钥/私钥/已跟踪env。当前硬件研究文档已去除非必要本机路径与参赛编号，保留原作者及官方资料来源；未改写历史。
 
+## 发布与匿名访问检查
+
+版本v0.3.0已发布，仓库已切换PUBLIC，匿名GitHub API和安装包校验清单下载通过。实际公开版本源返回0.3.0；当前版本不重复提示，0.2.0客户端识别更新且获得四种有效下载链接。
+
+[Packages发布运行43717406799](https://github.com/Epiphany-Lucky/cimc-simulator/actions/runs/43717406799)两个任务通过，推送后重新拉取并校验全部5个安装文件。GHCR内容摘要：Windows `sha256:8f612261dd8ff1002fc73d50f817f5161aeda7f642d3e5ac997003d4720dd662`；Linux `sha256:34c8354d815210020e8ca8e63e4b1bf634ee506fda0851cf1af49f176f8b628c`。
+
+待处理的外部设置：两个GHCR包仍拒绝匿名拉取（401）。仓库公开不自动公开包；官方方式为包页面Package settings → Change visibility → Public。当前桌面页面控制工具在初始化时报告 `failed to write kernel assets`，重置重试仍失败，因此没有执行这项独立可见性修改。源码和Releases安装文件已经公开，不受该设置影响。
+
 ## 边界
 
 - Linux构建基线Ubuntu22.04/glibc2.35，目标Ubuntu22.04+/Debian12+ amd64。没有验证所有发行版、ARM64或musl系统。

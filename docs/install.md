@@ -52,6 +52,8 @@ sudo apt remove cimc-studio
 
 例如使用Docker提取Linux安装文件（不会启动容器）：
 
+当前两份Packages已上传，但包本身尚为私有；直接下载公开Releases不受影响。仓库所有者在各包的Package settings中设置Public后，下面的匿名拉取命令即可使用。
+
 ```bash
 docker pull ghcr.io/epiphany-lucky/cimc-studio-linux:0.3.0
 id=$(docker create ghcr.io/epiphany-lucky/cimc-studio-linux:0.3.0 /__extract_only__)
