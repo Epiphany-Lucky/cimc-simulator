@@ -177,6 +177,14 @@ class Simulator:
         self.worker=threading.Thread(target=self._worker,daemon=True)
         self.worker.start()
 
+    def close(self):
+        """Finish the current bounded native chunk before Python tears down callbacks."""
+        self.closed=True
+        # A daemon thread may otherwise still be inside Unicorn/ctypes when the
+        # interpreter frees native state. No simulator lock is held while joining:
+        # the worker needs that lock to finish its current 10,000-instruction chunk.
+        self.worker.join()
+
     def _load_board(self):
         p=self.root/'web'/'board-v1.json'
         if p.exists():

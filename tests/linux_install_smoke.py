@@ -54,7 +54,9 @@ def main():
         def ready(p):
             end=time.monotonic()+15
             while time.monotonic()<end:
-                if p.poll() is not None:raise RuntimeError('Installed launcher exited: '+p.stderr.read())
+                if p.poll() is not None:
+                    stdout,stderr=p.communicate()
+                    raise RuntimeError(f'Installed launcher exited {p.returncode}\nstdout:\n{stdout}\nstderr:\n{stderr}')
                 try:
                     info=json.loads(record.read_text());url=info['url'].rstrip('/')
                     with urlopen(url+'/api/health',timeout=1) as r:health=json.load(r)
@@ -67,6 +69,16 @@ def main():
                 time.sleep(.1)
             raise RuntimeError('Installed managed session did not start')
 
+        def finish(p,timeout=8,expected=0):
+            try:stdout,stderr=p.communicate(timeout=timeout)
+            except subprocess.TimeoutExpired:
+                p.kill();stdout,stderr=p.communicate(timeout=5)
+                raise AssertionError(f'Owned process did not exit within {timeout}s\nstdout:\n{stdout}\nstderr:\n{stderr}')
+            if expected is not None:
+                assert p.returncode==expected,(
+                    f'Owned process exited {p.returncode}, expected {expected}\nstdout:\n{stdout}\nstderr:\n{stderr}')
+            return stdout,stderr
+
         def post(url,path,payload,origin=True):
             headers={'Content-Type':'application/json'}
             if origin:headers['Origin']=url if origin is True else origin
@@ -74,9 +86,8 @@ def main():
 
         try:
             first=spawn();url,instance=ready(first)
-            duplicate=spawn();duplicate.wait(timeout=15)
-            assert duplicate.returncode==0,duplicate.stderr.read()
-            assert url in duplicate.stdout.read()
+            duplicate=spawn();stdout,_=finish(duplicate,timeout=15)
+            assert url in stdout,stdout
             assert first.poll() is None
             for token,origin in [('bad',True),(instance,False),(instance,'https://foreign.invalid')]:
                 try:post(url,'/api/session/quit',{'instanceId':token},origin)
@@ -96,12 +107,12 @@ def main():
             else:raise AssertionError('Installed frozen engine did not run Keil firmware')
             assert sum(state['oled']['pixels'])>300
             post(url,'/api/session/quit',{'instanceId':instance})
-            first.wait(timeout=8);assert first.returncode==0
+            finish(first)
             assert not record.exists()
 
             # Health probes do not keep an abandoned desktop process alive.
             idle=spawn(idle=2);idle_url,_=ready(idle)
-            idle.wait(timeout=7);assert idle.returncode==0
+            finish(idle,timeout=7)
             assert not record.exists()
             try:urlopen(idle_url+'/api/health',timeout=.5)
             except (OSError,URLError):pass
@@ -114,13 +125,13 @@ def main():
             restarted=spawn();new_url,new_instance=ready(restarted)
             assert new_instance!=old_instance
             post(new_url,'/api/session/quit',{'instanceId':new_instance})
-            restarted.wait(timeout=8);assert restarted.returncode==0
+            finish(restarted)
 
             # Simulate no graphical opener without modifying system packages or settings.
             missing_browser=spawn(headless=False,command=executable,extra_env={'PATH':''})
-            missing_browser.wait(timeout=8)
-            assert missing_browser.returncode!=0
-            assert 'No desktop URL opener' in missing_browser.stderr.read()
+            stdout,stderr=finish(missing_browser,expected=None)
+            assert missing_browser.returncode!=0,f'Missing browser unexpectedly succeeded\nstdout:\n{stdout}\nstderr:\n{stderr}'
+            assert 'No desktop URL opener' in stderr,stderr
             assert not record.exists()
         finally:
             for process in processes:

@@ -4,10 +4,12 @@
 
 ## 已完成的源码与构建预检
 
-- Windows11 / Python3.13：`python -m unittest discover -s tests -v`，59项中50项通过，9项Linux专用测试按平台跳过。
-- WSL Ubuntu26.04 / Python3.14.4：59项全部通过，无跳过。Unicorn wheel仅解包至项目临时目录并通过PYTHONPATH加载，没有改动WSL系统包。该结果是Linux源码执行证据，不替代冻结包验收。
+- Windows11 / Python3.13：`python -m unittest discover -s tests -v`，73项中63项通过，10项Linux专用测试按平台跳过。
+- WSL Ubuntu26.04 / Python3.14.4：73项全部通过，无跳过。Unicorn wheel仅解包至项目临时目录并通过PYTHONPATH加载，没有改动WSL系统包。该结果是Linux源码执行证据，不替代冻结包验收。
 - Windows `scripts/build.ps1 -Version 0.3.0`：本地内核、WPF自包含宿主、Windows/HTML目录构建完成。
 - Inno Setup6.7.4官方安装程序已通过固定SHA256及Authenticode发布者Pyrsys B.V.校验；中文翻译采用官方固定commit和SHA256。
+- 更新查询的13项离线测试通过；Edge界面验收覆盖自动提示、手动检查、关闭提醒后重载、断网状态、安全下载链接和390px设置入口。
+- 运行固件后退出的原始Linux关闭路径在10次复现中出现5次native崩溃；改为等待有界执行线程结束后，10次全部正常退出且stderr为空。新增重复真实固件退出回归，不接受非零退出码。
 
 ## 安装器验收程序
 
@@ -30,7 +32,8 @@ sudo dpkg --remove cimc-studio
 - Windows11本机隔离安装验收通过，报告 `artifacts/installer-smoke-74c50dc0d587/result.json`。已安装的WPF窗口在125% DPI下位于工作区内，原理图阅读、真实固件运行、快捷方式、覆盖安装、卸载及用户文件保留均通过。
 - GitHub工作流 `43714112725` 的Windows安装、固件执行、覆盖安装和卸载通过；Ubuntu22.04与Windows源码测试通过。
 - Ubuntu22.04首次构建、apt安装和安装后HEX/BIN/OLED/UART/ADC/H6/SPI测试通过。首次浏览器验收中的原图测试遇到测试同步问题：前一组已有12条跳线，计数不能证明异步加载完成；现已改为等待本次加载响应后再比较接线ID，继续执行完整验收。
-- Linux完整浏览器、会话、卸载与本机WSL冻结包结果在发布前回填。GitHub工作流保留对应安装测试日志与报告，不将“成功生成安装文件”视为安装后可运行的证明。
+- GitHub工作流 `43714913743` 已通过Ubuntu冻结包的完整浏览器验收（含OLED/ADC/SPI/原图/退出界面）。该轮运行固件后退出的native错误已在源码中修复，具体复现与回归见上文。
+- 最终冻结安装包以[本版本构建验收工作流](https://github.com/Epiphany-Lucky/cimc-simulator/actions/workflows/ci.yml)及发行页附带的验收记录为准。发布门槛包含Windows安装/升级/卸载、Ubuntu实际安装/浏览器/生命周期/卸载、Debian12容器实际安装/固件/生命周期/卸载，以及同一Linux便携包在WSL中的执行；全部通过后才发布成品。GitHub保存安装日志、报告与界面截图。
 
 ## 边界
 

@@ -12,6 +12,7 @@ from urllib.parse import urlparse, unquote
 
 from simulator import Simulator
 from desktop_session import APP_ID, DesktopSession, open_browser
+from updates import UpdateChecker
 
 
 def main():
@@ -45,6 +46,7 @@ def main():
 def serve(args,session):
     web=(args.web_root or args.root/'web').resolve()
     simulator=Simulator(args.root)
+    updates=UpdateChecker('0.3.0')
     stop_event=threading.Event()
     launch_errors=[]
 
@@ -81,6 +83,10 @@ def serve(args,session):
                 if session:session.touch()
                 return self._send(200,decorate(simulator.state()))
             if path=='/api/project':return self._send(200,simulator.project())
+            if path=='/api/updates':
+                result=updates.check(force=urlparse(self.path).query=='force=1')
+                result['platform']='windows' if sys.platform=='win32' else 'linux'
+                return self._send(200,result)
             if path=='/api/health':return self._send(200,{'ok':True,'app':APP_ID,'version':'0.3.0','desktopSession':bool(session),'instanceId':session.instance_id if session else None})
             if path=='/api/demo':
                 p=args.root/'firmware'/'demo.hex'
@@ -142,7 +148,8 @@ def serve(args,session):
     except KeyboardInterrupt:pass
     finally:
         stop_event.set()
-        simulator.closed=True;server.server_close()
+        server.server_close()
+        simulator.close()
         if old_sigterm is not None:signal.signal(signal.SIGTERM,old_sigterm)
         if session:session.log('Stopped')
     return 1 if launch_errors else 0

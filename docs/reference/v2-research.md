@@ -4,10 +4,10 @@
 
 ## 已获得的直接证据
 
-1. 2026 官方《初赛 硬件设计题目说明》物理第 1 页右侧 V2.0 实拍图，原始提取文件为 `D:/desktop/网页开发/CIMC2026-research/images/official-hardware-photo-2.jpeg`。软件中的 `web/assets/board-v2.jpg` 是该文件的原样复制，保留官方图中的供电标注红框，不重画底板。
+1. 2026 官方《初赛 硬件设计题目说明》物理第 1 页右侧 V2.0 实拍图，原始提取文件为 `official-hardware-photo-2.jpeg`（本地研究存档）。软件中的 `web/assets/board-v2.jpg` 是该文件的原样复制，保留官方图中的供电标注红框，不重画底板。
 2. [官方商城](https://www.siemenscup-cimc.org.cn/store/index)的 [GD32F470VET6 v2.0 产品海报原图](http://www.siemenscup-cimc.org.cn/Public/ProductMainImage/2026/3/be67f84eaed54436a777dc151bf169ba.png)。原图 3200×3200，板卡排针丝印可放大阅读。
-3. 本机存在用户 2026 固件：`D:/desktop/CIMC2026/2026343469/2026343469-code/APP/Driver/`。代码证明该工程的配置，但其路径没有明确声明所用底板版本，不能独立证明 V2.0 铜线。
-4. 本机存在完整 **V1.0** 原理图：`D:/desktop/CIMC2026/CIMC_V1/GD32F470 Development Kit V1.0 原理图.pdf`，4 页，图签创建 2025-03-01、更新至 2025-03-22，图名 `CIMC-IHD-v04`。已经查看图页。仅历史对照，**禁止作为 V2.0 原理图使用**。
+3. 本机存在用户 2026 固件：`APP/Driver/`（本地用户工程，未随仓库分发）。代码证明该工程的配置，但其路径没有明确声明所用底板版本，不能独立证明 V2.0 铜线。
+4. 本机存在完整 **V1.0** 原理图：`GD32F470 Development Kit V1.0 原理图.pdf`，4 页，图签创建 2025-03-01、更新至 2025-03-22，图名 `CIMC-IHD-v04`。已经查看图页。仅历史对照，**禁止作为 V2.0 原理图使用**。
 
 官方公开赛项资料页：[工业嵌入式系统开发](https://www.siemenscup-cimc.org.cn/Project/PorjectResourceDetail?id=18)。本轮仍未取得完整 V2.0 原理图。
 
@@ -75,7 +75,7 @@ V2.0 USART2 区的跳线端丝印明确出现 **PD8、PD9**；V1.0 图纸 USART2
 
 精确型号为 **GD32F470VET6**。[兆易创新该型号官方页面](https://www.gigadevice.com.cn/product/mcu/mcus-product-selector/gd32f470vet6)给出 240 MHz、512K Flash、256K SRAM。不能把同系列 VG/VI 的更大容量套用到 VE。
 
-本机 `D:/desktop/CIMC2026/2026343469/2026343469-code/APP/project/CIMC_GD32_LED_driver.uvprojx` 第 18 行指定 `GD32F470VE`；第 22 行设备声明为：
+本机 用户工程 `APP/project/CIMC_GD32_LED_driver.uvprojx` 第 18 行指定 `GD32F470VE`；第 22 行设备声明为：
 
 ```text
 IRAM(0x20000000,0x030000) IRAM2(0x10000000,0x010000) IROM(0x08000000,0x080000)
@@ -93,6 +93,6 @@ IRAM(0x20000000,0x030000) IRAM2(0x10000000,0x010000) IROM(0x08000000,0x080000)
 
 ## 检索范围与未完成证据
 
-本轮检索了 `D:/desktop/CIMC2026`、`D:/desktop/2027年CIMC培训` 的相关图纸/驱动文件，以及 `C:/Users/admin/Documents/LCEDA-Pro/online-projects-backup` 中 CIMC、2026cimc国赛、米醋·西门子2026硬件题最新 ZIP 的目录和 EPRU 文档头。这些备份主要是扩展板项目；未发现 GD32F470 主控原理图标识。没有修改这些原始资料。
+本轮检索了本地竞赛资料、培训资料中的相关图纸/驱动文件，以及本地EDA备份中的CIMC项目目录和EPRU文档头。这些备份主要是扩展板项目；未发现 GD32F470 主控原理图标识。没有修改这些原始资料。
 
 仍须补齐完整 V2.0 原理图或用实板测量确认：OLED 与 MCU 的固定连接、LED/KEY 极性及公共网络、全部 UART 跳帽默认状态、SPI Flash/TF/以太网/ADC/DAC 固定路由及电源网络。当前软件只能称为“按官方 V2.0 外观和已确认端点构建、部分固定外设采用代码支持模型的训练仿真”。

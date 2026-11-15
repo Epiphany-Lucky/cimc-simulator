@@ -19,5 +19,7 @@
 | Windows安装升级卸载 | 新增 | packaging/windows/, scripts/build-windows-installer.ps1 | Inno当前用户安装，固定产品ID；验收独立TestAppId不触碰正式安装 |
 | Linux发行与应用菜单 | 新增 | scripts/build-linux.sh, packaging/linux/ | Ubuntu22.04构建onedir、deb、tar；复用原固件内核和浏览器界面 |
 | Linux会话生命周期 | 扩展 | engine/desktop_session.py, engine/server.py | 用户级独占锁、当前实例退出校验、180秒无客户端退出；WPF生命周期不变 |
+| 软件更新 | 新增并复用界面 | engine/updates.py, web/app.js | 固定GitHub版本源、语义版本比较、缓存；设置内检查和应用内提醒；原外链处理复用 |
+| Packages发布 | 扩展 | .github/workflows/packages.yml, packaging/registry/ | 官方GHCR OCI安装文件包，与Release安装文件哈希一致；无长期凭证 |
 
 禁区：不改原板固定网络；不猜测未知连线；不把未建模访问当成功；不上传本地密钥、个人目录或未授权第三方完整工程；不承诺已验证任意Keil固件。

@@ -13,6 +13,8 @@
   const schematicTitles = ['MCU 与排针','板载外设','电源','串口通信'];
   const heldKeys = new Set();
   const preferences = readStorage('cimc.studio.preferences', { labels: false, motion: false, shortcuts: true });
+  preferences.autoUpdates ??= true;
+  let checkingUpdate = false, lastUpdateAttempt = 0, notifiedVersion = '';
 
   function readStorage(key, fallback) { try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch { return fallback; } }
   function node(tag, cls, text) { const n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined) n.textContent = text; return n; }
@@ -55,6 +57,7 @@
       const result = await api('/api/state');
       if (sessionExited) return;
       connected = true;
+      if (preferences.autoUpdates && !lastUpdateAttempt) void checkUpdates(false);
       $('connection-notice').hidden = true;
       if (!sessionExited) renderState(result.state || result);
     } catch {
@@ -543,7 +546,12 @@
   $('schematic-zoom').addEventListener('change',()=>{applySchematicZoom();$('schematic-viewport').scrollTo({top:0,left:0,behavior:'instant'});});
 
   function showInfo(title, eyebrow, content) { $('info-title').textContent=title; $('info-eyebrow').textContent=eyebrow; $('info-content').replaceChildren(...content); $('info-dialog').showModal(); }
-  $('about-button').addEventListener('click',() => showInfo('CIMC Studio','PREVIEW 0.3',[node('p','','Windows 与浏览器共用的嵌入式仿真工作台。'),node('p','','载入 ARM 固件，探索程序与电路的每一次交互。'),node('p','','当前为功能预览版，具体外设支持范围以交付文档和运行诊断为准。CIMC Studio 为独立开发项目，非赛事官方软件。')]));
+  $('about-button').addEventListener('click',() => {
+    const settings = node('button', 'button secondary full-width', '软件更新与设置');
+    settings.id = 'about-settings-button';
+    settings.addEventListener('click', () => { $('info-dialog').close(); $('settings-dialog').showModal(); });
+    showInfo('CIMC Studio','PREVIEW 0.3',[node('p','','Windows、Linux 与浏览器共用的嵌入式仿真工作台。'),node('p','','载入 ARM 固件，探索程序与电路的每一次交互。'),node('p','','当前为功能预览版，具体外设支持范围以交付文档和运行诊断为准。CIMC Studio 为独立开发项目，非赛事官方软件。'),settings]);
+  });
   $('board-info-button').addEventListener('click',() => {
     const content = [];
     for (const [label,value] of [['板卡',board?.name || 'GD32F470 V1.0'],['资料状态',board?.verified ? '已核验' : 'V1 原理图已核对；外设功能为子集'],['可见端点',String(board?.pins?.length || 0)],['线路规则','固定网络只读；仅增删自己的跳线']]) { const row=node('div','info-row');row.append(node('span','',label),node('strong','',value));content.push(row); }
@@ -558,8 +566,56 @@
   $('export-button').addEventListener('click',async () => { if(activePanel==='wires'){$('save-project').click();return;} if(activePanel==='diagnostics'){saveFile(`cimc-diagnostics-${stamp()}.json`,JSON.stringify(state?.diagnostics||[],null,2));return;} const lines=(state?.serial||[]).map(e=>`[${logTime(e.time)}] [${e.channel}] [${e.direction}] ${e.text??e.hex??''}`);saveFile(`cimc-serial-${stamp()}.txt`,lines.join('\n'),'text/plain;charset=utf-8');toast('串口日志已导出。'); });
   $('clear-button').addEventListener('click',() => { if(activePanel==='wires'){toast('请使用每条跳线旁的删除按钮，避免误删接线。');return;} if(activePanel==='diagnostics'){diagnosticCutoff=(state?.diagnostics||[]).length;renderDiagnostics(true);return;} serialCutoff=Math.max(-1,...(state?.serial||[]).map((e,i)=>Number(e.id)||i));renderSerial(true);toast('已清空当前日志显示。'); });
 
-  function applyPreferences(){document.body.classList.toggle('show-pin-labels',preferences.labels);document.body.classList.toggle('reduce-motion',preferences.motion);$('setting-labels').checked=preferences.labels;$('setting-motion').checked=preferences.motion;$('setting-shortcuts').checked=preferences.shortcuts;try{localStorage.setItem('cimc.studio.preferences',JSON.stringify(preferences));}catch{}}
-  for(const [id,key] of [['setting-labels','labels'],['setting-motion','motion'],['setting-shortcuts','shortcuts']])$(id).addEventListener('change',e=>{preferences[key]=e.target.checked;applyPreferences();});
+  function applyPreferences(){document.body.classList.toggle('show-pin-labels',preferences.labels);document.body.classList.toggle('reduce-motion',preferences.motion);$('setting-labels').checked=preferences.labels;$('setting-motion').checked=preferences.motion;$('setting-shortcuts').checked=preferences.shortcuts;$('setting-updates').checked=preferences.autoUpdates;try{localStorage.setItem('cimc.studio.preferences',JSON.stringify(preferences));}catch{}}
+  for(const [id,key] of [['setting-labels','labels'],['setting-motion','motion'],['setting-shortcuts','shortcuts'],['setting-updates','autoUpdates']])$(id).addEventListener('change',e=>{preferences[key]=e.target.checked;applyPreferences();if(key==='autoUpdates'&&e.target.checked)void checkUpdates(false);});
+
+  function updateLink(url) {
+    try { const target = new URL(url); return target.origin === 'https://github.com' && target.pathname.startsWith('/Epiphany-Lucky/cimc-simulator/releases/') && !target.username && !target.password ? target.href : null; }
+    catch { return null; }
+  }
+  async function checkUpdates(manual) {
+    if (checkingUpdate || sessionExited) return;
+    checkingUpdate = true; lastUpdateAttempt = Date.now();
+    $('check-updates').disabled = true;
+    $('update-status').textContent = '正在检查更新…';
+    try {
+      const result = await api('/api/updates' + (manual ? '?force=1' : ''));
+      if (sessionExited) return;
+      $('update-current').textContent = `当前版本 ${result.currentVersion}`;
+      $('update-status').textContent = result.message;
+      const release = updateLink(result.releaseUrl);
+      const available = result.status === 'ok' && result.available && !!release;
+      $('settings-button').classList.toggle('has-update', available);
+      $('about-button').classList.toggle('has-update', available);
+      $('about-button').setAttribute('aria-label', available ? '关于 CIMC Studio，有新版本可用' : '关于 CIMC Studio');
+      $('settings-button').setAttribute('aria-label', available ? '设置，有新版本可用' : '设置');
+      $('update-downloads').replaceChildren();
+      $('update-downloads').hidden = !available;
+      if (available) {
+        const choices = result.platform === 'windows'
+          ? [['Windows 安装包', result.assets?.windowsInstaller], ['HTML 版', result.assets?.html]]
+          : [['Ubuntu / Debian 安装包', result.assets?.linuxDeb], ['Linux 便携包', result.assets?.linuxPortable]];
+        choices.push(['查看更新说明', release]);
+        for (const [label, value] of choices) {
+          const url = updateLink(value); if (!url) continue;
+          const link = node('a', 'update-link', label); link.href = url; link.target = '_blank'; link.rel = 'noopener noreferrer';
+          $('update-downloads').append(link);
+        }
+        if (notifiedVersion !== result.latestVersion) {
+          notifiedVersion = result.latestVersion;
+          toast(`CIMC Studio ${result.latestVersion} 已发布，可在“设置”中下载更新。`);
+        }
+      }
+    } catch {
+      $('update-status').textContent = '暂时无法检查更新，请检查网络后重试。仿真可继续使用。';
+    } finally {
+      checkingUpdate = false; $('check-updates').disabled = sessionExited;
+    }
+  }
+  $('check-updates').addEventListener('click', () => void checkUpdates(true));
+  function periodicUpdate() { if (preferences.autoUpdates && connected && !document.hidden && Date.now() - lastUpdateAttempt >= 6 * 60 * 60 * 1000) void checkUpdates(false); }
+  setInterval(periodicUpdate, 60 * 1000);
+  document.addEventListener('visibilitychange', periodicUpdate);
   function editing(){return ['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)||document.activeElement?.getAttribute('role')==='slider'||document.querySelector('dialog[open]');}
   window.addEventListener('keydown',e=>{if(document.querySelector('dialog[open]')){if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='o')e.preventDefault();return;}if(e.key==='Escape'){clearPinSelection();$('board-card').classList.remove('expanded');}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='o'){e.preventDefault();$('firmware-file').click();return;}if(editing())return;if(e.code==='Space'&&document.activeElement?.tagName!=='BUTTON'){e.preventDefault();if(!e.repeat&&!$('run-button').disabled)$('run-button').click();}if(preferences.shortcuts&&/^[1-6]$/.test(e.key)&&!e.repeat){e.preventDefault();void pressKey(Number(e.key)-1,true);}});
   window.addEventListener('keyup',e=>{if(document.querySelector('dialog[open]'))return;if(/^[1-6]$/.test(e.key))void pressKey(Number(e.key)-1,false);});

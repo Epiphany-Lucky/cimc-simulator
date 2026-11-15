@@ -128,6 +128,31 @@ class DesktopServerTests(unittest.TestCase):
         if origin:headers['Origin']=self.url if origin is True else origin
         return Request(self.url+'/api/session/quit',json.dumps({'instanceId':instance}).encode(),headers)
 
+    def assert_clean_exit(self,process):
+        stdout,stderr=process.communicate(timeout=8)
+        self.assertEqual(process.returncode,0,
+                         f'Server exited {process.returncode}\nstdout:\n{stdout}\nstderr:\n{stderr}')
+
+    def test_quit_while_firmware_is_running_exits_cleanly(self):
+        # Exercise native Unicorn callbacks during teardown, not just an idle server.
+        for iteration in range(3):
+            with self.subTest(iteration=iteration):
+                p=self.spawn();self.ready(p)
+                for action in ('demo','run'):
+                    with urlopen(Request(self.url+'/api/command',json.dumps({'action':action}).encode(),
+                                         {'Content-Type':'application/json'}),timeout=5) as r:json.load(r)
+                deadline=time.monotonic()+20
+                while time.monotonic()<deadline:
+                    with urlopen(self.url+'/api/state',timeout=3) as r:state=json.load(r)
+                    self.assertEqual(state['status'],'running',state['diagnostics'])
+                    if any('OLED READY' in row['text'] for row in state['serial']):break
+                    time.sleep(.05)
+                else:self.fail('Real firmware never reached OLED READY')
+                self.assertGreater(sum(state['oled']['pixels']),300)
+                with urlopen(self.quit_request(self.instance),timeout=5) as r:self.assertTrue(json.load(r)['ok'])
+                self.assert_clean_exit(p)
+                self.assertFalse((self.directory/'cimc-studio/session.json').exists())
+
     def test_duplicate_launch_reuses_instance_and_command_state(self):
         p=self.spawn();self.ready(p)
         duplicate=self.spawn();duplicate.wait(timeout=10)
@@ -147,7 +172,7 @@ class DesktopServerTests(unittest.TestCase):
             error.exception.close()
             self.assertIsNone(p.poll())
         with urlopen(self.quit_request(self.instance)) as r:self.assertTrue(json.load(r)['ok'])
-        p.wait(timeout=5);self.assertEqual(p.returncode,0)
+        self.assert_clean_exit(p)
         self.assertFalse((self.directory/'cimc-studio/session.json').exists())
 
     def test_no_client_exits_but_health_probes_do_not_extend_lifetime(self):
@@ -159,7 +184,7 @@ class DesktopServerTests(unittest.TestCase):
             except OSError:pass
             time.sleep(.1)
             if time.monotonic()-started>4:self.fail('Idle service did not exit')
-        self.assertEqual(p.returncode,0)
+        self.assert_clean_exit(p)
 
     def test_normal_service_does_not_expose_exit_control(self):
         p=subprocess.Popen([sys.executable,str(ROOT/'engine/server.py'),'--port','0'],cwd=ROOT,

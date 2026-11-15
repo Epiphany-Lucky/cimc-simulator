@@ -33,7 +33,7 @@ with tempfile.TemporaryDirectory(prefix='cimc-browser-') as directory:
                     break
                 except OSError:time.sleep(.25)
             else:raise RuntimeError('Linux desktop session startup timeout')
-            for script in ('ui_smoke.py','laptop_smoke.py','schematic_smoke.py'):
+            for script in ('ui_smoke.py','laptop_smoke.py','schematic_smoke.py','update_ui_smoke.py'):
                 subprocess.run([sys.executable,str(ROOT/'tests'/script),url],cwd=ROOT,check=True)
             with sync_playwright() as playwright:
                 browser=playwright.chromium.launch(headless=True)

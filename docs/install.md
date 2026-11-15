@@ -40,6 +40,28 @@ sudo apt remove cimc-studio
 
 完整解压 `CIMC-Studio-0.3.0-linux-x64.tar.gz`，保留内部符号链接和执行权限，然后运行目录中的 `./cimc-studio`。同样使用本机默认浏览器和同一套桌面会话规则。不要用会丢失符号链接的Windows ZIP工具重打包Linux目录。
 
+## 检查更新与新版本提醒
+
+在侧栏“设置”点击“检查更新”。窄屏可从右上角“C”打开“软件更新与设置”。默认在启动时检查，保持工作台打开期间每6小时再检查；开启提醒时，新版会显示应用内提示及设置入口圆点。可关闭“新版本提醒”，仍可手动检查。关闭应用后不会运行独立推送服务。
+
+更新源固定为本项目公开的GitHub Releases，包含可下载的预览版；不会读取或发送固件、接线工程、串口数据。断网或GitHub限流只影响更新查询，不影响本地仿真。点击对应系统的下载链接后，保存工程并退出应用，再运行安装包升级；程序不静默覆盖当前安装。
+
+## GitHub Packages
+
+仓库侧边栏Packages对应两个OCI安装文件包：`ghcr.io/epiphany-lucky/cimc-studio-windows:0.3.0` 与 `ghcr.io/epiphany-lucky/cimc-studio-linux:0.3.0`。它们保存与Releases相同的安装文件及SHA256清单，供版本化拉取；普通安装请直接下载Releases中的EXE/DEB。这些OCI包是文件容器，不是可运行的仿真服务镜像。
+
+例如使用Docker提取Linux安装文件（不会启动容器）：
+
+```bash
+docker pull ghcr.io/epiphany-lucky/cimc-studio-linux:0.3.0
+id=$(docker create ghcr.io/epiphany-lucky/cimc-studio-linux:0.3.0 /__extract_only__)
+mkdir -p cimc-installers
+docker cp "$id:/packages/." ./cimc-installers/
+docker rm "$id"
+cd cimc-installers
+sha256sum --check SHA256SUMS.txt
+```
+
 ## 常见检查
 
 - 界面提示内核未连接：从安装后的应用入口重新打开，不要直接双击HTML文件。

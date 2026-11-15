@@ -144,3 +144,4 @@ jobs:
             artifacts/*linux*.png
             artifacts/laptop-*-v02.png
             artifacts/schematic-*.png
+            artifacts/update-*.png

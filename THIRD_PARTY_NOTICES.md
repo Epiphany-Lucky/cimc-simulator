@@ -8,7 +8,7 @@
 
 CIMC Studio is an independent development tool, not an official competition judging application or an Apple product. No Apple logo, proprietary font file, or website artwork is bundled. Hardware documentation and images retain their original authorship.
 
-Release use and redistribution must preserve applicable upstream terms. The project repository and release are initially private; no public website or public source release is implied.
+Release use and redistribution must preserve applicable upstream terms. The repository and release are published at the project owner's request. Public availability does not remove upstream copyright or grant rights to third-party trademarks and hardware documents.
 
 - Python 3.13: Python Software Foundation license, bundled as licenses/Python-LICENSE.txt.
 - PyInstaller bootloader terms: licenses/PyInstaller-COPYING.txt.

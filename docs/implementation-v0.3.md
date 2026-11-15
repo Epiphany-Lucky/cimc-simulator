@@ -64,3 +64,15 @@
 - 回滚：安装器只操作其文件清单；Linux由dpkg卸载；用户工程及浏览器数据保留；上一版发行包和Git标签不变。
 
 实际结果记录到docs/validation-v0.3.md，完成后回写能力地图。
+
+## 追加：更新提醒、Packages与公开仓库（2026-11-15）
+
+用户明确要求“将推送更新和检查更新也加进去”，并要求将安装成品放进GitHub Packages后公开代码库。本节记录追加范围；这些操作已获得用户直接授权。
+
+G1：涉及 `engine/updates.py`、`engine/server.py`、`tests/test_updates.py`、`tests/update_ui_smoke.py`、`web/index.html`、`web/app.js`、`web/styles.css`、`desktop/App.cs`、`.github/workflows/packages.yml`、`packaging/registry/Dockerfile`、`docs/install.md`、`docs/validation-v0.3.md`、`docs/releases/v0.3.0.md`、`README.md`、`.ai-governance/capability-map.md`，共15个文件。命中H1/H3/H4/H7/H8/H9；不涉及数据库、资金；功能口径按启动/定时应用内提醒、手动检查、用户下载后安装处理。判定大。
+
+G2调查：`engine/server.py`已有同源本地HTTP API与线程服务；`web/app.js`已有设置偏好、toast、dialog及共享工作台；`desktop/App.cs`为WebView2宿主，外链应交系统浏览器打开；此前无远端版本检查。Packages官方支持Docker/OCI等注册表格式，EXE/DEB不属于原生包类型，因此使用带仓库来源标签的OCI安装文件包，并继续在Releases提供用户可直接双击/apt安装的文件。
+
+方案：新增标准库更新查询模块，只向固定GitHub Releases API读取版本信息，严格校验版本与下载URL并缓存；前端在设置中提供检查、自动提醒开关、最新版本与下载入口，启动后和运行期间定期检查，不打断固件运行。离线不阻止仿真，不自动执行远端安装程序。Windows外链交系统浏览器。以Actions临时GITHUB_TOKEN发布两个GHCR安装文件包，与仓库关联；包发布后按用户要求公开仓库并验证匿名读取。公开前检查跟踪文件及历史中的凭证和超范围资料，不改写用户历史。
+
+不采用：将凭证打入客户端、静默下载执行安装器、将软件更新描述为系统级后台推送、仅上传容器而删除普通安装包。验收包括版本顺序/缓存/错误及URL校验、前端新版本提示和手动检查、Windows外链、公开匿名版本读取、实际GHCR拉取文件哈希与Release一致。

@@ -1,0 +1,70 @@
+name: Publish installer packages
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Published release version without v
+        required: true
+        default: '0.3.0'
+permissions:
+  contents: read
+  packages: write
+jobs:
+  publish:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [windows, linux]
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Resolve published version
+        id: version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          EVENT_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          version="${INPUT_VERSION:-${EVENT_TAG#v}}"
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.-]+)?$ ]]
+          printf 'value=%s\n' "$version" >> "$GITHUB_OUTPUT"
+      - name: Download published installation files
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.value }}
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          mkdir -p packages
+          if [ "$PLATFORM" = windows ]; then
+            gh release download "v$VERSION" --repo "$GITHUB_REPOSITORY" --dir packages \
+              --pattern "CIMC-Studio-$VERSION-Setup-x64.exe" \
+              --pattern "CIMC-Studio-$VERSION-win-x64.zip" \
+              --pattern "CIMC-Studio-$VERSION-html-local.zip"
+          else
+            gh release download "v$VERSION" --repo "$GITHUB_REPOSITORY" --dir packages \
+              --pattern "cimc-studio_${VERSION}_amd64.deb" \
+              --pattern "CIMC-Studio-$VERSION-linux-x64.tar.gz"
+          fi
+          (cd packages && sha256sum * > SHA256SUMS.txt)
+          cp docs/install.md packages/INSTALL.md
+      - name: Publish linked OCI installation package
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.value }}
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          printf '%s' "$GH_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+          image="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/cimc-studio-$PLATFORM"
+          docker build -f packaging/registry/Dockerfile --build-arg "VERSION=$VERSION" \
+            --build-arg "PLATFORM=$PLATFORM" -t "$image:$VERSION" -t "$image:latest" .
+          docker push "$image:$VERSION"
+          docker push "$image:latest"
+          docker image rm "$image:$VERSION" "$image:latest"
+          docker pull "$image:$VERSION"
+          id=$(docker create "$image:$VERSION" /__extract_only__)
+          mkdir extracted
+          docker cp "$id:/packages/." extracted/
+          docker rm "$id"
+          (cd extracted && sha256sum --check SHA256SUMS.txt)
+          printf 'Published and verified `%s:%s`\n' "$image" "$VERSION" >> "$GITHUB_STEP_SUMMARY"
