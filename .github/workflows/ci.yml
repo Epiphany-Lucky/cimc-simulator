@@ -105,6 +105,29 @@ jobs:
           test ! -e /usr/bin/cimc-studio
           test ! -e /opt/cimc-studio/CIMC-Engine
           test ! -e /usr/share/applications/cimc-studio.desktop
+      - name: Verify Debian 12 install, firmware, lifecycle and uninstall
+        run: |
+          set -euo pipefail
+          # Read-only checkout keeps the Ubuntu screenshots and reports untouched.
+          docker run --rm -i \
+            --mount "type=bind,src=$GITHUB_WORKSPACE,dst=/workspace,readonly" \
+            --workdir /workspace \
+            --env CIMC_VERSION --env DEBIAN_FRONTEND=noninteractive \
+            debian:12-slim /bin/bash -euxo pipefail <<'DEBIAN' 2>&1 | tee artifacts/linux-debian12-install.log
+          cat /etc/os-release
+          uname -m
+          apt-get update
+          apt-get install -y --no-install-recommends python3 "/workspace/artifacts/cimc-studio_${CIMC_VERSION}_amd64.deb"
+          dpkg-query --show cimc-studio
+          python3 tests/package_smoke.py /opt/cimc-studio
+          python3 tests/linux_install_smoke.py /opt/cimc-studio
+          dpkg --remove cimc-studio
+          test ! -e /usr/bin/cimc-studio
+          test ! -e /opt/cimc-studio/CIMC-Engine
+          test ! -e /usr/share/applications/cimc-studio.desktop
+          test ! -e /usr/share/icons/hicolor/scalable/apps/cimc-studio.svg
+          DEBIAN
+          printf '%s\n' '{"distribution":"Debian 12","architecture":"amd64","installedFirmware":true,"desktopLifecycle":true,"uninstalled":true,"passed":true}' > artifacts/linux-debian12-verification.json
       - uses: actions/upload-artifact@v4
         with:
           name: cimc-studio-linux
