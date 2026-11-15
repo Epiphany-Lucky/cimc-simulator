@@ -1,0 +1,198 @@
+name: Prepare verified release draft
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version without the v prefix; its tag must already exist
+        required: true
+        type: string
+        default: '0.3.0'
+      build_run_id:
+        description: Successful Build and verify run containing both package artifacts
+        required: true
+        type: string
+        default: '43716184712'
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: release-draft-${{ inputs.version }}
+  cancel-in-progress: false
+jobs:
+  prepare-draft:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    env:
+      VERSION: ${{ inputs.version }}
+      BUILD_RUN_ID: ${{ inputs.build_run_id }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Verify successful CI, source tag and absence of an existing release
+        id: provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, re, subprocess
+          from pathlib import Path
+
+          version = os.environ['VERSION']
+          run_id = os.environ['BUILD_RUN_ID']
+          repo = os.environ['GH_REPO']
+          number = r'(?:0|[1-9][0-9]*)'
+          identifier = r'(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)'
+          semver = rf'{number}\.{number}\.{number}(?:-{identifier}(?:\.{identifier})*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?'
+          if len(version) > 128 or re.fullmatch(semver, version) is None:
+              raise SystemExit('version must be strict SemVer without a v prefix')
+          if re.fullmatch(r'[1-9][0-9]{0,19}', run_id) is None:
+              raise SystemExit('build_run_id must be a positive numeric run ID')
+          if repo != 'Epiphany-Lucky/cimc-simulator':
+              raise SystemExit('This release workflow is restricted to the official repository')
+
+          def api(path, paginate=False):
+              command = ['gh', 'api']
+              if paginate:
+                  command += ['--paginate', '--slurp']
+              command.append(f'repos/{repo}/{path}')
+              return json.loads(subprocess.check_output(command, text=True))
+
+          run = api(f'actions/runs/{run_id}')
+          workflow = api('actions/workflows/ci.yml')
+          if (str(run['id']) != run_id or run['workflow_id'] != workflow['id']
+                  or workflow['path'] != '.github/workflows/ci.yml'
+                  or run['status'] != 'completed' or run['conclusion'] != 'success'
+                  or run['head_repository']['full_name'] != repo
+                  or run['event'] not in ('push', 'workflow_dispatch')):
+              raise SystemExit('The source run must be successful official-repository ci.yml execution')
+          source_sha = run['head_sha']
+          if re.fullmatch(r'[0-9a-f]{40}', source_sha) is None:
+              raise SystemExit('Unexpected source commit format')
+          tag = f'v{version}'
+          target = api(f'git/ref/tags/{tag}')['object']
+          for _ in range(10):
+              if target['type'] == 'commit':
+                  break
+              if target['type'] != 'tag':
+                  raise SystemExit('Version tag does not identify a commit')
+              target = api(f"git/tags/{target['sha']}")['object']
+          if target['type'] != 'commit' or target['sha'] != source_sha:
+              raise SystemExit('Remote version tag and successful build source commit must match')
+          jobs = [job for page in api(f'actions/runs/{run_id}/jobs?per_page=100', True)
+                  for job in page['jobs']]
+          for required in ('package-windows', 'package-linux'):
+              matching = [job for job in jobs if job['name'] == required]
+              if len(matching) != 1 or matching[0]['conclusion'] != 'success':
+                  raise SystemExit(f'Required package job did not succeed: {required}')
+          releases = [release for page in api('releases?per_page=100', True) for release in page]
+          if any(release['tag_name'] == tag for release in releases):
+              raise SystemExit(f'A release already exists for {tag}; refusing to replace it')
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as output:
+              output.write(f'source_sha={source_sha}\n')
+          print(f'Verified {tag} = {source_sha}; successful CI run {run_id}')
+          PY
+
+      - name: Read release notes from the verified source commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.provenance.outputs.source_sha }}
+          persist-credentials: false
+
+      - name: Download verified Windows build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: cimc-studio-windows
+          path: downloaded/windows
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.build_run_id }}
+
+      - name: Download verified Linux build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: cimc-studio-linux
+          path: downloaded/linux
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.build_run_id }}
+
+      - name: Select the five exact packages and create checksums and validation record
+        shell: bash
+        env:
+          SOURCE_SHA: ${{ steps.provenance.outputs.source_sha }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib, os, shutil
+          from pathlib import Path
+
+          version, source_sha = os.environ['VERSION'], os.environ['SOURCE_SHA']
+          run_id, repo = os.environ['BUILD_RUN_ID'], os.environ['GH_REPO']
+          notes = Path(f'docs/releases/v{version}.md')
+          if not notes.is_file() or not notes.read_text(encoding='utf-8').strip():
+              raise SystemExit('Release notes are missing from the verified source commit')
+          selected = {
+              f'CIMC-Studio-{version}-Setup-x64.exe': 'windows',
+              f'CIMC-Studio-{version}-win-x64.zip': 'windows',
+              f'CIMC-Studio-{version}-html-local.zip': 'windows',
+              f'cimc-studio_{version}_amd64.deb': 'linux',
+              f'CIMC-Studio-{version}-linux-x64.tar.gz': 'linux',
+          }
+          destination = Path('release-assets')
+          destination.mkdir()
+          checksums = []
+          for name, platform in selected.items():
+              source = Path('downloaded') / platform / name
+              if source.is_symlink() or not source.is_file() or source.stat().st_size == 0:
+                  raise SystemExit(f'Missing or invalid required artifact: {source}')
+              target = destination / name
+              shutil.copyfile(source, target)
+              digest = hashlib.sha256()
+              with target.open('rb') as stream:
+                  for chunk in iter(lambda: stream.read(1024 * 1024), b''):
+                      digest.update(chunk)
+              checksums.append(f'{digest.hexdigest()}  {name}\n')
+          (destination / f'SHA256SUMS-{version}.txt').write_text(''.join(checksums), encoding='ascii')
+          validation = f'''# CIMC Studio {version} release validation
+
+          - Source commit: `{source_sha}`
+          - Version tag: `v{version}` (remote tag dereferenced and matched to source commit)
+          - Source CI: https://github.com/{repo}/actions/runs/{run_id}
+          - CI workflow: `.github/workflows/ci.yml`, completed successfully.
+          - Both `package-windows` and `package-linux` jobs completed successfully.
+          - Exactly five versioned application packages were selected from that run's artifacts.
+          - SHA-256 checksums were generated from the files attached to this draft.
+
+          Windows native desktop acceptance reports are maintained separately and must be
+          reviewed by the maintainer before publication. This workflow does not run WSL
+          acceptance and does not claim that it has passed. The release remains a draft
+          pending the maintainer's verification of the same Linux package in WSL.
+          '''
+          (destination / f'VALIDATION-v{version}.md').write_text(
+              '\n'.join(line.removeprefix('          ') for line in validation.splitlines()) + '\n',
+              encoding='utf-8')
+          print('Prepared the five packages, SHA256SUMS, and validation record.')
+          PY
+
+      - name: Create a draft prerelease without replacing existing assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          assets=(
+            "release-assets/CIMC-Studio-${VERSION}-Setup-x64.exe"
+            "release-assets/CIMC-Studio-${VERSION}-win-x64.zip"
+            "release-assets/CIMC-Studio-${VERSION}-html-local.zip"
+            "release-assets/cimc-studio_${VERSION}_amd64.deb"
+            "release-assets/CIMC-Studio-${VERSION}-linux-x64.tar.gz"
+            "release-assets/SHA256SUMS-${VERSION}.txt"
+            "release-assets/VALIDATION-v${VERSION}.md"
+          )
+          gh release create "v${VERSION}" "${assets[@]}" \
+            --repo "$GH_REPO" --draft --prerelease --verify-tag \
+            --title "CIMC Studio ${VERSION}" --notes-file "docs/releases/v${VERSION}.md"
+          {
+            printf '## Draft release prepared\n\n'
+            gh release view "v${VERSION}" --repo "$GH_REPO" --json url --jq '.url'
+            printf '\nFive application packages, checksums and validation record are attached.\n'
+            printf 'The release is still a draft; same-package WSL acceptance is pending.\n'
+          } >> "$GITHUB_STEP_SUMMARY"

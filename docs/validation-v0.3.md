@@ -35,6 +35,15 @@ sudo dpkg --remove cimc-studio
 - GitHub工作流 `43714913743` 已通过Ubuntu冻结包的完整浏览器验收（含OLED/ADC/SPI/原图/退出界面）。该轮运行固件后退出的native错误已在源码中修复，具体复现与回归见上文。
 - 最终冻结安装包以[本版本构建验收工作流](https://github.com/Epiphany-Lucky/cimc-simulator/actions/workflows/ci.yml)及发行页附带的验收记录为准。发布门槛包含Windows安装/升级/卸载、Ubuntu实际安装/浏览器/生命周期/卸载、Debian12容器实际安装/固件/生命周期/卸载，以及同一Linux便携包在WSL中的执行；全部通过后才发布成品。GitHub保存安装日志、报告与界面截图。
 
+## 最终候选成品验收（提交1e3b7dd）
+
+- [GitHub完整验收43716184712](https://github.com/Epiphany-Lucky/cimc-simulator/actions/runs/43716184712)：两个源码任务、Windows安装任务和Linux安装任务全部成功。
+- Ubuntu22.04：实际apt安装、冻结HEX/BIN/OLED/UART/ADC/SPI、全部Chromium界面/原图/笔记本/更新检查验收、会话退出及恢复、dpkg卸载通过。
+- Debian12官方容器：实际安装同一个DEB、真实固件、会话生命周期与卸载通过，`linux-debian12-verification.json`为passed。
+- WSL Ubuntu26.04：从同一个CI便携包完整解压后，固件与生命周期验收通过；tar.gz SHA256为 `e23d30ce86286df0cdf38f162d72742b9188350effb78a3823e6ca94d46ff90d`。没有安装或修改WSL系统组件。
+- Windows11本机最新版：`installer-smoke-dbb506ebff2c/result.json`全部通过，包含原生WPF、真实固件、125%DPI、原图、覆盖安装和卸载保留用户文件。两ZIP CRC及源码/许可证/文档一致性通过；没有残留测试进程。本机与云端分别构建，安装器文件摘要以各自对应清单为准。
+- 公开前只读扫描：8个可达提交、2个旧标签、164个历史blob及当前跟踪文件未发现明显密钥/私钥/已跟踪env。当前硬件研究文档已去除非必要本机路径与参赛编号，保留原作者及官方资料来源；未改写历史。
+
 ## 边界
 
 - Linux构建基线Ubuntu22.04/glibc2.35，目标Ubuntu22.04+/Debian12+ amd64。没有验证所有发行版、ARM64或musl系统。
