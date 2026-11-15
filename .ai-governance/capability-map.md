@@ -16,5 +16,8 @@
 | 板载SPI Flash | 新增并集成 | engine/spiflash.py, firmware/spiflash_probe.c | 复用Unicorn/SPI1/GPIO网络，GD25Q40E轮询指令子集 |
 | 固定端点保护 | 修改 | scripts/generate-board-v1.py, engine/simulator.py | 固定网络和H7只读；H6只准两种模式；v1工程迁移和原子拒绝 |
 | 原图阅读 | 复用并新增入口 | docs/reference/, web/assets/schematics/, web/app.js | 原始V1 PDF不变，四页渲染预览在侧栏只读查看，复用现有弹窗/静态服务 |
+| Windows安装升级卸载 | 新增 | packaging/windows/, scripts/build-windows-installer.ps1 | Inno当前用户安装，固定产品ID；验收独立TestAppId不触碰正式安装 |
+| Linux发行与应用菜单 | 新增 | scripts/build-linux.sh, packaging/linux/ | Ubuntu22.04构建onedir、deb、tar；复用原固件内核和浏览器界面 |
+| Linux会话生命周期 | 扩展 | engine/desktop_session.py, engine/server.py | 用户级独占锁、当前实例退出校验、180秒无客户端退出；WPF生命周期不变 |
 
 禁区：不改原板固定网络；不猜测未知连线；不把未建模访问当成功；不上传本地密钥、个人目录或未授权第三方完整工程；不承诺已验证任意Keil固件。

@@ -12,3 +12,5 @@ Release use and redistribution must preserve applicable upstream terms. The proj
 
 - Python 3.13: Python Software Foundation license, bundled as licenses/Python-LICENSE.txt.
 - PyInstaller bootloader terms: licenses/PyInstaller-COPYING.txt.
+- Inno Setup 6.7.4: Windows installer build tool and installer engine, https://jrsoftware.org/ . Official Simplified Chinese translation is pinned by the setup script; compiler and translation downloads are hash-verified. Inno Setup is not required to run the installed application.
+- Linux desktop integration uses the system xdg-utils opener and an installed graphical browser. They are operating-system dependencies, not bundled browser engines.

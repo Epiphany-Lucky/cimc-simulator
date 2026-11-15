@@ -4,7 +4,7 @@
   const $ = id => document.getElementById(id);
   const svg = name => `<svg aria-hidden="true"><use href="#i-${name}"/></svg>`;
   const API = location.protocol === 'file:' ? 'http://127.0.0.1:8765' : '';
-  let connected = false, state = null, board = null, selectedPin = null;
+  let connected = false, state = null, board = null, selectedPin = null, sessionExited = false;
   let activePanel = 'serial', channel = 'ch340', pendingFile = null, busy = false;
   let toastTimer, pollTimer, pollInProgress = false, serialCutoff = -1, diagnosticCutoff = 0;
   let lastWires = '', lastSerial = '', lastDiagnostics = '', lastOled = '';
@@ -48,15 +48,17 @@
   }
 
   async function poll() {
-    if (pollInProgress) return;
+    if (pollInProgress || sessionExited) return;
     pollInProgress = true;
     clearTimeout(pollTimer);
     try {
       const result = await api('/api/state');
+      if (sessionExited) return;
       connected = true;
       $('connection-notice').hidden = true;
-      renderState(result.state || result);
+      if (!sessionExited) renderState(result.state || result);
     } catch {
+      if (sessionExited) return;
       connected = false;
       $('connection-notice').hidden = false;
       $('connection-status').className = 'status-pill';
@@ -68,11 +70,13 @@
       updateEnabled();
     } finally {
       pollInProgress = false;
-      pollTimer = setTimeout(poll, connected ? (document.hidden ? 700 : 130) : 1600);
+      if (!sessionExited) pollTimer = setTimeout(poll, connected ? (document.hidden ? 700 : 130) : 1600);
     }
   }
 
   function updateEnabled() {
+    $('exit-app-button').hidden = !state?.engine?.desktopSession || sessionExited;
+    $('exit-app-button').disabled = !connected || busy;
     document.querySelectorAll('[data-engine]').forEach(b => b.disabled = !connected || busy);
     document.querySelectorAll('[data-firmware]').forEach(b => b.disabled = !connected || !hasFirmware() || busy);
     $('step-button').disabled = !connected || !hasFirmware() || isRunning() || busy;
@@ -89,6 +93,7 @@
   }
 
   function renderState(next) {
+    if (sessionExited) return;
     state = next;
     const labels = { running: '正在运行', paused: '已暂停', loaded: '固件就绪', ready: '准备就绪', idle: '准备就绪', stopped: '已停止', error: '运行已中止', halted: '运行已中止', faulted: '运行已中止' };
     const status = next.status || 'idle';
@@ -476,6 +481,24 @@
   document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click',() => b.closest('dialog')?.close()));
   document.querySelectorAll('dialog').forEach(dialog => dialog.addEventListener('click',e => { if (e.target !== dialog) return; const r = dialog.getBoundingClientRect(); if (e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom) dialog.close(); }));
   $('help-button').addEventListener('click',() => $('help-dialog').showModal());
+  $('exit-app-button').addEventListener('click',async () => {
+    if (!state?.engine?.desktopSession || !connected) return;
+    busy = true; updateEnabled();
+    try {
+      await api('/api/session/quit',{instanceId:state.engine.instanceId});
+      sessionExited = true; connected = false; clearTimeout(pollTimer);
+      $('connection-status').className = 'status-pill';
+      $('connection-status').replaceChildren(node('i'),document.createTextNode('应用已退出'));
+      $('session-sub').textContent = '可以关闭此页面';
+      $('footer-engine').textContent = '本次仿真会话已结束';
+      $('oled-live').classList.remove('on');
+      $('connection-notice').hidden = false;
+      $('connection-notice').querySelector('strong').textContent = '应用已退出';
+      $('connection-message').textContent = '可关闭此页面；需要继续时，从应用菜单重新启动 CIMC Studio。';
+      $('retry-button').hidden = true;
+    } catch(error) { toast(error.message,true); }
+    finally { busy = false; updateEnabled(); }
+  });
   $('settings-button').addEventListener('click',() => $('settings-dialog').showModal());
 
   function applySchematicZoom() {
@@ -520,7 +543,7 @@
   $('schematic-zoom').addEventListener('change',()=>{applySchematicZoom();$('schematic-viewport').scrollTo({top:0,left:0,behavior:'instant'});});
 
   function showInfo(title, eyebrow, content) { $('info-title').textContent=title; $('info-eyebrow').textContent=eyebrow; $('info-content').replaceChildren(...content); $('info-dialog').showModal(); }
-  $('about-button').addEventListener('click',() => showInfo('CIMC Studio','PREVIEW 0.2',[node('p','','Windows 与浏览器共用的嵌入式仿真工作台。'),node('p','','载入 ARM 固件，探索程序与电路的每一次交互。'),node('p','','当前为功能预览版，具体外设支持范围以交付文档和运行诊断为准。CIMC Studio 为独立开发项目，非赛事官方软件。')]));
+  $('about-button').addEventListener('click',() => showInfo('CIMC Studio','PREVIEW 0.3',[node('p','','Windows 与浏览器共用的嵌入式仿真工作台。'),node('p','','载入 ARM 固件，探索程序与电路的每一次交互。'),node('p','','当前为功能预览版，具体外设支持范围以交付文档和运行诊断为准。CIMC Studio 为独立开发项目，非赛事官方软件。')]));
   $('board-info-button').addEventListener('click',() => {
     const content = [];
     for (const [label,value] of [['板卡',board?.name || 'GD32F470 V1.0'],['资料状态',board?.verified ? '已核验' : 'V1 原理图已核对；外设功能为子集'],['可见端点',String(board?.pins?.length || 0)],['线路规则','固定网络只读；仅增删自己的跳线']]) { const row=node('div','info-row');row.append(node('span','',label),node('strong','',value));content.push(row); }

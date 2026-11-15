@@ -11,7 +11,7 @@ from urllib.request import Request,urlopen
 package=Path(sys.argv[1]).resolve()
 with socket.socket() as s:s.bind(('127.0.0.1',0));port=s.getsockname()[1]
 url=f'http://127.0.0.1:{port}'
-process=subprocess.Popen([str(package/'CIMC-Engine.exe'),'--port',str(port)],cwd=package,
+process=subprocess.Popen([str(package/('CIMC-Engine.exe' if sys.platform=='win32' else 'CIMC-Engine')),'--port',str(port)],cwd=package,
                          stdout=subprocess.PIPE,stderr=subprocess.PIPE,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
 def state():
     with urlopen(url+'/api/state',timeout=3) as r:return json.load(r)

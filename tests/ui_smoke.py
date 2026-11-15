@@ -7,7 +7,7 @@ from playwright.sync_api import sync_playwright, expect
 ROOT=Path(__file__).resolve().parents[1]
 url=sys.argv[1] if len(sys.argv)>1 else 'http://127.0.0.1:8765'
 with sync_playwright() as p:
-    browser=p.chromium.launch(channel='msedge',headless=True)
+    browser=p.chromium.launch(channel='msedge' if sys.platform=='win32' else None,headless=True)
     page=browser.new_page(viewport={'width':1440,'height':1000},device_scale_factor=1)
     errors=[]
     page.on('pageerror',lambda e:errors.append(str(e)))

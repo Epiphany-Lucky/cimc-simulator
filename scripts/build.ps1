@@ -1,4 +1,4 @@
-param([string]$Version = '0.2.0')
+param([string]$Version = '0.3.0')
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 Set-Location -LiteralPath $projectRoot
@@ -29,7 +29,7 @@ foreach ($folder in @('engine','tests','scripts','desktop')) {
     New-Item -ItemType Directory -Path $destination -Force | Out-Null
     Get-ChildItem -LiteralPath $folder -File | Copy-Item -Destination $destination -Force
 }
-foreach ($folder in @('web','firmware','assets','docs','licenses','.github','.ai-governance')) {
+foreach ($folder in @('web','firmware','assets','docs','licenses','packaging','.github','.ai-governance')) {
     Copy-Item -LiteralPath $folder -Destination $sourceRoot -Recurse -Force
 }
 Copy-Item -LiteralPath 'README.md','THIRD_PARTY_NOTICES.md','CHANGELOG.md','requirements-dev.txt','.gitignore' -Destination $sourceRoot -Force

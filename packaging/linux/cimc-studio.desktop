@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Name=CIMC Studio
+GenericName=Embedded Firmware Simulator
+GenericName[zh_CN]=嵌入式固件仿真工作台
+Comment=Run Keil HEX/BIN firmware on a virtual CIMC V1 board
+Comment[zh_CN]=在虚拟 CIMC V1 开发板上运行 Keil HEX/BIN 固件
+Exec=/usr/bin/cimc-studio
+TryExec=/usr/bin/cimc-studio
+Icon=cimc-studio
+Terminal=false
+StartupNotify=false
+Categories=Development;Electronics;Education;
+Keywords=CIMC;GD32;Keil;ARM;Simulator;

@@ -13,7 +13,7 @@ assert hashlib.sha256(PDF.read_bytes()).hexdigest() == PDF_SHA256
 (ROOT / 'artifacts').mkdir(exist_ok=True)
 
 with sync_playwright() as p:
-    browser = p.chromium.launch(channel='msedge', headless=True)
+    browser = p.chromium.launch(channel='msedge' if sys.platform=='win32' else None, headless=True)
     page = browser.new_page(viewport={'width': 1280, 'height': 720}, accept_downloads=True)
     errors, commands, file_choosers = [], [], []
     page.on('pageerror', lambda error: errors.append(str(error)))

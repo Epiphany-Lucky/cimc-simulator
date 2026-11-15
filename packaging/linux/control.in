@@ -1,0 +1,15 @@
+Package: cimc-studio
+Version: @VERSION@
+Section: devel
+Priority: optional
+Architecture: amd64
+Maintainer: CIMC Studio Project <1579583959@qq.com>
+Installed-Size: @INSTALLED_SIZE@
+Depends: libc6 (>= 2.35), libstdc++6, zlib1g, xdg-utils
+Recommends: firefox | firefox-esr | chromium | chromium-browser
+Homepage: https://github.com/Epiphany-Lucky/cimc-simulator
+Description: Local embedded firmware simulation workbench
+ Executes ARM HEX/BIN firmware with a functional GD32F470 V1 board model.
+ Includes the Python runtime and Unicorn CPU engine. The graphical workbench
+ opens in the user's default desktop browser; no physical COM port or board
+ is needed. This package targets Ubuntu 22.04+ and Debian 12+ on amd64.

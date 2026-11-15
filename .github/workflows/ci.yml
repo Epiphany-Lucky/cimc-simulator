@@ -5,32 +5,40 @@ on:
     tags: ['v*']
   pull_request:
   workflow_dispatch:
+    inputs:
+      build_packages:
+        description: Build and test Windows/Linux installers
+        type: boolean
+        default: true
 permissions:
   contents: read
+env:
+  CIMC_VERSION: '0.3.0'
 jobs:
   verify:
-    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-22.04]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
       - uses: actions/setup-dotnet@v4
+        if: runner.os == 'Windows'
         with:
           dotnet-version: '10.0.x'
       - name: Install emulator dependencies
         run: python -m pip install -r engine/requirements.txt
-      - name: Run firmware and circuit tests
+      - name: Run firmware, circuit and service tests
         run: python -m unittest discover -s tests -v
       - name: Build Windows shell
+        if: runner.os == 'Windows'
         run: dotnet build desktop/CimcLab.csproj -c Release
-      - name: Upload browser application
-        uses: actions/upload-artifact@v4
-        with:
-          name: cimc-studio-html
-          path: web/
-  package:
-    if: startsWith(github.ref, 'refs/tags/v')
+  package-windows:
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.build_packages)
     needs: verify
     runs-on: windows-latest
     steps:
@@ -44,12 +52,72 @@ jobs:
       - name: Install build dependencies
         shell: pwsh
         run: ./scripts/setup.ps1 -Testing
-      - name: Build both distributable applications
+      - name: Build Windows and HTML packages
         shell: pwsh
-        run: ./scripts/build.ps1
-      - name: Execute packaged firmware engine
-        run: .venv/Scripts/python.exe tests/package_smoke.py artifacts/CIMC-Studio-0.2.0-html-local
+        run: ./scripts/build.ps1 -Version $env:CIMC_VERSION
+      - name: Build current-user Windows installer
+        shell: pwsh
+        run: ./scripts/build-windows-installer.ps1 -Version $env:CIMC_VERSION
+      - name: Test isolated install, firmware execution, upgrade and uninstall
+        shell: pwsh
+        run: .venv/Scripts/python.exe tests/windows_installer_smoke.py "artifacts/CIMC-Studio-$env:CIMC_VERSION-win-x64" --version $env:CIMC_VERSION --skip-desktop
       - uses: actions/upload-artifact@v4
         with:
-          name: windows-and-html-release
-          path: artifacts/CIMC-Studio-*.zip
+          name: cimc-studio-windows
+          path: |
+            artifacts/CIMC-Studio-*-Setup-x64.exe
+            artifacts/CIMC-Studio-*.zip
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-install-verification
+          path: |
+            artifacts/installer-smoke-*/result.json
+            artifacts/installer-smoke-*/*.log
+  package-linux:
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.build_packages)
+    needs: verify
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install Linux build dependencies
+        run: python -m pip install -r engine/requirements.txt -r requirements-dev.txt
+      - name: Build Linux application and Debian installer
+        run: bash scripts/build-linux.sh "$CIMC_VERSION"
+      - name: Install browser acceptance dependencies
+        run: |
+          python -m pip install playwright==1.65.2
+          python -m playwright install --with-deps chromium
+      - name: Install Debian package
+        run: sudo apt-get install -y --no-install-recommends "./artifacts/cimc-studio_${CIMC_VERSION}_amd64.deb"
+      - name: Execute installed firmware engine
+        run: python tests/package_smoke.py /opt/cimc-studio
+      - name: Exercise installed Linux browser workbench
+        run: python tests/linux_browser_smoke.py /opt/cimc-studio
+      - name: Verify installed launcher lifecycle
+        run: python tests/linux_install_smoke.py /opt/cimc-studio
+      - name: Uninstall Debian package
+        run: |
+          sudo dpkg --remove cimc-studio
+          test ! -e /usr/bin/cimc-studio
+          test ! -e /opt/cimc-studio/CIMC-Engine
+          test ! -e /usr/share/applications/cimc-studio.desktop
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cimc-studio-linux
+          path: |
+            artifacts/cimc-studio_*.deb
+            artifacts/CIMC-Studio-*-linux-x64.tar.gz
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: linux-install-verification
+          path: |
+            artifacts/*linux*.log
+            artifacts/*linux*.json
+            artifacts/*linux*.png
+            artifacts/laptop-*-v02.png
+            artifacts/schematic-*.png

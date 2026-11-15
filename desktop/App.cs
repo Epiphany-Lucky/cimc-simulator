@@ -39,7 +39,7 @@ public sealed class App : Application
             var workArea = SystemParameters.WorkArea;
             var window = new Window
             {
-                Title = "CIMC Studio · 0.2.0",
+                Title = "CIMC Studio · 0.3.0",
                 Width = Math.Min(1280, Math.Max(320, workArea.Width - 32)),
                 Height = Math.Min(820, Math.Max(240, workArea.Height - 32)),
                 WindowStartupLocation = WindowStartupLocation.CenterScreen,

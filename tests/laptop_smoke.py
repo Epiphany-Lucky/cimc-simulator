@@ -14,7 +14,7 @@ URL = (sys.argv[1] if len(sys.argv) > 1 else 'http://127.0.0.1:8765').rstrip('/'
 
 
 with sync_playwright() as p:
-    browser = p.chromium.launch(channel='msedge', headless=True)
+    browser = p.chromium.launch(channel='msedge' if sys.platform=='win32' else None, headless=True)
     page = browser.new_page(viewport={'width': 1280, 'height': 660})
     errors = []
     page.on('pageerror', lambda error: errors.append(str(error)))
