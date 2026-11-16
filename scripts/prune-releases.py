@@ -98,7 +98,8 @@ def main():
         if not any(args.current_version in v.get('metadata', {}).get('container', {}).get('tags', []) for v in versions):
             raise SystemExit('Current GHCR version is missing; nothing deleted: ' + name)
         packages[name] = package_deletions(versions, args.current_version)
-    report = {'currentVersion': args.current_version, 'executed': args.execute,
+    report = {'format': 'cimc-remote-installer-cleanup-v1', 'repository': REPO,
+              'currentVersion': args.current_version, 'executed': args.execute,
               'releaseAssets': release_deletions(releases, args.current_version), 'packageVersions': packages,
               'deleted': [], 'verified': False}
     args.report.parent.mkdir(parents=True, exist_ok=True)

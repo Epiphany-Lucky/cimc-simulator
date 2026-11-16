@@ -9,8 +9,18 @@ $current = [version]$CurrentVersion
 $projectRoot = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
 $artifactRoot = [IO.Path]::GetFullPath((Join-Path $projectRoot 'artifacts'))
 $prefix = $artifactRoot + [IO.Path]::DirectorySeparatorChar
+$ancestor = $artifactRoot
+while ($ancestor) {
+    if (((Get-Item -LiteralPath $ancestor -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
+        throw "Refusing linked workspace ancestor: $ancestor"
+    }
+    $ancestor = Split-Path -Parent $ancestor
+}
 $proof = Get-Content -LiteralPath $PublicationReport -Raw | ConvertFrom-Json
-if ($proof.currentVersion -ne $CurrentVersion -or $proof.verified -ne $true -or $proof.executed -ne $true) {
+if ($proof.format -ne 'cimc-remote-installer-cleanup-v1' -or $proof.repository -ne 'Epiphany-Lucky/cimc-simulator' -or
+    $proof.currentVersion -ne $CurrentVersion -or $proof.verified -isnot [bool] -or $proof.verified -ne $true -or
+    $proof.executed -isnot [bool] -or $proof.executed -ne $true -or
+    $null -eq $proof.packageVersions.'cimc-studio-windows' -or $null -eq $proof.packageVersions.'cimc-studio-linux') {
     throw 'A successful publication and remote cleanup report for this version is required.'
 }
 $targets = [Collections.Generic.List[string]]::new()
