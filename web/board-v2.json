@@ -4609,5 +4609,28 @@
         ]
       ]
     }
+  ],
+  "fixedPulls": [
+    {
+      "net": "FLASH_CS",
+      "level": 1,
+      "resistanceOhms": 10000,
+      "component": "R26",
+      "evidence": "V2 schematic p2 R26, 10k to 3V3"
+    },
+    {
+      "net": "E_SCL",
+      "level": 1,
+      "resistanceOhms": 10000,
+      "component": "R27",
+      "evidence": "V2 schematic p2 R27, 10k to 3V3"
+    },
+    {
+      "net": "E_SDA",
+      "level": 1,
+      "resistanceOhms": 10000,
+      "component": "R28",
+      "evidence": "V2 schematic p2 R28, 10k to 3V3"
+    }
   ]
 }

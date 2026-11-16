@@ -101,6 +101,11 @@ fixed = {
 board['fixedNets'] += [{'id': 'schematic_' + name, 'nodes': nodes, 'locked': True, 'verified': True,
                        'evidence': 'V2 schematic p1 MCU net labels and p2/p4 peripheral terminals'}
                       for name, nodes in fixed.items()]
+board['fixedPulls'] = [
+    {'net': net, 'level': 1, 'resistanceOhms': 10000, 'component': component,
+     'evidence': f'V2 schematic p2 {component}, 10k to 3V3'}
+    for component, net in (('R26', 'FLASH_CS'), ('R27', 'E_SCL'), ('R28', 'E_SDA'))
+]
 board['provisionalFixedNets'] = []
 board['fixedVisualWires'] = []
 examples = [('H10.1', 'H10.3'), ('H10.2', 'H10.4'),
