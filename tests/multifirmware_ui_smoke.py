@@ -5,6 +5,7 @@ No unittest discovery and no mocked simulation output.
 """
 import json
 import sys
+import time
 from pathlib import Path
 
 from playwright.sync_api import expect, sync_playwright
@@ -36,9 +37,15 @@ with sync_playwright() as p:
         return page.request.get(URL + '/api/state').json()
 
     def wait_state(expression):
-        page.wait_for_function(
-            "() => fetch('/api/state').then(r => r.json()).then(s => (" + expression + "))",
-            timeout=30000)
+        # wait_for_function treats a returned Promise as truthy in this runtime;
+        # request synchronously and evaluate a plain boolean from the response.
+        deadline = time.monotonic() + 30
+        while time.monotonic() < deadline:
+            snapshot = state()
+            if page.evaluate('(s) => (' + expression + ')', snapshot):
+                return snapshot
+            page.wait_for_timeout(100)
+        raise AssertionError(f'Timed out waiting for {expression}: {snapshot}')
 
     def apply():
         page.locator('#firmware-set-apply').click()
@@ -94,7 +101,7 @@ with sync_playwright() as p:
 
     run_from_bootloader('1', 'A', '0x08010000', 0)
     page.locator('#reset-button').click()
-    wait_state("s.status === 'loaded' && s.cpu.instructions === 0")
+    wait_state("s.status === 'ready' && s.cpu.instructions === 0")
     assert len(state()['firmwares']) == 3
     run_from_bootloader('2', 'B', '0x08020000', 1)
     page.locator('#run-button').click()

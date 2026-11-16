@@ -5,9 +5,11 @@ The ADC and SPI assertions use actual ARM firmware and the live local API.
 """
 import json
 import sys
+import time
 from pathlib import Path
 
 from playwright.sync_api import expect, sync_playwright
+from browser_waits import wait_for_api_state
 
 ROOT = Path(__file__).resolve().parents[1]
 URL = (sys.argv[1] if len(sys.argv) > 1 else 'http://127.0.0.1:8765').rstrip('/')
@@ -25,9 +27,27 @@ with sync_playwright() as p:
         return page.request.get(URL + '/api/state').json()
 
     def wait_state(expression):
-        page.wait_for_function(
-            "() => fetch('/api/state').then(r => r.json()).then(s => (" + expression + "))",
-            timeout=30000)
+        return wait_for_api_state(page, URL,
+                                  lambda snapshot: page.evaluate('(s) => (' + expression + ')', snapshot),
+                                  description=expression)
+
+    # Negative controls catch the former Promise-truthiness bug before any
+    # hardware assertions: a false condition must time out, not "pass".
+    started = time.monotonic()
+    try:
+        wait_for_api_state(page, URL, lambda snapshot: False,
+                           description='negative control', timeout_ms=200, poll_interval_ms=40)
+    except AssertionError as error:
+        assert 'Timed out waiting for negative control' in str(error), str(error)
+        assert time.monotonic() - started >= 0.18
+    else:
+        raise AssertionError('A false API condition incorrectly passed')
+    try:
+        wait_for_api_state(page, URL, lambda snapshot: {'not': 'a boolean'})
+    except TypeError:
+        pass
+    else:
+        raise AssertionError('A truthy non-boolean API condition incorrectly passed')
 
     # A fresh load leaves ADC readings empty until firmware requests conversion.
     page.locator('#demo-button').click()
@@ -165,7 +185,7 @@ with sync_playwright() as p:
 
     assert not errors, errors
     print(json.dumps(layouts, ensure_ascii=False))
-    print('PASS: six laptop viewports and mobile; real ADC keyboard/pointer/range input and conversions; '
+    print('PASS: false-condition timeout and non-boolean rejection; six laptop viewports and mobile; real ADC keyboard/pointer/range input and conversions; '
           'four readonly OLED routes; fixed pins; managed H6 routes and RS232 RX/TX; '
           'real SPI read/write/erase UI counters; no JS exceptions.')
     browser.close()
