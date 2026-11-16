@@ -1,6 +1,6 @@
 # V0.4 多固件与 Bootloader 验收
 
-日期：2026-11-16。本记录区分真实编译固件、源码内核、界面、冻结安装包和在线发布证据。**当前是待补齐的验收记录；未在下文记录的 0.4 安装包、CI 或发布结果不得视为通过。** V0.3 的既有报告不能替代本版安装验收。
+日期：2026-11-16。本记录区分真实编译固件、源码内核、界面、冻结安装包和在线发布证据。**0.4.0已发布，安装、更新识别、Packages回拉与旧分发文件清理均完成。** 发布源码为`8221c1ff0fe2b6c5aee42b76fc9d62552092f90c`；后续验收记录提交只补充事实，不替换已测试版本标签或安装文件。
 
 ## 已完成：真实 Keil 验收固件
 
@@ -30,7 +30,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File firmware\build-boot-prob
 .venv\Scripts\python.exe -m unittest discover -s tests -p test_multifirmware.py -v
 ```
 
-实际结果：**17 项通过，0 失败，0 跳过，退出码 0**。这是本文建立时的专项结果；最终分支完整回归数量、提交号及 CI 结果仍需在后续表中补齐。
+实际结果：**17 项通过，0 失败，0 跳过，退出码 0**。这是本文建立时的专项结果；最终分支完整回归数量、提交号及 CI 结果见后续交付验收表。
 
 该回归覆盖：
 
@@ -63,25 +63,25 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File firmware\build-boot-prob
 
 `tests/test_scheduler.py`独立12项通过：大块/小块/单步的完整CPU与SysTick状态一致；pending、PRIMASK、真实BX异常返回、栈恢复；故障和零进展停止；有/无中断的墙钟限制；密集中断暂停/恢复/关闭与临时时间片清理。未降低密集中断1000条/2秒的回归门槛。
 
-新增冻结包交错三组相对吞吐回归，门槛为SysTick/无IRQ中位速率≥0.25。修改前的0.4冻结包已作为负对照实际失败（比值0.0743），因此该测试可识别旧问题。此前的Windows安装通过记录属于修复前；最终包须重新构建验收。
+新增冻结包交错三组相对吞吐回归，门槛为SysTick/无IRQ中位速率≥0.25。修改前的0.4冻结包已作为负对照实际失败（比值0.0743），因此该测试可识别旧问题。随后已重新构建最终引擎和安装包并完成下表验收，未用修复前安装结果替代。
 
 ## 最终交付验收表
 
-以下为验收项，不是已完成声明。由主发布流程填入实际命令、报告路径、提交号、摘要和运行链接；未通过的项目保留失败原因。
+以下均为本次实际执行结果。安装包来源、平台与图形界面证据分别列明；本地Windows构建与CI构建不声称字节相同，同包WSL校验则精确匹配发行tar。
 
 | 验收项 | 当前证据状态 | 完成时需要记录 |
 |---|---|---|
-| 最终 Windows/Linux 全量源码回归 | Windows已通过，Linux待CI | `python -m unittest discover -s tests -v`：118项，108通过、10项Linux专属跳过；包括调度12项、清理流程14项与HTTP边界8项；日志artifacts/v04-final-windows-build.log |
+| 最终 Windows/Linux 全量源码回归 | 通过 | Windows118项，108通过、10项Linux专属跳过；Linux118项全部通过。最终源码`8221c1ff0fe2b6c5aee42b76fc9d62552092f90c`；[CI 43804681787](https://github.com/Epiphany-Lucky/cimc-simulator/actions/runs/43804681787)全部4个job成功 |
 | 多固件对话框和工作台 | Windows源码服务已通过 | `multifirmware_ui_smoke.py`、`ui_smoke.py`、`laptop_smoke.py`、`schematic_smoke.py`；3BIN/8镜像、真实串口选A/B、错误草稿/取消/启动选择、v3工程往返、超过6MiB实际请求；1024×600与390px截图在artifacts/multifirmware-*.png；无JS异常 |
-| Windows/HTML 冻结包 | 待补 | 构建命令；安装后及便携包真实多镜像/MSP/VTOR/SysTick结果；文件摘要 |
-| Windows 安装/覆盖/卸载 | 待补 | 隔离 TestAppId、原生 WPF、用户文件保留、报告路径 |
-| Ubuntu 22.04 安装与冻结包 | 待补 | apt 安装、真实多固件、浏览器、生命周期、卸载、CI链接 |
-| Debian 12 安装与运行 | 待补 | 同一 DEB 安装、真实固件、生命周期、卸载 |
-| WSL 同一 Linux 发行包 | 待补 | 包 SHA-256、实际多固件执行与退出结果 |
-| GitHub CI 与 Release | 待补 | 最终提交/标签/工作流；发布文件与 SHA256SUMS；匿名下载核对 |
-| GHCR Packages | 待补 | Windows/Linux推送及回拉摘要匹配；可见性实际状态（当前仍私有） |
-| 在线更新识别 | 待补 | 公开更新源返回0.4.0、旧客户端可识别及下载链接验证 |
-| 旧版分发文件清理 | 待补，必须最后执行 | 已枚举目标及删除结果；确认源码/标签/Release公告/验证报告保留 |
+| Windows/HTML 冻结包 | 通过 | 重新构建真实新引擎；HTML多固件UI、所有外设及Bootloader HEX/BIN回归通过。SysTick/无IRQ吞吐比：HTML0.98861、实际安装后0.93300；日志artifacts/v04-final-html-package-smoke.log及v04-final-html-ui-smoke.log |
+| Windows 安装/覆盖/卸载 | 通过 | 独立TestAppId `db5f3c6abc27`；原生WPF120DPI位于工作区，OLED/JEDEC/ADC/原图、关闭自有内核、重装与卸载保留用户文件均通过；artifacts/installer-smoke-db5f3c6abc27/result.json。云端另通过同提交安装/运行/升级/卸载（不冒称云端原生桌面验收） |
+| Ubuntu 22.04 安装与冻结包 | 通过 | 最终CI同包apt安装、真实固件、全部Chromium工作台用例及退出、生命周期、卸载通过；SysTick比值1.00006 |
+| Debian 12 安装与运行 | 通过 | 最终CI同DEB在Debian12容器安装、真实固件、生命周期、卸载通过；SysTick比值0.99999；Debian容器未做图形浏览器验收 |
+| WSL 同一 Linux 发行包 | 通过 | artifact14198031656的API摘要核对一致，Linux tar SHA256为`440e9fcfad0cdf2d32bed76f4a2b9c69c62da9b3ac8c47444e0fcd1ed5cd9355`；WSL Ubuntu26.04运行同tar真实固件与便携生命周期通过，SysTick比值0.99824；artifacts/v04-final-linux-verification.json |
+| GitHub CI 与 Release | 通过，已发布 | `v0.4.0`指向最终CI提交；[发行组装43805352121](https://github.com/Epiphany-Lucky/cimc-simulator/actions/runs/43805352121)核对CI与tag并附五包、SHA256SUMS及独立验收记录；[公开Release](https://github.com/Epiphany-Lucky/cimc-simulator/releases/tag/v0.4.0) |
+| GHCR Packages | 通过 | [发布和清理43805602944](https://github.com/Epiphany-Lucky/cimc-simulator/actions/runs/43805602944)两平台push/pull、逐文件对原始Release摘要检查通过；保留0.4.0/latest。包当前仍私有，公开下载用Release |
+| 在线更新识别 | 通过 | 实际冻结0.3.0客户端返回latestVersion=0.4.0/available=true；0.4.0返回available=false；Windows安装器、DEB、Linux tar、HTML四个匿名下载入口均HTTP200。artifacts/v04-public-update-check.json |
+| 旧版分发文件清理 | 已完成，最后执行 | 0.1/0.2旧安装ZIP及清单已删除；自动流程删除0.3五包+清单及两个旧GHCR版本；本地18个旧分发文件/目录随后删除。Git标签、公告及0.3验收附件保留；[清理记录](releases/cleanup-v0.4.0.json) |
 
 ## 容量、证据与运行边界
 

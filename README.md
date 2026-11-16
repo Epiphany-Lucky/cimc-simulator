@@ -2,7 +2,7 @@
 
 面向 CIMC 工业嵌入式训练的本地固件仿真工作台。第一版按用户最新选择使用 **GD32F470 V1.0**；Windows 安装版、Ubuntu/Debian 安装版与 HTML 网页共用界面和本地执行内核。
 
-当前开发版本：**0.4.0，开发预览**。新增多固件共同烧录、启动选择和真实 Bootloader 跳转。确切支持范围、硬件证据及本版发布验收进度见 [硬件证据](docs/hardware-evidence.md)、[0.4 公告](docs/releases/v0.4.0.md) 和 [验收记录](docs/validation-v0.4.md)。不能将开发预览视为全部 Keil 工程或官方评测的兼容证明。
+当前发行版本：**[0.4.0，开发预览](https://github.com/Epiphany-Lucky/cimc-simulator/releases/tag/v0.4.0)**。新增多固件共同烧录、启动选择和真实 Bootloader 跳转，并修复SysTick中断调度停顿。确切支持范围、硬件证据及本版发布验收见 [硬件证据](docs/hardware-evidence.md)、[0.4 公告](docs/releases/v0.4.0.md) 和 [验收记录](docs/validation-v0.4.md)。不能将开发预览视为全部 Keil 工程或官方评测的兼容证明。
 
 ![V1.0 工作台](docs/ui-preview.png)
 
@@ -55,7 +55,7 @@ HTML 源码位于 `web/index.html`，不依赖 CDN。**浏览器与桌面版运�
 
 侧栏“设置”提供 **检查更新** 和 **新版本提醒**。默认在启动时及保持使用期间每6小时检查本项目GitHub发行版；发现新版本后从设置中的对应系统链接下载，保存工程、退出应用后安装。窄屏可从右上角“C → 软件更新与设置”进入。断网可继续仿真。
 
-源码仓库和 Releases 公开。仓库关联的 Windows/Linux GHCR Packages **目前仍为私有**，不能承诺匿名拉取；0.4 的发布目标标签为 `ghcr.io/epiphany-lucky/cimc-studio-windows:0.4.0`、`ghcr.io/epiphany-lucky/cimc-studio-linux:0.4.0`，实际上传及回拉结果见验收记录。它们是安装文件的版本化分发容器；直接安装推荐公开 Releases 的 EXE/DEB。提取方式见 [安装说明](docs/install.md#github-packages)。
+源码仓库和 Releases 公开。仓库关联的 Windows/Linux GHCR Packages **目前仍为私有**，不能匿名拉取；已发布并回拉验证 `ghcr.io/epiphany-lucky/cimc-studio-windows:0.4.0`、`ghcr.io/epiphany-lucky/cimc-studio-linux:0.4.0`及`latest`。它们是安装文件的版本化分发容器；直接安装推荐公开 Releases 的 EXE/DEB。旧Release安装附件和旧Packages版本已按发布流程清理，源码标签及公告保留。提取方式见 [安装说明](docs/install.md#github-packages)。
 
 ## 开发环境
 

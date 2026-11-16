@@ -1,0 +1,151 @@
+{
+  "date": "2026-11-16",
+  "version": "0.4.0",
+  "workflow": "https://github.com/Epiphany-Lucky/cimc-simulator/actions/runs/43805602944",
+  "remote": {
+    "format": "cimc-remote-installer-cleanup-v1",
+    "repository": "Epiphany-Lucky/cimc-simulator",
+    "currentVersion": "0.4.0",
+    "executed": true,
+    "releaseAssets": [
+      {
+        "tag": "v0.3.0",
+        "name": "CIMC-Studio-0.3.0-html-local.zip",
+        "id": 751035280
+      },
+      {
+        "tag": "v0.3.0",
+        "name": "CIMC-Studio-0.3.0-linux-x64.tar.gz",
+        "id": 751035284
+      },
+      {
+        "tag": "v0.3.0",
+        "name": "CIMC-Studio-0.3.0-Setup-x64.exe",
+        "id": 751035286
+      },
+      {
+        "tag": "v0.3.0",
+        "name": "CIMC-Studio-0.3.0-win-x64.zip",
+        "id": 751035278
+      },
+      {
+        "tag": "v0.3.0",
+        "name": "cimc-studio_0.3.0_amd64.deb",
+        "id": 751035288
+      },
+      {
+        "tag": "v0.3.0",
+        "name": "SHA256SUMS-0.3.0.txt",
+        "id": 751035350
+      }
+    ],
+    "packageVersions": {
+      "cimc-studio-windows": [
+        {
+          "id": 1567916634,
+          "tags": [
+            "0.3.0"
+          ]
+        }
+      ],
+      "cimc-studio-linux": [
+        {
+          "id": 1567915861,
+          "tags": [
+            "0.3.0"
+          ]
+        }
+      ]
+    },
+    "deleted": [
+      {
+        "kind": "releaseAsset",
+        "tag": "v0.3.0",
+        "name": "CIMC-Studio-0.3.0-html-local.zip",
+        "id": 751035280
+      },
+      {
+        "kind": "releaseAsset",
+        "tag": "v0.3.0",
+        "name": "CIMC-Studio-0.3.0-linux-x64.tar.gz",
+        "id": 751035284
+      },
+      {
+        "kind": "releaseAsset",
+        "tag": "v0.3.0",
+        "name": "CIMC-Studio-0.3.0-Setup-x64.exe",
+        "id": 751035286
+      },
+      {
+        "kind": "releaseAsset",
+        "tag": "v0.3.0",
+        "name": "CIMC-Studio-0.3.0-win-x64.zip",
+        "id": 751035278
+      },
+      {
+        "kind": "releaseAsset",
+        "tag": "v0.3.0",
+        "name": "cimc-studio_0.3.0_amd64.deb",
+        "id": 751035288
+      },
+      {
+        "kind": "releaseAsset",
+        "tag": "v0.3.0",
+        "name": "SHA256SUMS-0.3.0.txt",
+        "id": 751035350
+      },
+      {
+        "kind": "packageVersion",
+        "package": "cimc-studio-windows",
+        "id": 1567916634,
+        "tags": [
+          "0.3.0"
+        ]
+      },
+      {
+        "kind": "packageVersion",
+        "package": "cimc-studio-linux",
+        "id": 1567915861,
+        "tags": [
+          "0.3.0"
+        ]
+      }
+    ],
+    "verified": true
+  },
+  "earlierReleases": {
+    "v0.1.0": "two installer ZIPs and checksum removed; remaining uploaded assets empty",
+    "v0.2.0": "two installer ZIPs removed; remaining uploaded assets empty"
+  },
+  "local": {
+    "verified": true,
+    "removedCount": 18,
+    "removed": [
+      "artifacts/CIMC-Studio-0.1.0-html-local",
+      "artifacts/CIMC-Studio-0.1.0-win-x64",
+      "artifacts/CIMC-Studio-0.2.0-html-local",
+      "artifacts/CIMC-Studio-0.2.0-win-x64",
+      "artifacts/CIMC-Studio-0.3.0-html-local",
+      "artifacts/CIMC-Studio-0.3.0-win-x64",
+      "artifacts/github-linux-v0.3/cimc-studio_0.3.0_amd64.deb",
+      "artifacts/github-linux-v0.3/CIMC-Studio-0.3.0-linux-x64.tar.gz",
+      "artifacts/installer-smoke-74c50dc0d587/CIMC-Studio-0.3.0-Test-74c50dc0d587-Setup-x64.exe",
+      "artifacts/installer-smoke-dbb506ebff2c/CIMC-Studio-0.3.0-Test-dbb506ebff2c-Setup-x64.exe",
+      "artifacts/CIMC-Studio-0.1.0-html-local.zip",
+      "artifacts/CIMC-Studio-0.1.0-win-x64.zip",
+      "artifacts/CIMC-Studio-0.2.0-html-local.zip",
+      "artifacts/CIMC-Studio-0.2.0-win-x64.zip",
+      "artifacts/CIMC-Studio-0.3.0-html-local.zip",
+      "artifacts/CIMC-Studio-0.3.0-Setup-x64.exe",
+      "artifacts/CIMC-Studio-0.3.0-win-x64.zip",
+      "artifacts/cimc-studio-linux-ci-43716184712.zip"
+    ]
+  },
+  "preserved": [
+    "current 0.4.0 installer files",
+    "Git commits and version tags",
+    "release announcements",
+    "historical validation records",
+    "build tools and user files"
+  ]
+}

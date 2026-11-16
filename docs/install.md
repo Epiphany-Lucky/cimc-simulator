@@ -60,7 +60,7 @@ v3 工程包含固件原始字节、地址、启动向量，以及接线、串�
 
 ## GitHub Packages
 
-仓库关联两个 OCI 安装文件包，本次目标标签为 `ghcr.io/epiphany-lucky/cimc-studio-windows:0.4.0` 与 `ghcr.io/epiphany-lucky/cimc-studio-linux:0.4.0`；实际上传、摘要和回拉结果见本版验收记录。它们保存与 Releases 相同的安装文件及 SHA256 清单，供版本化拉取；普通安装请直接下载公开 Releases 中的 EXE/DEB。这些 OCI 包是文件容器，不是可运行的仿真服务镜像。
+仓库关联两个 OCI 安装文件包，已发布并回拉验证 `ghcr.io/epiphany-lucky/cimc-studio-windows:0.4.0` 与 `ghcr.io/epiphany-lucky/cimc-studio-linux:0.4.0`及`latest`；实际摘要和结果见本版验收记录。它们保存与 Releases 相同的安装文件及 SHA256 清单，供版本化拉取；普通安装请直接下载公开 Releases 中的 EXE/DEB。这些 OCI 包是文件容器，不是可运行的仿真服务镜像。
 
 例如使用Docker提取Linux安装文件（不会启动容器）：
 
