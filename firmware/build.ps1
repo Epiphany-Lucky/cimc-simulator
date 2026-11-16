@@ -1,4 +1,4 @@
-param([switch]$Gnu, [ValidateSet('demo','systick','adc_probe','spiflash_probe','v2_spiflash_probe')][string]$Target='demo')
+param([switch]$Gnu, [ValidateSet('demo','systick','adc_probe','spiflash_probe','v2_spiflash_probe','bitband_probe')][string]$Target='demo')
 $ErrorActionPreference = 'Stop'
 Push-Location $PSScriptRoot
 try {

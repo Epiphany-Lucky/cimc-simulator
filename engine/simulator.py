@@ -280,8 +280,10 @@ class Simulator:
         uc.mem_map(SRAM,SRAM_SIZE)
         uc.mem_map(CCM,CCM_SIZE,UC_PROT_READ|UC_PROT_WRITE)
         uc.mmio_map(0x40000000,0x30000,self._mmio_read,0x40000000,self._mmio_write,0x40000000)
+        uc.mmio_map(0x42000000,0x2000000,self._bitband_read,None,self._bitband_write,None)
         uc.mmio_map(0xE000E000,0x2000,self._mmio_read,0xE000E000,self._mmio_write,0xE000E000)
         uc.hook_add(UC_HOOK_MEM_INVALID,self._invalid)
+        uc.hook_add(UC_HOOK_MEM_READ|UC_HOOK_MEM_WRITE,self._bitband_access,begin=0x42000000,end=0x43FFFFFF)
         uc.hook_add(UC_HOOK_CODE,self._code_hook)
         uc.hook_add(UC_HOOK_INTR,self._interrupt)
         uc.reg_write(UC_ARM_REG_SP,program.sp)
@@ -353,6 +355,34 @@ class Simulator:
         address=base+offset
         try:self._write(address&~3,value<<((address&3)*8),size,address&3)
         except Exception as e:self.diagnose('外设写入失败：'+str(e))
+
+    def _bitband_target(self,offset,size):
+        if size!=4 or offset&3:
+            raise ValueError(f'外设位带要求字对齐32位访问：0x{0x42000000+offset:08X}')
+        # ARM Cortex-M4 TRM 3.7. One alias word selects one register bit.
+        return 0x40000000+(offset//128)*4,(offset//4)%32
+
+    def _bitband_access(self,uc,access,address,size,value,user):
+        # Validate the original CPU transfer before Unicorn splits unaligned MMIO.
+        try:self._bitband_target(address-0x42000000,size)
+        except ValueError as error:self.diagnose(str(error))
+
+    def _bitband_read(self,uc,offset,size,user):
+        if self.status=='faulted':return 0
+        try:
+            address,bit=self._bitband_target(offset,size)
+            return (self._read(address)>>bit)&1
+        except Exception as error:
+            self.diagnose('外设位带读取失败：'+str(error));return 0
+
+    def _bitband_write(self,uc,offset,size,value,user):
+        if self.status=='faulted':return
+        try:
+            address,bit=self._bitband_target(offset,size)
+            previous=self._read(address)
+            if self.status=='faulted':return
+            self._write(address,(previous&~(1<<bit))|((value&1)<<bit))
+        except Exception as error:self.diagnose('外设位带写入失败：'+str(error))
 
     def _unsupported(self,a,operation):
         self.diagnose(f'尚未实现的寄存器{operation}：0x{a:08X}',address=f'0x{a:08X}',pc=f'0x{self.uc.reg_read(UC_ARM_REG_PC):08X}')

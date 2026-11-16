@@ -123,6 +123,27 @@ try:
             time.sleep(.1)
         else:raise RuntimeError('Packaged SPI Flash probe did not program and erase')
         command('pause')
+    # Exercise alias instructions in the frozen engine through normal LED state.
+    # Preserve the existing external wires for the subsequent boot probes.
+    led_wires=[wire for wire in state()['wires']
+               if any(wire[endpoint].startswith('LED') for endpoint in ('from','to'))]
+    for wire in led_wires:command('wire_remove',id=wire['id'])
+    bitband_wires=[]
+    for index in range(6):
+        wired=command('wire_add',**{'from':f'PD{8+index}','to':f'LED{index+1}'})
+        bitband_wires.append(wired['wires'][-1]['id'])
+    for extension in ('hex','bin'):
+        probe=package/'firmware'/f'bitband_probe.{extension}'
+        command('load',filename=probe.name,data=base64.b64encode(probe.read_bytes()).decode())
+        command('run')
+        wait_for(lambda snapshot:snapshot['cpu']['instructions']>=1000
+                 and snapshot['leds']==[False,True,True,False,False,True],
+                 'real peripheral bit-band RCC/GPIOD instructions')
+        command('pause')
+    for wire_id in bitband_wires:command('wire_remove',id=wire_id)
+    for wire in led_wires:
+        command('wire_add',**{'from':wire['from'],'to':wire['to'],'color':wire['color']})
+    print('PASS: packaged Keil HEX/BIN peripheral bit-band RCC/PLL + GPIOD LED state',flush=True)
     # These are three independently linked Keil programs. No RAM inspection or
     # special debug endpoint is used: only the same HTTP contract as the GUI.
     for ext in ('hex','bin'):

@@ -33,3 +33,4 @@
 | 内部 Flash、串口 IRQ 与系统复位 | 新增 | engine/fmc.py, engine/simulator.py | V2 RX/IDLE、FMC锁定/擦写、实际Flash快照、复位；保留V1回归 |
 | V2 ADC/DAC | 扩展 | engine/adc.py, engine/v2_devices.py | PC0/VR1、PC2/H7基准、PC1外接参考输入、DAC0 PA4原生引脚、SPI0 GD25Q40E，实际寄存器与工程保存 |
 | 应用内更新安装 | 扩展 | engine/self_update.py, engine/updates.py, engine/server.py, desktop/App.cs | 固定发行源、异步下载进度、大小/SHA256、同源会话校验、系统安装与重启 |
+| 外设位带访问 | 扩展 | engine/simulator.py, firmware/bitband_probe.c, tests/test_bitband.py, tests/package_smoke.py | V1/V2共享字对齐32位外设别名读写，复用真实寄存器与设备副作用；实际HAL用户HEX通过启动/SysTick/LED验收，未知目标和非法访问明确诊断 |
