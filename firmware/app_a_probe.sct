@@ -1,0 +1,9 @@
+LR_IROM1 0x08010000 0x10000 {
+ ER_IROM1 0x08010000 0x10000 {
+  * (.isr_vector, +First)
+  .ANY (+RO)
+ }
+ RW_IRAM1 0x20000100 0x17F00 {
+  .ANY (+RW +ZI)
+ }
+}

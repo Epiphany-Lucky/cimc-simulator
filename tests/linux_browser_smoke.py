@@ -33,7 +33,7 @@ with tempfile.TemporaryDirectory(prefix='cimc-browser-') as directory:
                     break
                 except OSError:time.sleep(.25)
             else:raise RuntimeError('Linux desktop session startup timeout')
-            for script in ('ui_smoke.py','laptop_smoke.py','schematic_smoke.py','update_ui_smoke.py'):
+            for script in ('ui_smoke.py','laptop_smoke.py','schematic_smoke.py','multifirmware_ui_smoke.py','update_ui_smoke.py'):
                 subprocess.run([sys.executable,str(ROOT/'tests'/script),url],cwd=ROOT,check=True)
             with sync_playwright() as playwright:
                 browser=playwright.chromium.launch(headless=True)
@@ -52,7 +52,7 @@ with tempfile.TemporaryDirectory(prefix='cimc-browser-') as directory:
                 assert process.returncode==0,log.read_text()
                 assert not errors,errors
                 browser.close()
-            print('PASS: installed Linux Chromium workbench + laptop/OLED/ADC/SPI/schematic + UI-owned shutdown')
+            print('PASS: installed Linux Chromium workbench + laptop/OLED/ADC/SPI/schematic/multifirmware + UI-owned shutdown')
         finally:
             if process.poll() is None:
                 process.terminate()

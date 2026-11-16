@@ -30,12 +30,12 @@ with sync_playwright() as p:
     expect(page.locator('#terminal')).to_contain_text('ACK L',timeout=15000)
     page.locator('#run-button').click()
     expect(page.locator('#connection-status')).to_contain_text('已暂停')
-    # Save/load preserves only added jumpers. Remove a wire via actual UI.
+    # Project v3 restores firmware and user jumpers. Remove a wire via actual UI.
     page.locator('[data-panel="wires"]').click()
     with page.expect_download() as event:page.locator('#save-project').click()
     saved=ROOT/'artifacts/ui-wiring.json';event.value.save_as(saved)
     project=json.loads(saved.read_text())
-    assert project['boardId']=='cimc-v1' and len(project['wires'])==12 and project['version']==2
+    assert project['boardId']=='cimc-v1' and len(project['wires'])==12 and project['version']==3
     page.locator('#wire-list .icon-button').first.click()
     expect(page.locator('#wire-count')).to_have_text('11')
     page.locator('#project-file').set_input_files(str(saved))

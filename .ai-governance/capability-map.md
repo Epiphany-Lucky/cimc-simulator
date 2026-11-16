@@ -21,5 +21,9 @@
 | Linux会话生命周期 | 扩展 | engine/desktop_session.py, engine/server.py | 用户级独占锁、当前实例退出校验、180秒无客户端退出；WPF生命周期不变 |
 | 软件更新 | 新增并复用界面 | engine/updates.py, web/app.js | 固定GitHub版本源、语义版本比较、缓存；设置内检查和应用内提醒；原外链处理复用 |
 | Packages发布 | 扩展 | .github/workflows/packages.yml, packaging/registry/ | 官方GHCR OCI安装文件包，与Release安装文件哈希一致；无长期凭证 |
+| 多固件共同烧录 | 新增并复用内核 | engine/firmware_images.py, engine/simulator.py, web/app.js | 多HEX/BIN按实际段共同占用512KiB内部Flash，拒绝真实重叠；无固定槽数，单文件4MiB、集合导出JSON8MiB；复用ARM取指与原外设 |
+| 启动向量与真实Bootloader | 扩展 | engine/simulator.py, firmware/boot_probe.c, firmware/app_probe.c, firmware/build-boot-probes.ps1 | 独立启动向量、MSP/VTOR/BX跨镜像跳转，三份Keil产物与SysTick证据；不扩展为FMC在线IAP |
+| 工程完整固件恢复 | 扩展 | engine/firmware_images.py, engine/simulator.py, tests/test_multifirmware.py | v3保存完整集合和启动选择，整体预检后提交；v1/v2保持兼容，不保存CPU/RAM/SPI运行快照 |
+| 多固件发布与验收证据 | 扩展 | docs/implementation-v0.4.md, docs/validation-v0.4.md, docs/releases/v0.4.0.md, firmware/BOOT_PROBES.md | 区分源码/真实fixture/安装包/在线发布证据；发布验收后清理旧分发附件，保留源码、标签、公告与报告；GHCR仍私有 |
 
 禁区：不改原板固定网络；不猜测未知连线；不把未建模访问当成功；不上传本地密钥、个人目录或未授权第三方完整工程；不承诺已验证任意Keil固件。

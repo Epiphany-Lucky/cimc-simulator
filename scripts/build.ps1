@@ -1,4 +1,4 @@
-param([string]$Version = '0.3.0')
+param([string]$Version = '0.4.0')
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 Set-Location -LiteralPath $projectRoot
@@ -32,7 +32,7 @@ foreach ($folder in @('engine','tests','scripts','desktop')) {
 foreach ($folder in @('web','firmware','assets','docs','licenses','packaging','.github','.ai-governance')) {
     Copy-Item -LiteralPath $folder -Destination $sourceRoot -Recurse -Force
 }
-Copy-Item -LiteralPath 'README.md','THIRD_PARTY_NOTICES.md','CHANGELOG.md','requirements-dev.txt','.gitignore' -Destination $sourceRoot -Force
+Copy-Item -LiteralPath 'README.md','THIRD_PARTY_NOTICES.md','CHANGELOG.md','AGENTS.md','requirements-dev.txt','.gitignore' -Destination $sourceRoot -Force
 Set-Content -LiteralPath (Join-Path $releaseRoot 'Open-Web.cmd') -Encoding ascii -Value '@echo off', 'start "" "%~dp0CIMC-Studio.exe" --web'
 $htmlRoot = Join-Path $projectRoot "artifacts/CIMC-Studio-$Version-html-local"
 New-Item -ItemType Directory -Path $htmlRoot -Force | Out-Null

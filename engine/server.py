@@ -13,6 +13,7 @@ from urllib.parse import urlparse, unquote
 from simulator import Simulator
 from desktop_session import APP_ID, DesktopSession, open_browser
 from updates import UpdateChecker
+from app_version import VERSION
 
 
 def main():
@@ -46,7 +47,7 @@ def main():
 def serve(args,session):
     web=(args.web_root or args.root/'web').resolve()
     simulator=Simulator(args.root)
-    updates=UpdateChecker('0.3.0')
+    updates=UpdateChecker(VERSION)
     stop_event=threading.Event()
     launch_errors=[]
 
@@ -87,7 +88,7 @@ def serve(args,session):
                 result=updates.check(force=urlparse(self.path).query=='force=1')
                 result['platform']='windows' if sys.platform=='win32' else 'linux'
                 return self._send(200,result)
-            if path=='/api/health':return self._send(200,{'ok':True,'app':APP_ID,'version':'0.3.0','desktopSession':bool(session),'instanceId':session.instance_id if session else None})
+            if path=='/api/health':return self._send(200,{'ok':True,'app':APP_ID,'version':VERSION,'desktopSession':bool(session),'instanceId':session.instance_id if session else None})
             if path=='/api/demo':
                 p=args.root/'firmware'/'demo.hex'
                 return self._send(200,p.read_bytes(),'application/octet-stream')
@@ -107,7 +108,7 @@ def serve(args,session):
                     return self._send(403,{'error':'Desktop exit requires a same-origin JSON request'})
             try:
                 length=int(self.headers.get('Content-Length','0'))
-                if not 0<length<=6*1024*1024:return self._send(413,{'error':'Request too large or empty'})
+                if not 0<length<=16*1024*1024:return self._send(413,{'error':'Request too large or empty'})
                 data=json.loads(self.rfile.read(length))
                 if not isinstance(data,dict):raise ValueError('Request must be a JSON object')
                 if path=='/api/session/quit':
@@ -124,7 +125,7 @@ def serve(args,session):
     server=ThreadingHTTPServer(('127.0.0.1',args.port),Handler)
     args.port=server.server_address[1]
     url=f'http://127.0.0.1:{args.port}/'
-    print(f'CIMC Lab 0.3.0 {url}',flush=True)
+    print(f'CIMC Lab {VERSION} {url}',flush=True)
     old_sigterm=None
     if session:
         session.publish(url)

@@ -77,7 +77,7 @@ class FixedConnectionTests(unittest.TestCase):
             self.assertEqual(self.s.serial_mode,mode)
             self.assertEqual(self.pair_set(self.s.wires),{frozenset(('PD10','LED1'))})
             self.assertEqual(self.s.adc.voltage,2.4)
-            self.assertEqual(self.s.project()['version'],2)
+            self.assertEqual(self.s.project()['version'],3)
             self.assertEqual(self.s.board['fixedConnections'],self.fixed)
 
     def test_invalid_import_is_atomic_for_wires_mode_and_adc_position(self):

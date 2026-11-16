@@ -10,6 +10,7 @@
   let lastWires = '', lastSerial = '', lastDiagnostics = '', lastOled = '';
   let adcPreview = 1.65, adcPending = null, adcSending = false, adcDragging = false, adcDragOrigin = null;
   let schematicPage = 1, schematicReturnFocus = null;
+  let firmwareDraft = [], firmwareDraftBoot = null, firmwareDraftSequence = 0, firmwareSetBusy = false, firmwareSetReturnFocus = null;
   const schematicTitles = ['MCU 与排针','板载外设','电源','串口通信'];
   const heldKeys = new Set();
   const preferences = readStorage('cimc.studio.preferences', { labels: false, motion: false, shortcuts: true });
@@ -93,6 +94,7 @@
     document.querySelectorAll('[data-channel]').forEach(b => { b.disabled = !channelMapping(b.dataset.channel); b.title = b.disabled ? `${b.dataset.channel.toUpperCase()} 固定映射待 V1 原理图核验` : ''; });
     document.querySelectorAll('.key').forEach(b => b.disabled = !connected || !hasFirmware());
     document.querySelectorAll('.pin').forEach(b => b.disabled = !connected || b.dataset.connectable === 'false');
+    updateFirmwareSetControls();
   }
 
   function renderState(next) {
@@ -109,7 +111,11 @@
     const fw = next.firmware || {};
     $('firmware-name').textContent = fw.name || '导入你的固件';
     $('firmware-name').title = fw.name || '';
-    $('firmware-detail').textContent = fw.size ? `${bytesLabel(fw.size)} · 点击更换固件` : '选择或拖入 Keil 编译文件';
+    const firmwareCount = next.firmwares?.length || (hasFirmware() ? 1 : 0);
+    $('firmware-detail').textContent = firmwareCount > 1 ? `${firmwareCount} 个镜像 · 启动 ${address(next.bootAddress)}` : fw.size ? `${bytesLabel(fw.size)} · 点击更换固件` : '选择单文件，或打开“多固件”';
+    $('firmware-set-open').textContent = firmwareCount > 1 ? `多固件 · ${firmwareCount}` : '多固件';
+    $('firmware-open').title = firmwareCount > 1 ? '导入单文件，将替换当前全部烧录镜像' : '导入单个 HEX 或 BIN';
+    $('firmware-set-vtor').textContent = address(next.currentVectorAddress);
     $('firmware-format').textContent = fw.format ? fw.format.toUpperCase() : 'HEX / BIN';
     $('firmware-open').classList.toggle('loaded', hasFirmware());
     $('firmware-meta').hidden = !hasFirmware();
@@ -401,6 +407,133 @@
     if (result) toast(`示例固件与 ${state?.wires?.length || 0} 条 LED/KEY 跳线已载入，板载连接保持固定。点击运行。`);
   }
 
+  function setFirmwareDraftError(message = '') {
+    $('firmware-set-error').textContent = message;
+    $('firmware-set-error').hidden = !message;
+  }
+
+  function updateFirmwareSetControls() {
+    const custom = $('firmware-set-custom').checked;
+    $('firmware-set-apply').disabled = firmwareSetBusy || !connected || !firmwareDraft.length;
+    $('firmware-set-apply').textContent = firmwareSetBusy ? '正在烧录…' : '一次烧录';
+    $('firmware-set-add').disabled = firmwareSetBusy;
+    $('firmware-set-custom').disabled = firmwareSetBusy;
+    $('firmware-set-boot-address').disabled = firmwareSetBusy || !custom;
+    document.querySelectorAll('#firmware-set-dialog [data-close], #firmware-set-list button, #firmware-set-list input').forEach(control=>{
+      control.disabled = firmwareSetBusy || (control.type === 'radio' && custom);
+    });
+    $('firmware-set-count').textContent = `${firmwareDraft.length} 个镜像`;
+    const selected = firmwareDraft.find(entry=>entry.key === firmwareDraftBoot);
+    const summary = custom ? `从 ${$('firmware-set-boot-address').value || '自定义地址'} 启动` : selected ? `从 ${selected.name} 启动` : '添加固件后选择启动项';
+    $('firmware-set-start-summary').textContent = summary;
+    $('firmware-set-start-summary').title = summary;
+  }
+
+  function renderFirmwareDraft() {
+    const list = $('firmware-set-list');
+    list.replaceChildren();
+    firmwareDraft.forEach(entry=>{
+      const row = node('div','firmware-set-row'); row.dataset.key = entry.key;
+      row.classList.toggle('boot-selected',entry.key === firmwareDraftBoot && !$('firmware-set-custom').checked);
+      const start = node('label','firmware-boot-choice');
+      const radio = node('input'); radio.type = 'radio'; radio.name = 'firmware-boot'; radio.value = entry.key; radio.checked = entry.key === firmwareDraftBoot;
+      radio.setAttribute('aria-label',`从 ${entry.name} 启动`);
+      radio.addEventListener('change',()=>{
+        firmwareDraftBoot=entry.key;setFirmwareDraftError();
+        list.querySelectorAll('.firmware-set-row').forEach(item=>item.classList.toggle('boot-selected',item.dataset.key === firmwareDraftBoot));
+        updateFirmwareSetControls();
+      });
+      start.append(radio,node('span','','启动'));
+      const identity = node('div','firmware-set-identity');
+      const filename = node('strong','',entry.name); filename.title = entry.name;
+      identity.append(filename,node('span','',`${entry.format.toUpperCase()} · ${bytesLabel(entry.size)} · ${entry.id ? '已烧录' : '新增'}`));
+      const location = node('div','firmware-set-location');
+      if (entry.format === 'bin' && !entry.id) {
+        const label = node('label','','装载地址'); label.htmlFor = `firmware-address-${entry.key}`;
+        const input = node('input','firmware-image-address'); input.id = label.htmlFor; input.value = entry.address; input.spellcheck = false;
+        input.setAttribute('aria-label',`${entry.name} BIN 装载地址`);
+        input.addEventListener('input',()=>{entry.address=input.value;setFirmwareDraftError();updateFirmwareSetControls();});
+        location.append(label,input);
+      } else {
+        location.append(node('span','',entry.format === 'hex' && !entry.id ? 'HEX 内置地址' : '装载地址'),node('code','',entry.address ? address(entry.address) : '由文件记录决定'));
+        if (entry.id && entry.format === 'bin') location.append(node('small','','重选文件可调整地址'));
+      }
+      const remove = node('button','icon-button firmware-remove'); remove.type = 'button'; remove.innerHTML = svg('trash'); remove.title = '从待烧录列表移除'; remove.setAttribute('aria-label',`移除 ${entry.name}`);
+      remove.addEventListener('click',()=>{
+        const index = firmwareDraft.findIndex(item=>item.key === entry.key);
+        firmwareDraft = firmwareDraft.filter(item=>item.key !== entry.key);
+        if (firmwareDraftBoot === entry.key) firmwareDraftBoot = firmwareDraft[0]?.key || null;
+        setFirmwareDraftError(); renderFirmwareDraft();
+        (list.children[Math.min(index,firmwareDraft.length-1)]?.querySelector('.firmware-remove') || $('firmware-set-add')).focus();
+      });
+      row.append(start,identity,location,remove); list.append(row);
+    });
+    if (!firmwareDraft.length) list.append(empty('file','添加你的固件','支持多个 HEX / BIN；各 BIN 使用自己的链接地址。'));
+    updateFirmwareSetControls();
+  }
+
+  function openFirmwareSet() {
+    if ($('firmware-set-dialog').open) return;
+    firmwareSetReturnFocus = document.activeElement;
+    firmwareDraft = (state?.firmwares || []).map(item=>({id:item.id,key:String(++firmwareDraftSequence),name:item.name,format:String(item.format).toLowerCase(),size:item.size,address:item.address}));
+    firmwareDraftBoot = (firmwareDraft.find(item=>item.id === state?.firmware?.id) || firmwareDraft[0])?.key || null;
+    const selected = firmwareDraft.find(item=>item.key === firmwareDraftBoot);
+    const custom = state?.bootAddress != null && selected && Number(state.bootAddress) !== Number(selected.address);
+    $('firmware-set-custom').checked = !!custom;
+    $('firmware-set-boot-address').value = address(state?.bootAddress ?? '0x08000000');
+    $('firmware-set-advanced').open = !!custom;
+    setFirmwareDraftError(); renderFirmwareDraft(); releaseKeys();
+    $('firmware-set-dialog').showModal(); document.body.classList.add('firmware-set-open');
+    $('firmware-set-add').focus();
+  }
+
+  function addFirmwareFiles(files) {
+    if (firmwareSetBusy) return;
+    const additions = Array.from(files || []);
+    if (!additions.length) return;
+    const invalid = additions.find(file=>!(/\.(hex|bin)$/i.test(file.name)) || file.size > 4 * 1024 * 1024 || !file.size);
+    if (invalid) { setFirmwareDraftError(`${invalid.name}：请选择非空 HEX / BIN，单文件不超过 4 MiB。`); return; }
+    firmwareDraft.push(...additions.map(file=>({file,key:String(++firmwareDraftSequence),name:file.name,format:file.name.toLowerCase().endsWith('.bin') ? 'bin' : 'hex',size:file.size,address:file.name.toLowerCase().endsWith('.bin') ? '0x08000000' : null})));
+    if (!firmwareDraftBoot) firmwareDraftBoot = firmwareDraft[0].key;
+    setFirmwareDraftError(); renderFirmwareDraft();
+  }
+
+  $('firmware-set-open').addEventListener('click',openFirmwareSet);
+  $('firmware-set-add').addEventListener('click',()=>$('firmware-set-files').click());
+  $('firmware-set-files').addEventListener('change',e=>{addFirmwareFiles(e.target.files);e.target.value='';});
+  $('firmware-set-custom').addEventListener('change',()=>{setFirmwareDraftError();renderFirmwareDraft();});
+  $('firmware-set-boot-address').addEventListener('input',()=>{setFirmwareDraftError();updateFirmwareSetControls();});
+  $('firmware-set-dialog').addEventListener('cancel',e=>{if(firmwareSetBusy)e.preventDefault();});
+  $('firmware-set-dialog').addEventListener('close',()=>{
+    document.body.classList.remove('firmware-set-open'); firmwareDraft=[]; firmwareDraftBoot=null;
+    firmwareSetReturnFocus?.focus({preventScroll:true});
+  });
+  $('firmware-set-form').addEventListener('submit',async event=>{
+    event.preventDefault();
+    if (firmwareSetBusy || !firmwareDraft.length || !connected) return;
+    const validAddress = value=>/^(0x[0-9a-f]+|\d+)$/i.test(value.trim()) && Number.isSafeInteger(Number(value)) && Number(value) <= 0xFFFFFFFF;
+    const invalid = firmwareDraft.find(item=>!item.id && item.format === 'bin' && !validAddress(item.address));
+    if (invalid) { setFirmwareDraftError(`${invalid.name}：请输入有效 BIN 装载地址，例如 0x08010000。`); return; }
+    const custom = $('firmware-set-custom').checked, bootAddress = $('firmware-set-boot-address').value.trim();
+    if (custom && !validAddress(bootAddress)) { setFirmwareDraftError('请输入有效的启动向量地址，例如 0x08000000。'); return; }
+    if (firmwareDraft.reduce((size,item)=>size + (item.file ? 4 * Math.ceil(item.file.size/3) : 0),0) > 16 * 1024 * 1024) { setFirmwareDraftError('新增文件编码后超过单次 16 MiB 请求限制，请减少文件体积。'); return; }
+    firmwareSetBusy=true;busy=true;setFirmwareDraftError();updateEnabled();
+    try {
+      const images = await Promise.all(firmwareDraft.map(async item=>item.id ? {id:item.id} : {filename:item.name,data:toBase64(new Uint8Array(await item.file.arrayBuffer())),...(item.format === 'bin' ? {address:item.address.trim()} : {})}));
+      const fields = custom ? {bootAddress} : {bootIndex:Math.max(0,firmwareDraft.findIndex(item=>item.key === firmwareDraftBoot))};
+      const payload = {action:'load_set',images,...fields};
+      if (new TextEncoder().encode(JSON.stringify(payload)).length > 16 * 1024 * 1024) throw new Error('固件集合超过单次 16 MiB 请求限制，请减少文件体积。');
+      const result = await api('/api/command',payload);
+      const next = result.state || result;
+      if (next.status && next.cpu) renderState(next);
+      else await poll();
+      serialCutoff=-1;diagnosticCutoff=0;
+      $('firmware-set-dialog').close();
+      toast(`已烧录 ${images.length} 个镜像，点击“运行”从所选向量启动。`);
+    } catch(error) { setFirmwareDraftError(error.message); }
+    finally {firmwareSetBusy=false;busy=false;updateEnabled();}
+  });
+
   function prepareFile(file) {
     if (!file) return;
     if (!/\.(hex|bin)$/i.test(file.name)) { toast('请选择 .hex 或 .bin 固件文件。',true); return; }
@@ -409,7 +542,7 @@
     $('import-filename').textContent = file.name;
     $('import-filesize').textContent = bytesLabel(file.size);
     $('address-field').hidden = !/\.bin$/i.test(file.name);
-    $('import-description').textContent = /\.bin$/i.test(file.name) ? 'BIN 文件不包含装载地址，请确认链接配置。' : 'HEX 文件包含装载地址，内核将检查校验和与地址范围。';
+    $('import-description').textContent = (/\.bin$/i.test(file.name) ? 'BIN 文件不包含装载地址，请确认链接配置。' : 'HEX 文件包含装载地址，内核将检查校验和与地址范围。') + (state?.firmwares?.length > 1 ? '此次导入将替换当前全部镜像；一起烧录请使用“多固件”。' : '');
     $('import-dialog').showModal();
   }
 
@@ -482,7 +615,7 @@
 
   document.querySelectorAll('[data-nav]').forEach(b => b.addEventListener('click',() => { document.querySelectorAll('[data-nav]').forEach(x => x.classList.toggle('active',x === b)); const target = b.dataset.nav; if (target === 'workbench') $('workbench').scrollIntoView({behavior:'smooth'}); else { activatePanel(target); $('console-card').scrollIntoView({behavior:'smooth',block:'start'}); } }));
   document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click',() => b.closest('dialog')?.close()));
-  document.querySelectorAll('dialog').forEach(dialog => dialog.addEventListener('click',e => { if (e.target !== dialog) return; const r = dialog.getBoundingClientRect(); if (e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom) dialog.close(); }));
+  document.querySelectorAll('dialog').forEach(dialog => dialog.addEventListener('click',e => { if (e.target !== dialog || (dialog.id === 'firmware-set-dialog' && firmwareSetBusy)) return; const r = dialog.getBoundingClientRect(); if (e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom) dialog.close(); }));
   $('help-button').addEventListener('click',() => $('help-dialog').showModal());
   $('exit-app-button').addEventListener('click',async () => {
     if (!state?.engine?.desktopSession || !connected) return;
@@ -550,7 +683,7 @@
     const settings = node('button', 'button secondary full-width', '软件更新与设置');
     settings.id = 'about-settings-button';
     settings.addEventListener('click', () => { $('info-dialog').close(); $('settings-dialog').showModal(); });
-    showInfo('CIMC Studio','PREVIEW 0.3',[node('p','','Windows、Linux 与浏览器共用的嵌入式仿真工作台。'),node('p','','载入 ARM 固件，探索程序与电路的每一次交互。'),node('p','','当前为功能预览版，具体外设支持范围以交付文档和运行诊断为准。CIMC Studio 为独立开发项目，非赛事官方软件。'),settings]);
+    showInfo('CIMC Studio','PREVIEW 0.4',[node('p','','Windows、Linux 与浏览器共用的嵌入式仿真工作台。'),node('p','','共同烧录 Bootloader 与多个 ARM 应用，从选定向量启动。'),node('p','','当前为功能预览版，具体外设支持范围以交付文档和运行诊断为准。CIMC Studio 为独立开发项目，非赛事官方软件。'),settings]);
   });
   $('board-info-button').addEventListener('click',() => {
     const content = [];
@@ -560,9 +693,9 @@
     showInfo('开发板信息','BOARD PROFILE',content);
   });
 
-  $('save-project').addEventListener('click',async () => { try { const result=await api('/api/project');saveFile(`cimc-wiring-${stamp()}.json`,JSON.stringify(result.project||result,null,2));toast('接线方案已保存。'); } catch(error) { toast(error.message,true); } });
+  $('save-project').addEventListener('click',async () => { try { const result=await api('/api/project');saveFile(`cimc-project-${stamp()}.json`,JSON.stringify(result.project||result,null,2));toast('固件、启动设置与接线工程已保存。'); } catch(error) { toast(error.message,true); } });
   $('import-project').addEventListener('click',() => $('project-file').click());
-  $('project-file').addEventListener('change',async e => { const file=e.target.files[0];if(!file)return;try { const project=JSON.parse(await file.text());if(await command('project_load',{project}))toast('接线方案已恢复。'); }catch(error){toast(`无法打开接线文件：${error.message}`,true);}finally{e.target.value='';} });
+  $('project-file').addEventListener('change',async e => { const file=e.target.files[0];if(!file)return;try { const project=JSON.parse(await file.text());if(await command('project_load',{project})){serialCutoff=-1;diagnosticCutoff=0;toast(project.version >= 3 ? '固件与接线工程已恢复。' : '旧版接线工程已恢复。');} }catch(error){toast(`无法打开工程文件：${error.message}`,true);}finally{e.target.value='';} });
   $('export-button').addEventListener('click',async () => { if(activePanel==='wires'){$('save-project').click();return;} if(activePanel==='diagnostics'){saveFile(`cimc-diagnostics-${stamp()}.json`,JSON.stringify(state?.diagnostics||[],null,2));return;} const lines=(state?.serial||[]).map(e=>`[${logTime(e.time)}] [${e.channel}] [${e.direction}] ${e.text??e.hex??''}`);saveFile(`cimc-serial-${stamp()}.txt`,lines.join('\n'),'text/plain;charset=utf-8');toast('串口日志已导出。'); });
   $('clear-button').addEventListener('click',() => { if(activePanel==='wires'){toast('请使用每条跳线旁的删除按钮，避免误删接线。');return;} if(activePanel==='diagnostics'){diagnosticCutoff=(state?.diagnostics||[]).length;renderDiagnostics(true);return;} serialCutoff=Math.max(-1,...(state?.serial||[]).map((e,i)=>Number(e.id)||i));renderSerial(true);toast('已清空当前日志显示。'); });
 
@@ -626,7 +759,7 @@
   document.addEventListener('dragenter',e=>{if(e.dataTransfer?.types.includes('Files')){e.preventDefault();dragDepth++;$('drop-cover').classList.add('active');}});
   document.addEventListener('dragover',e=>{if(e.dataTransfer?.types.includes('Files'))e.preventDefault();});
   document.addEventListener('dragleave',e=>{if(e.dataTransfer?.types.includes('Files')){dragDepth=Math.max(0,dragDepth-1);if(!dragDepth)$('drop-cover').classList.remove('active');}});
-  document.addEventListener('drop',e=>{e.preventDefault();dragDepth=0;$('drop-cover').classList.remove('active');prepareFile(e.dataTransfer?.files[0]);});
+  document.addEventListener('drop',e=>{e.preventDefault();dragDepth=0;$('drop-cover').classList.remove('active');const files=e.dataTransfer?.files;if(!files?.length)return;if($('firmware-set-dialog').open){addFirmwareFiles(files);return;}if(document.querySelector('dialog[open]'))return;if(files.length>1){openFirmwareSet();addFirmwareFiles(files);}else prepareFile(files[0]);});
 
   buildHardwareControls(6,6);applyPreferences();updateEnabled();renderWires([]);renderDiagnostics(true);
   fetch('board-v1.json').then(r=>r.ok?r.json():Promise.reject()).then(setBoard).catch(()=>{});

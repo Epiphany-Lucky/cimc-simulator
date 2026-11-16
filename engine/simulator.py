@@ -6,7 +6,6 @@ MMIO stops execution; loading a firmware is never evidence of full compatibility
 from __future__ import annotations
 import base64
 from collections import deque
-import hashlib
 import json
 import math
 from pathlib import Path
@@ -19,6 +18,8 @@ from unicorn import Uc, UcError, UC_ARCH_ARM, UC_MODE_THUMB, UC_MODE_MCLASS, UC_
 from unicorn.arm_const import *
 from adc import AdcDevice
 from spiflash import SpiFlashDevice
+from app_version import VERSION
+from firmware_images import parse_firmware, parse_image, assemble, prepare_set
 
 FLASH = 0x08000000
 FLASH_SIZE = 0x80000
@@ -31,56 +32,6 @@ UART = {'USART0':0x40011000,'USART1':0x40004400,'USART2':0x40004800,'UART3':0x40
 CORE_REGS = [UC_ARM_REG_R0, UC_ARM_REG_R1, UC_ARM_REG_R2, UC_ARM_REG_R3, UC_ARM_REG_R12, UC_ARM_REG_LR, UC_ARM_REG_PC, UC_ARM_REG_XPSR]
 
 
-def parse_firmware(data: bytes, filename: str, address: int=FLASH):
-    """Validate Intel HEX (including checksum and address records), or raw BIN."""
-    is_hex = filename.lower().endswith('.hex')
-    cells = {}
-    if is_hex:
-        upper = 0
-        eof = False
-        for line_no, line in enumerate(data.decode('ascii').splitlines(), 1):
-            line = line.strip()
-            if not line: continue
-            if eof: raise ValueError(f'HEX 第 {line_no} 行：EOF 后仍有记录')
-            if not line.startswith(':'): raise ValueError(f'HEX 第 {line_no} 行缺少冒号')
-            try: record = bytes.fromhex(line[1:])
-            except ValueError: raise ValueError(f'HEX 第 {line_no} 行包含非法十六进制')
-            if len(record) < 5 or len(record) != record[0]+5 or sum(record)&255:
-                raise ValueError(f'HEX 第 {line_no} 行长度或校验和错误')
-            length, offset, kind = record[0], int.from_bytes(record[1:3], 'big'), record[3]
-            payload = record[4:-1]
-            if kind == 0:
-                for i,b in enumerate(payload):
-                    a = upper+offset+i
-                    if a in cells and cells[a] != b: raise ValueError('HEX 记录地址重叠且内容不一致')
-                    cells[a] = b
-            elif kind == 1:
-                if length or offset: raise ValueError('HEX EOF 记录无效')
-                eof = True
-            elif kind in (2,4):
-                if length != 2 or offset: raise ValueError('HEX 扩展地址记录无效')
-                upper = int.from_bytes(payload, 'big') << (4 if kind == 2 else 16)
-            elif kind in (3,5):
-                if length != 4: raise ValueError('HEX 起始地址记录无效')
-            else: raise ValueError(f'HEX 不支持记录类型 {kind}')
-        if not eof: raise ValueError('HEX 缺少 EOF 结束记录')
-        if not cells: raise ValueError('HEX 没有程序数据')
-        base = min(cells)
-        end = max(cells)+1
-        if base < FLASH or end > FLASH+FLASH_SIZE: raise ValueError('HEX 数据超出本版本模型的 Flash 地址范围')
-        image = bytearray(b'\xff'*(end-base))
-        for a,b in cells.items(): image[a-base] = b
-        image = bytes(image)
-    else:
-        base = address
-        image = data
-        if not image or base < FLASH or base+len(image)>FLASH+FLASH_SIZE: raise ValueError('BIN 装载地址或大小超出 Flash 范围')
-    if base % 128: raise ValueError('向量表地址必须至少按 128 字节对齐')
-    if len(image)<8: raise ValueError('固件缺少初始栈指针和复位向量')
-    sp, entry = struct.unpack_from('<II',image)
-    if sp%4 or not (SRAM < sp <= SRAM+SRAM_SIZE or CCM < sp <= CCM+CCM_SIZE): raise ValueError(f'初始 SP 0x{sp:08X} 不在 SRAM 范围内')
-    if not entry&1 or not base <= (entry&~1) < base+len(image): raise ValueError(f'复位向量 0x{entry:08X} 无效或不在固件内')
-    return image, base, sp, entry, 'HEX' if is_hex else 'BIN'
 
 
 class OLED:
@@ -162,6 +113,7 @@ class Simulator:
         self.firmware=None
         self.uc=None
         self.image=None
+        self.program=None
         self.wires=[]
         self.serial_mode='rs485'
         self._connection_cache={}
@@ -271,40 +223,61 @@ class Simulator:
             if b:self._serial_log(self._channel(uart),'tx',b);b.clear()
 
     def load(self,raw,name,address=FLASH):
-        image,base,sp,entry,fmt=parse_firmware(raw,name,address)
+        im=parse_image(raw,name,address)
+        program=assemble((im,),im.base)
+        with self.lock:self._install_program(program,self._make_cpu(program))
+
+    def load_set(self,data):
         with self.lock:
-            self.image=image;self.base=base;self.initial_sp=sp;self.entry=entry
-            self.firmware={'name':name,'size':len(raw),'imageSize':len(image),'format':fmt,'sha256':hashlib.sha256(raw).hexdigest(),'entry':f'0x{entry:08X}','address':f'0x{base:08X}'}
-            self.logs=[];self.diagnostics=[]
-            self.reset()
+            program=prepare_set(data,self.program.images if self.program else ())
+            cpu=self._make_cpu(program)
+            self._install_program(program,cpu)
+
+    def _make_cpu(self,program):
+        # Allocate and configure before touching the running machine. Invalid sets
+        # and native allocation failures leave the old CPU and peripherals intact.
+        uc=Uc(UC_ARCH_ARM,UC_MODE_THUMB|UC_MODE_MCLASS)
+        uc.ctl_set_cpu_model(UC_CPU_ARM_CORTEX_M4)
+        for base in (FLASH,0):
+            uc.mem_map(base,FLASH_SIZE)
+            uc.mem_write(base,program.flash)
+            uc.mem_protect(base,FLASH_SIZE,UC_PROT_READ|UC_PROT_EXEC)
+        uc.mem_map(SRAM,SRAM_SIZE)
+        uc.mem_map(CCM,CCM_SIZE,UC_PROT_READ|UC_PROT_WRITE)
+        uc.mmio_map(0x40000000,0x30000,self._mmio_read,0x40000000,self._mmio_write,0x40000000)
+        uc.mmio_map(0xE000E000,0x2000,self._mmio_read,0xE000E000,self._mmio_write,0xE000E000)
+        uc.hook_add(UC_HOOK_MEM_INVALID,self._invalid)
+        uc.hook_add(UC_HOOK_CODE,self._code_hook)
+        uc.hook_add(UC_HOOK_INTR,self._interrupt)
+        uc.reg_write(UC_ARM_REG_SP,program.sp)
+        uc.reg_write(UC_ARM_REG_MSP,program.sp)
+        uc.reg_write(UC_ARM_REG_PC,program.entry)
+        uc.reg_write(UC_ARM_REG_XPSR,0x01000000)
+        return uc
+
+    def _install_program(self,program,cpu):
+        self.program=program
+        self.image=program.flash if program else None
+        self.logs=[];self.diagnostics=[]
+        if program:
+            self.base=program.boot_address;self.initial_sp=program.sp;self.entry=program.entry
+            boot=next(im for im in program.images if im.id==program.boot_image_id)
+            self.firmware={**boot.metadata(),'entry':f'0x{program.entry:08X}'}
+        else:self.firmware=None
+        self._reset_devices()
+        self.uc=cpu
+        self.keys=[False]*len(self.board.get('keyMappings',[]))
+        if program:self.regs[0xE000ED08]=program.boot_address
+        self.status='ready' if program else 'idle'
 
     def reset(self):
         with self.lock:
-            if self.image is None:return
+            if self.program is None:return
+            cpu=self._make_cpu(self.program)
             self._reset_devices()
             self.keys=[False]*len(self.board.get('keyMappings',[]))
-            self.uc=Uc(UC_ARCH_ARM,UC_MODE_THUMB|UC_MODE_MCLASS)
-            self.uc.ctl_set_cpu_model(UC_CPU_ARM_CORTEX_M4)
-            self.uc.mem_map(FLASH,FLASH_SIZE)
-            self.uc.mem_write(FLASH,b'\xff'*FLASH_SIZE)
-            self.uc.mem_write(self.base,self.image)
-            self.uc.mem_protect(FLASH,FLASH_SIZE,UC_PROT_READ|UC_PROT_EXEC)
-            self.uc.mem_map(0,FLASH_SIZE)
-            self.uc.mem_write(self.base-FLASH,self.image)
-            self.uc.mem_protect(0,FLASH_SIZE,UC_PROT_READ|UC_PROT_EXEC)
-            self.uc.mem_map(SRAM,SRAM_SIZE)
-            self.uc.mem_map(CCM,CCM_SIZE,UC_PROT_READ|UC_PROT_WRITE)
-            # Dedicated MMIO callbacks avoid modifying translated memory from a read hook.
-            self.uc.mmio_map(0x40000000,0x30000,self._mmio_read,0x40000000,self._mmio_write,0x40000000)
-            self.uc.mmio_map(0xE000E000,0x2000,self._mmio_read,0xE000E000,self._mmio_write,0xE000E000)
-            self.uc.hook_add(UC_HOOK_MEM_INVALID,self._invalid)
-            self.uc.hook_add(UC_HOOK_CODE,self._code_hook)
-            self.uc.hook_add(UC_HOOK_INTR,self._interrupt)
-            self.uc.reg_write(UC_ARM_REG_SP,self.initial_sp)
-            self.uc.reg_write(UC_ARM_REG_MSP,self.initial_sp)
-            self.uc.reg_write(UC_ARM_REG_PC,self.entry)
-            self.uc.reg_write(UC_ARM_REG_XPSR,0x01000000)
-            self.regs[0xE000ED08]=self.base
+            self.uc=cpu
+            self.regs[0xE000ED08]=self.program.boot_address
             self.status='ready'
 
     def _invalid(self,uc,access,address,size,value,user):
@@ -372,11 +345,27 @@ class Simulator:
         if a==0xE000E018:return self.systick['value']
         if a==0xE000E01C:return 10000
         if a==0xE000ED00:return 0x410FC241
+        if a==0xE000ED04:
+            # ARM DUI 0553A, ICSR: PENDSTCLR is write-only, PENDSTSET
+            # reads the pending state; VECTPENDING/ACTIVE are read-only.
+            return (1<<11)|(15 if self.in_exception else 0)|(((1<<26)|(15<<12)) if self.systick['pending'] else 0)
         if a in (0xE000ED04,0xE000ED08,0xE000ED0C,0xE000ED10,0xE000ED14,0xE000ED18,0xE000ED1C,0xE000ED20,0xE000ED24,0xE000ED28,0xE000ED2C,0xE000ED88):return self.regs.get(a,0)
         return self._unsupported(a,'读取')
 
     def _write(self,a,v,size=4,byte_offset=0):
         mask=((1<<(size*8))-1)<<(byte_offset*8)
+        if a==0xE000ED04:
+            # Act only on the written bits, never replay a previous W1 command.
+            command=v&mask
+            if command&((1<<31)|(1<<28)):
+                self.diagnose('NMI/PendSV 异常尚未实现');return
+            if command&(1<<25) and command&(1<<26):
+                self.diagnose('ICSR 同时设置和清除 SysTick pending 属于不可预测操作');return
+            if command&(1<<25):self.systick['pending']=False
+            if command&(1<<26):self.systick['pending']=True
+            # PENDSVCLR clears an already-empty pending state in this subset.
+            # Other bits are read-only/reserved; zero writes have no effect.
+            return
         previous=self.regs.get(a,0)
         v=((previous&~mask)|(v&mask))&0xFFFFFFFF
         self.regs[a]=v
@@ -568,6 +557,7 @@ class Simulator:
             if len(raw)>4*1024*1024:raise ValueError('固件文件超过 4 MiB')
             a=data.get('address',FLASH);a=int(a,0) if isinstance(a,str) else int(a)
             self.load(raw,data.get('filename','firmware.bin'),a)
+        elif action=='load_set':self.load_set(data)
         elif action=='demo':
             p=self.root/'firmware'/'demo.hex';self.load(p.read_bytes(),'CIMC Lab · Keil demo.hex')
             self.serial_mode='rs485'
@@ -645,7 +635,7 @@ class Simulator:
         return {'id':str(uuid.uuid4())[:8],'from':a,'to':b,'color':str(data.get('color','#0071e3'))}
 
     def load_project(self,project):
-        if not isinstance(project,dict) or project.get('format')!='cimc-lab-project' or project.get('version') not in (1,2):raise ValueError('不支持的工程格式或版本')
+        if not isinstance(project,dict) or project.get('format')!='cimc-lab-project' or project.get('version') not in (1,2,3):raise ValueError('不支持的工程格式或版本')
         if project.get('boardId')!=self.board['id']:raise ValueError('工程板卡版本与当前板卡不一致')
         raw=project.get('wires')
         if not isinstance(raw,list) or len(raw)>200 or any(not isinstance(w,dict) for w in raw):raise ValueError('工程跳线列表无效')
@@ -669,12 +659,27 @@ class Simulator:
             raw=remaining
         staged=[]
         for w in raw:staged.append(self.validate_wire(w,staged))
+        # A v3 restore is self-contained. Legacy projects intentionally only
+        # restore wiring/settings and retain the machine already loaded.
+        program=cpu=None
+        if project['version']==3:
+            if 'firmwareSet' not in project:raise ValueError('v3 工程缺少 firmwareSet')
+            saved=project['firmwareSet']
+            if saved is not None:
+                program=prepare_set(saved,allow_references=False)
+                cpu=self._make_cpu(program)
+        if project['version']==3:self._install_program(program,cpu)
         self.set_serial_mode(mode)
         self.adc.set_voltage(voltage)
         self.wires=staged
         self._connection_cache.clear()
 
-    def project(self):return {'format':'cimc-lab-project','version':2,'boardId':self.board.get('id'),'wires':list(self.wires),'firmware':self.firmware,'serialMode':self.serial_mode,'adcVoltage':self.adc.voltage}
+    def project(self):
+        with self.lock:
+            return {'format':'cimc-lab-project','version':3,'boardId':self.board.get('id'),
+                    'wires':list(self.wires),'firmware':self.firmware,
+                    'firmwareSet':self.program.exported() if self.program else None,
+                    'serialMode':self.serial_mode,'adcVoltage':self.adc.voltage}
 
     def state(self):
         with self.lock:
@@ -683,4 +688,4 @@ class Simulator:
             leds=[self.net_level(m.get('net',m.get('pin')))==m.get('active',1) for m in self.board.get('ledMappings',[])]
             pc=self.uc.reg_read(UC_ARM_REG_PC) if self.uc else 0
             sp=self.uc.reg_read(UC_ARM_REG_SP) if self.uc else 0
-            return {'status':self.status,'firmware':self.firmware,'cpu':{'pc':f'0x{pc:08X}','sp':f'0x{sp:08X}','instructions':self.instructions,'model':'Cortex-M4 / Unicorn 2.1.4'},'board':self.board,'leds':leds,'keys':list(self.keys),'oled':{'width':self.oled.width,'height':self.oled.height,'pixels':self.oled.pixels(),'on':self.oled.on},'wires':list(self.wires),'managedWires':self.managed_wires(),'serialMode':self.serial_mode,'adc':self.adc.state(),'flash':self.flash.state(),'serial':list(self.logs),'diagnostics':list(self.diagnostics),'engine':{'version':'0.3.0','mode':'functional','cycleAccurate':False,'supported':'GPIO, polling USART, GPIO I2C OLED, basic SysTick, software ADC, SPI1 GD25Q40E'}}
+            return {'status':self.status,'firmware':self.firmware,'firmwares':[im.metadata() for im in self.program.images] if self.program else [],'bootAddress':f'0x{self.program.boot_address:08X}' if self.program else None,'currentVectorAddress':f"0x{self.regs.get(0xE000ED08,0):08X}" if self.uc else None,'cpu':{'pc':f'0x{pc:08X}','sp':f'0x{sp:08X}','instructions':self.instructions,'model':'Cortex-M4 / Unicorn 2.1.4'},'board':self.board,'leds':leds,'keys':list(self.keys),'oled':{'width':self.oled.width,'height':self.oled.height,'pixels':self.oled.pixels(),'on':self.oled.on},'wires':list(self.wires),'managedWires':self.managed_wires(),'serialMode':self.serial_mode,'adc':self.adc.state(),'flash':self.flash.state(),'serial':list(self.logs),'diagnostics':list(self.diagnostics),'engine':{'version':VERSION,'mode':'functional','cycleAccurate':False,'supported':'GPIO, polling USART, GPIO I2C OLED, basic SysTick, software ADC, SPI1 GD25Q40E'}}

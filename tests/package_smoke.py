@@ -17,6 +17,35 @@ def state():
     with urlopen(url+'/api/state',timeout=3) as r:return json.load(r)
 def command(action,**fields):
     with urlopen(Request(url+'/api/command',data=json.dumps({'action':action,**fields}).encode(),headers={'Content-Type':'application/json'}),timeout=5) as r:return json.load(r)
+
+def project():
+    with urlopen(url+'/api/project',timeout=5) as r:return json.load(r)
+
+def wait_for(predicate,description):
+    for _ in range(150):
+        current=state()
+        assert current['status']!='faulted',current['diagnostics']
+        if predicate(current):return current
+        time.sleep(.05)
+    raise RuntimeError('Packaged engine timeout: '+description)
+
+def has_tx(current,text):
+    return any(log['channel']=='ch340' and log['direction']=='tx' and text in log['text'] for log in current['serial'])
+
+def verify_application(letter,base,led):
+    current=wait_for(lambda s:has_tx(s,f'APP {letter} READY') and s['currentVectorAddress']==base
+                     and s['leds']==[i==led for i in range(6)],f'APP {letter} UART/VTOR/LED')
+    assert int(base,16)<=int(current['cpu']['pc'],16)<int(base,16)+0x10000,current['cpu']
+    command('pause')
+    return current
+
+def boot_select(choice):
+    command('run')
+    wait_for(lambda s:has_tx(s,'SELECT 1 OR 2'),'Bootloader serial selection prompt')
+    command('serial',channel='ch340',data=base64.b64encode(str(choice).encode()).decode())
+    result=verify_application('A' if choice==1 else 'B',f'0x080{choice}0000',choice-1)
+    assert result['bootAddress']=='0x08000000',result['bootAddress']
+    return result
 try:
     for _ in range(120):
         if process.poll() is not None:raise RuntimeError('Packaged engine exited during startup: '+process.stderr.read().decode(errors='replace'))
@@ -69,7 +98,43 @@ try:
             time.sleep(.1)
         else:raise RuntimeError('Packaged SPI Flash probe did not program and erase')
         command('pause')
-    print('PASS: packaged engine + Keil HEX/BIN + OLED + UART + ADC + H6 switch + SPI Flash program/erase')
+    # These are three independently linked Keil programs. No RAM inspection or
+    # special debug endpoint is used: only the same HTTP contract as the GUI.
+    for ext in ('hex','bin'):
+        images=[]
+        for name,address in (('bootloader_probe','0x08000000'),('app_a_probe','0x08010000'),('app_b_probe','0x08020000')):
+            path=package/'firmware'/f'{name}.{ext}'
+            images.append({'filename':path.name,'data':base64.b64encode(path.read_bytes()).decode(),'address':address})
+        loaded=command('load_set',images=images,bootIndex=0)
+        assert len(loaded['firmwares'])==3,loaded['firmwares']
+        assert loaded['cpu']['sp']=='0x20010000',loaded['cpu']
+        ids=[im['id'] for im in loaded['firmwares']]
+        for pin,terminal in (('PD10','LED1'),('PD11','LED2')):
+            if not any({w['from'],w['to']}=={pin,terminal} for w in loaded['wires']):
+                command('wire_add',**{'from':pin,'to':terminal})
+        saved=project()
+        assert saved['version']==3 and len(saved['firmwareSet']['images'])==3,saved['version']
+        assert [base64.b64decode(im['data']) for im in saved['firmwareSet']['images']]==[
+            base64.b64decode(im['data']) for im in images]
+        boot_select(1)
+        reset=command('reset')
+        assert reset['currentVectorAddress']=='0x08000000' and len(reset['firmwares'])==3,reset['bootAddress']
+        # Reset preserves log history, so clear it to require new firmware output.
+        command('clear_log')
+        boot_select(2)
+        direct=command('load_set',images=[{'id':ident} for ident in ids],bootIndex=2)
+        assert direct['firmware']['id']==ids[2] and direct['cpu']['sp']=='0x20020000',direct['firmware']
+        command('run')
+        direct=verify_application('B','0x08020000',1)
+        assert direct['bootAddress']=='0x08020000',direct['bootAddress']
+        assert not has_tx(direct,'BOOT READY'),direct['serial']
+        restored=command('project_load',project=json.loads(json.dumps(saved)))
+        assert [im['id'] for im in restored['firmwares']]==ids,restored['firmwares']
+        assert restored['bootAddress']=='0x08000000' and restored['status']=='ready',restored['status']
+        assert project()['firmwareSet']==saved['firmwareSet']
+        boot_select(1)
+    print('PASS: packaged engine + Keil HEX/BIN + OLED + UART + ADC + H6 switch + SPI Flash program/erase + '
+          '3-image Bootloader to A/B + direct B + project v3 restore (real UART/VTOR/LED)')
 finally:
     if process.poll() is None:
         if sys.platform=='win32':subprocess.run(['taskkill','/PID',str(process.pid),'/T','/F'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)

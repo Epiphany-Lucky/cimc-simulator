@@ -3,7 +3,7 @@
 # PYTHON=/path/to/build-venv/bin/python bash scripts/build-linux.sh [version]
 set -euo pipefail
 
-version=${1:-0.3.0}
+version=${1:-0.4.0}
 if [[ $# -gt 1 || ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
     echo 'Usage: build-linux.sh [MAJOR.MINOR.PATCH]' >&2
     exit 2
@@ -60,7 +60,7 @@ for folder in web assets docs licenses packaging .github .ai-governance; do
     cp -a -- "$folder" "$source_root/"
 done
 cp -a -- "$bundle/firmware" "$source_root/"
-cp -a -- README.md THIRD_PARTY_NOTICES.md CHANGELOG.md requirements-dev.txt .gitignore "$source_root/"
+cp -a -- README.md THIRD_PARTY_NOTICES.md CHANGELOG.md AGENTS.md requirements-dev.txt .gitignore "$source_root/"
 
 unicorn_source="$artifact_root/third-party-source/unicorn-2.1.4.tar.gz"
 if [[ ! -f "$unicorn_source" ]]; then

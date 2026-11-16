@@ -6,12 +6,11 @@ on:
         description: Version without the v prefix; its tag must already exist
         required: true
         type: string
-        default: '0.3.0'
+        default: '0.4.0'
       build_run_id:
         description: Successful Build and verify run containing both package artifacts
         required: true
         type: string
-        default: '43716184712'
 permissions:
   contents: write
   actions: read

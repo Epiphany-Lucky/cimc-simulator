@@ -7,12 +7,16 @@ on:
       version:
         description: Published release version without v
         required: true
-        default: '0.3.0'
+        default: '0.4.0'
 permissions:
   contents: read
   packages: write
+concurrency:
+  group: installer-packages-latest
+  cancel-in-progress: false
 jobs:
   publish:
+    if: github.repository == 'Epiphany-Lucky/cimc-simulator'
     strategy:
       fail-fast: false
       matrix:
@@ -35,7 +39,19 @@ jobs:
           VERSION: ${{ steps.version.outputs.value }}
           PLATFORM: ${{ matrix.platform }}
         run: |
+          set -euo pipefail
+          # A delayed old run must never move the latest package tags backwards.
+          PYTHONPATH=engine python3 - <<'PY'
+          import os
+          from updates import UpdateChecker
+          state = UpdateChecker('0.0.0').check()
+          assert state['status'] == 'ok', state
+          assert state['latestVersion'] == os.environ['VERSION'], 'Only the current public release may be published'
+          assert all(state['assets'].values()), 'Missing public installers'
+          PY
           mkdir -p packages
+          gh release download "v$VERSION" --repo "$GITHUB_REPOSITORY" --dir . \
+            --pattern "SHA256SUMS-$VERSION.txt"
           if [ "$PLATFORM" = windows ]; then
             gh release download "v$VERSION" --repo "$GITHUB_REPOSITORY" --dir packages \
               --pattern "CIMC-Studio-$VERSION-Setup-x64.exe" \
@@ -46,6 +62,28 @@ jobs:
               --pattern "cimc-studio_${VERSION}_amd64.deb" \
               --pattern "CIMC-Studio-$VERSION-linux-x64.tar.gz"
           fi
+          python3 - <<'PY'
+          import hashlib, os
+          from pathlib import Path
+          version = os.environ['VERSION']
+          expected = ({f'CIMC-Studio-{version}-Setup-x64.exe', f'CIMC-Studio-{version}-win-x64.zip',
+                       f'CIMC-Studio-{version}-html-local.zip'} if os.environ['PLATFORM'] == 'windows'
+                      else {f'cimc-studio_{version}_amd64.deb', f'CIMC-Studio-{version}-linux-x64.tar.gz'})
+          files = {p.name: p for p in Path('packages').iterdir()}
+          assert set(files) == expected, 'Unexpected or missing downloaded installer'
+          records = {}
+          for line in Path(f'SHA256SUMS-{version}.txt').read_text(encoding='ascii').splitlines():
+              digest, name = line.split('  ', 1)
+              assert name not in records, 'Duplicate checksum record'
+              records[name] = digest
+          for name, path in files.items():
+              assert name in records, 'Missing release checksum for ' + name
+              digest = hashlib.sha256()
+              with path.open('rb') as stream:
+                  for chunk in iter(lambda: stream.read(1024 * 1024), b''):
+                      digest.update(chunk)
+              assert digest.hexdigest() == records[name], 'Release checksum mismatch: ' + name
+          PY
           (cd packages && sha256sum * > SHA256SUMS.txt)
           cp docs/install.md packages/INSTALL.md
       - name: Publish linked OCI installation package
@@ -54,6 +92,7 @@ jobs:
           VERSION: ${{ steps.version.outputs.value }}
           PLATFORM: ${{ matrix.platform }}
         run: |
+          set -euo pipefail
           printf '%s' "$GH_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
           image="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/cimc-studio-$PLATFORM"
           docker build -f packaging/registry/Dockerfile --build-arg "VERSION=$VERSION" \
@@ -68,3 +107,26 @@ jobs:
           docker rm "$id"
           (cd extracted && sha256sum --check SHA256SUMS.txt)
           printf 'Published and verified `%s:%s`\n' "$image" "$VERSION" >> "$GITHUB_STEP_SUMMARY"
+  prune-old-installers:
+    needs: publish
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify replacement and remove superseded installation files
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_VERSION: ${{ inputs.version }}
+          EVENT_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          version="${INPUT_VERSION:-${EVENT_TAG#v}}"
+          python3 scripts/prune-releases.py --current-version "$version" --execute --report cleanup-report.json
+          printf 'Old installer assets and package versions removed; source history and release announcements preserved.\n' >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: installer-cleanup-report
+          path: cleanup-report.json

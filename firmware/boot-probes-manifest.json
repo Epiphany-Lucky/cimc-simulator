@@ -1,0 +1,62 @@
+﻿{
+    "format":  "cimc-boot-probe-build",
+    "version":  1,
+    "generatedAtUtc":  "2026-11-16T03:58:56.3146972Z",
+    "compiler":  "Product: MDK Plus 5.40\r\nComponent: Arm Compiler for Embedded 6.22\r\nTool: armclang [5ee92100]\r\n\r\nTarget: unspecified-arm-none-unspecified",
+    "linker":  "Product: MDK Plus 5.40\r\nComponent: Arm Compiler for Embedded 6.22\r\nTool: armlink [5ee90200]\r\nFor support see http://www.arm.com/support\r\nSoftware supplied by: ARM Limited",
+    "exporter":  "Product: MDK Plus 5.40\r\nComponent: Arm Compiler for Embedded 6.22\r\nTool: fromelf [5ee90f00]\r\nFor support see http://www.arm.com/support\r\nSoftware supplied by: ARM Limited",
+    "buildScriptSha256":  "d876e2da84f0b865961faa7669c7fb9529710d041bfed904514f3c67a43d36f1",
+    "targets":  [
+                    {
+                        "name":  "bootloader_probe",
+                        "source":  "boot_probe.c",
+                        "appId":  0,
+                        "address":  "0x08000000",
+                        "initialMsp":  "0x20010000",
+                        "entry":  "0x08000041",
+                        "size":  612,
+                        "sha256":  {
+                                       "boot_probe.c":  "6589e1df9b77834d3822d9b0545627e7098803bcdc0773813e84ca0c39af9c71",
+                                       "bootloader_probe.sct":  "178b7768623d78a82939e7598baa3314fbc517226f5b4d9dfe39411ce4516494",
+                                       "bootloader_probe.hex":  "68eed142651bd140d8b65af3bd18b7d9db5512a54259c809f85f0215c7f65e80",
+                                       "bootloader_probe.bin":  "1b10e7308ab61824676d71ff0221efb5f63678118c2b70fd8eca66ed851b6ef2",
+                                       "bootloader_probe.axf":  "42aaaec2d8cadedb664a3ace0b3da23958ed2091d8b828e01ac3c57f440e69d5",
+                                       "bootloader_probe.map":  "8c168961d13736dd8d511b7dab184c88399b379026deb6b640f4044323f524de"
+                                   }
+                    },
+                    {
+                        "name":  "app_a_probe",
+                        "source":  "app_probe.c",
+                        "appId":  1,
+                        "address":  "0x08010000",
+                        "initialMsp":  "0x20018000",
+                        "entry":  "0x08010141",
+                        "size":  388,
+                        "sha256":  {
+                                       "app_probe.c":  "60d9a8985e138d458a653ab66f5c2b1a453d109f1d5f6c37451e356f49ce05d6",
+                                       "app_a_probe.sct":  "3b629c64533b28f90fa9e799db66c9effb00b7827eeffb34b59bf76da7e2fdb1",
+                                       "app_a_probe.hex":  "97f281d03626042887a57d06ca1a9092d41fff514312a77718213667ec01c860",
+                                       "app_a_probe.bin":  "554d976e340b0d8548a529eb5d390631545b6a08e6d3f5f754d03a88e0ef0787",
+                                       "app_a_probe.axf":  "56b89c6394f5c551b36291d0c7776a6c40e0975411a95ca9dc577675fac73235",
+                                       "app_a_probe.map":  "f6e1632e5fa893d588ea7d6ead4f3d4a4b96f8ca98cb7831fbc2461d16abdd4e"
+                                   }
+                    },
+                    {
+                        "name":  "app_b_probe",
+                        "source":  "app_probe.c",
+                        "appId":  2,
+                        "address":  "0x08020000",
+                        "initialMsp":  "0x20020000",
+                        "entry":  "0x08020141",
+                        "size":  388,
+                        "sha256":  {
+                                       "app_probe.c":  "60d9a8985e138d458a653ab66f5c2b1a453d109f1d5f6c37451e356f49ce05d6",
+                                       "app_b_probe.sct":  "6590afd18674dcf904a87609b2a7991166e5f457c95833bb33f38e1261f31bad",
+                                       "app_b_probe.hex":  "3db8e2df9ddd7facaf249d3a47ab6847927dea15d805203f6f715abf66c2efda",
+                                       "app_b_probe.bin":  "cf9dd8efdb9ce28cfb42aabf6e44d6d87580675dfce8f285136329759723a230",
+                                       "app_b_probe.axf":  "51d35f3355213cdd934758084b7ee8293d805a1bcdbd8ae1a206ec3756349776",
+                                       "app_b_probe.map":  "98c83300855bfac053d1f17b7a9b1f96a05f569e37cce3c586e719b97639b5f5"
+                                   }
+                    }
+                ]
+}

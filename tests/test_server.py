@@ -84,6 +84,24 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(result.exception.code, 400)
         self.assertIn('error', json.load(result.exception))
 
+    def test_portable_firmware_set_has_transport_headroom(self):
+        # The compact firmwareSet can occupy 8 MiB; project JSON needs room for
+        # its outer fields. A valid large JSON body must reach command validation.
+        body = b'{"action":"not_an_action"}' + b' ' * (8 * 1024 * 1024)
+        request = Request(self.url+'/api/command', data=body,
+                          headers={'Content-Type': 'application/json'})
+        with self.assertRaises(HTTPError) as result:
+            urlopen(request, timeout=10)
+        self.assertEqual(result.exception.code, 400)
+        self.assertIn('error', json.load(result.exception))
+
+    def test_oversized_body_is_rejected_before_reading(self):
+        request = Request(self.url+'/api/command', data=b'', headers={
+            'Content-Type': 'application/json', 'Content-Length': str(16 * 1024 * 1024 + 1)})
+        with self.assertRaises(HTTPError) as result:
+            urlopen(request, timeout=2)
+        self.assertEqual(result.exception.code, 413)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -13,7 +13,7 @@ on:
 permissions:
   contents: read
 env:
-  CIMC_VERSION: '0.3.0'
+  CIMC_VERSION: '0.4.0'
 jobs:
   verify:
     strategy:
@@ -145,3 +145,4 @@ jobs:
             artifacts/laptop-*-v02.png
             artifacts/schematic-*.png
             artifacts/update-*.png
+            artifacts/multifirmware-*.png
