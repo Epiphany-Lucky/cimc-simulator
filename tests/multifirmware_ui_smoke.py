@@ -9,6 +9,7 @@ import time
 from pathlib import Path
 
 from playwright.sync_api import expect, sync_playwright
+from browser_waits import wait_for_terminal_text
 
 ROOT = Path(__file__).resolve().parents[1]
 URL = (sys.argv[1] if len(sys.argv) > 1 else 'http://127.0.0.1:8765').rstrip('/')
@@ -63,12 +64,12 @@ with sync_playwright() as p:
 
     def run_from_bootloader(number, letter, vector, led_index):
         page.locator('#run-button').click()
-        expect(page.locator('#terminal')).to_contain_text('SELECT 1 OR 2', timeout=30000)
+        wait_for_terminal_text(page, 'SELECT 1 OR 2')
         page.locator('#serial-newline').uncheck()
         page.locator('#serial-input').fill(number)
         page.locator('#serial-send').click()
-        expect(page.locator('#terminal')).to_contain_text(f'JUMP APP {letter}', timeout=30000)
-        expect(page.locator('#terminal')).to_contain_text(f'APP {letter} READY', timeout=30000)
+        wait_for_terminal_text(page, f'JUMP APP {letter}')
+        wait_for_terminal_text(page, f'APP {letter} READY')
         wait_state(f"s.currentVectorAddress === '{vector}' && s.status === 'running'")
         expect(page.locator('#leds .led-light').nth(led_index)).to_have_class('led-light on')
         # The reset selection remains Bootloader; this VTOR change came from ARM code.
@@ -130,7 +131,7 @@ with sync_playwright() as p:
     assert state()['bootAddress'] == '0x08020000'
     assert all(set(item) == {'id'} for item in uploads[-1]['images'])
     page.locator('#run-button').click()
-    expect(page.locator('#terminal')).to_contain_text('APP B READY', timeout=30000)
+    wait_for_terminal_text(page, 'APP B READY')
     assert 'BOOT READY' not in page.locator('#terminal').inner_text()
 
     # Explicit vector address takes precedence only when selected in the UI;

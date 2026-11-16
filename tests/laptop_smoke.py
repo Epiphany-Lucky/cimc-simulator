@@ -9,7 +9,7 @@ import time
 from pathlib import Path
 
 from playwright.sync_api import expect, sync_playwright
-from browser_waits import wait_for_api_state
+from browser_waits import wait_for_api_state, wait_for_terminal_text
 
 ROOT = Path(__file__).resolve().parents[1]
 URL = (sys.argv[1] if len(sys.argv) > 1 else 'http://127.0.0.1:8765').rstrip('/')
@@ -99,7 +99,7 @@ with sync_playwright() as p:
     wait_state('s.adc.voltage > 0.1 && s.adc.voltage <= 3.3')
 
     page.locator('#run-button').click()
-    expect(page.locator('#terminal')).to_contain_text('OLED READY', timeout=30000)
+    wait_for_terminal_text(page, 'OLED READY')
     wait_state('s.adc.sampleCount > 0')
     page.wait_for_function("() => document.querySelector('#oled-live').classList.contains('on')")
     expect(page.locator('#flash-command')).to_contain_text('0x9F')
@@ -131,7 +131,7 @@ with sync_playwright() as p:
     page.locator('#serial-newline').uncheck()
     page.locator('#serial-input').fill('A')
     page.locator('#serial-send').click()
-    expect(page.locator('#terminal')).to_contain_text('ADC 0001 PC0', timeout=30000)
+    wait_for_terminal_text(page, 'ADC 0001 PC0')
     page.locator('[data-panel="wires"]').click()
     expect(page.locator('#wire-list .icon-button')).to_have_count(12)
     expect(page.locator('#wire-list .managed-wire-label')).to_have_count(4)

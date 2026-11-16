@@ -5,6 +5,7 @@ Protocol results are decoded from the machine-code-produced RS485 log.
 """
 import json
 from pathlib import Path
+import re
 import struct
 import sys
 
@@ -96,6 +97,8 @@ with sync_playwright() as playwright:
     page.locator('#board-select').select_option('cimc-v2')
     wait(lambda snapshot: snapshot['board']['id'] == 'cimc-v2', 'V2 board selection')
     expect(page.locator('#v2-devices')).to_be_visible()
+    expect(page.locator('#pt100-slider')).to_have_count(0)
+    expect(page.locator('#dac-output')).to_have_count(0)
     expect(page.locator('#schematic-button')).to_be_enabled()
     expect(page.locator('#board-image')).to_have_attribute('src', 'assets/board-v2.svg')
     page.locator('#demo-button').click()
@@ -141,6 +144,7 @@ with sync_playwright() as playwright:
 
     assert send(0x0301, (3072).to_bytes(2, 'big')) == b'\xff'
     wait(lambda snapshot: snapshot['analog']['dac']['value'] == 3072, 'firmware DAC output')
+    expect(page.locator('[data-pin="PA4"]')).to_have_attribute('title', re.compile(re.escape('DAC0 3072 / 4095 · 2.476 V')))
 
     # Two complete restores retain wiring, model inputs and actual Flash writes.
     expected_dac = 3072
@@ -180,6 +184,8 @@ with sync_playwright() as playwright:
         assert send(0x0301, expected_dac.to_bytes(2, 'big')) == b'\xff'
         wait(lambda snapshot: snapshot['analog']['dac']['value'] == expected_dac,
              'restored firmware writes changed DAC value')
+        label = f'DAC0 {expected_dac} / 4095 · {expected_dac * 3.3 / 4095:.3f} V'
+        expect(page.locator('[data-pin="PA4"]')).to_have_attribute('title', re.compile(re.escape(label)))
 
     snapshots = []
     for width, height in ((1024, 600), (390, 844)):

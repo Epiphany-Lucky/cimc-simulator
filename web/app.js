@@ -146,7 +146,13 @@
   function updateChannelNote() {
     const mapping = channelMapping(channel);
     $('serial-mode-label').textContent = typeof mapping === 'string' ? mapping : mapping?.uart || '待核验';
-    const message = board?.id === 'cimc-v2' ? 'V2 USART1 固定 PD5/PD6、PE8 方向控制，H10 跳帽可拆接。外接示例跳线可自行增删。协议发送 ASCII 十六进制帧，升级 BIN 按原始字节发送。' : channel.startsWith('rs') ? `H6 当前选择 ${(state?.serialMode || 'rs485').toUpperCase()}。RS232 / RS485 共用 USART1；通过右侧接口选择切换，页签只切换终端视图。` : channel === 'ch340' ? 'H7 · CH340 固定连接 USART0，无需手动接线。' : 'CN1 · USART2：PB10 TX / PB11 RX，TTL 调试通道。';
+    const v2Notes = {
+      ch340: 'H12 · CH340 接 USART0 PA9/PA10，使用 1–3、2–4 跳帽。',
+      ttl: 'H11 · TTL 接 USART2 PD8/PD9，使用 1–3、2–4 跳帽。',
+      rs485: 'H10 · RS485 接 USART1 PD5/PD6，PE8 控制方向。跳帽可拆接，协议发送 ASCII 十六进制帧，升级 BIN 按原始字节发送。',
+      rs232: 'H10 · RS232 与 RS485 共用 USART1，使用 3–5、4–6 跳帽。'
+    };
+    const message = board?.id === 'cimc-v2' ? v2Notes[channel] || '' : channel.startsWith('rs') ? `H6 当前选择 ${(state?.serialMode || 'rs485').toUpperCase()}。RS232 / RS485 共用 USART1；通过右侧接口选择切换，页签只切换终端视图。` : channel === 'ch340' ? 'H7 · CH340 固定连接 USART0，无需手动接线。' : 'CN1 · USART2：PB10 TX / PB11 RX，TTL 调试通道。';
     $('channel-note').textContent = message;
     $('channel-note').hidden = !message;
   }
@@ -160,13 +166,13 @@
     document.querySelector('#spi-flash-card .flash-foot').textContent = v2 ? '原图固定 SPI0 · PB3–PB5 · PA15 CS' : '板载固定连接 · PB12–PB15';
     $('v2-devices').hidden = !v2;
     $('v2-protocol').hidden = !v2;
-    document.querySelector('label[for="adc-slider"] span').textContent = v2 ? 'ADC_IN0 · 参考 PC0' : 'VR1 · PC0';
+    document.querySelector('label[for="adc-slider"] span').textContent = 'VR1 · PC0';
     $('keys').closest('.key-group').hidden = profile.keys?.length === 0;
     $('serial-mode').closest('label').hidden = false;
     $('serial-mode').closest('label').firstChild.textContent = v2 ? 'H10 接口' : 'H6 接口';
     $('schematic-button').disabled = false;
     $('wiring-example').hidden = !v2;
-    $('schematic-button').title = v2 ? 'V2 接线视图与参考跳线' : 'V1.0 原理图';
+    $('schematic-button').title = v2 ? 'V2.0 原理图' : 'V1.0 原理图';
     $('demo-button').lastElementChild?.remove();
     $('demo-button').replaceChildren(document.createTextNode(v2 ? '载入 V2 Bootloader + App' : '载入示例固件'));
     if (!profile.uart_channels?.[channel]) channel = v2 ? 'rs485' : 'ch340';

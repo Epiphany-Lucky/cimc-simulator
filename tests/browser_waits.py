@@ -2,6 +2,14 @@
 import time
 
 
+def wait_for_terminal_text(page, expected, *, timeout_ms=30000):
+    """Match rendered TX payloads across transport chunks and timestamp rows."""
+    page.wait_for_function("expected => Array.from(document.querySelectorAll('#terminal .log-line'))"
+                           ".filter(row => row.querySelector('.log-direction')?.textContent === 'TX')"
+                           ".map(row => row.querySelector('.log-content')?.textContent || '').join('').includes(expected)",
+                           arg=expected, timeout=timeout_ms)
+
+
 def wait_for_api_state(page, url, predicate, *, description='API state condition',
                        timeout_ms=30000, poll_interval_ms=100):
     """Return a snapshot only when predicate(snapshot) is literally True.

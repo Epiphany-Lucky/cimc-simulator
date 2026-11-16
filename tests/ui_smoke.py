@@ -3,6 +3,7 @@ import json
 import sys
 from pathlib import Path
 from playwright.sync_api import sync_playwright, expect
+from browser_waits import wait_for_terminal_text
 
 ROOT=Path(__file__).resolve().parents[1]
 url=sys.argv[1] if len(sys.argv)>1 else 'http://127.0.0.1:8765'
@@ -17,7 +18,7 @@ with sync_playwright() as p:
     page.locator('#demo-button').click()
     expect(page.locator('#wire-count')).to_have_text('12')
     page.locator('#run-button').click()
-    expect(page.locator('#terminal')).to_contain_text('OLED READY',timeout=30000)
+    wait_for_terminal_text(page, 'OLED READY')
     page.wait_for_function("document.querySelector('#oled-live').classList.contains('on')")
     # Press and hold a real UI key until firmware updates GPIO.
     key=page.locator('#keys button').nth(1)
@@ -27,7 +28,7 @@ with sync_playwright() as p:
     page.locator('#serial-newline').uncheck()
     page.locator('#serial-input').fill('L')
     page.locator('#serial-send').click()
-    expect(page.locator('#terminal')).to_contain_text('ACK L',timeout=15000)
+    wait_for_terminal_text(page, 'ACK L', timeout_ms=15000)
     page.locator('#run-button').click()
     expect(page.locator('#connection-status')).to_contain_text('已暂停')
     # Project v3 restores firmware and user jumpers. Remove a wire via actual UI.
@@ -55,7 +56,7 @@ with sync_playwright() as p:
     expect(page.locator('#cpu-instructions')).to_have_text('0')
     page.locator('[data-panel="serial"]').click()
     page.locator('#run-button').click()
-    expect(page.locator('#terminal')).to_contain_text('OLED READY',timeout=30000)
+    wait_for_terminal_text(page, 'OLED READY')
     page.locator('#settings-button').click()
     page.locator('#setting-motion').check()
     page.locator('#settings-dialog [data-close]').last.click()

@@ -10,7 +10,7 @@ url = sys.argv[1] if len(sys.argv) > 1 else 'http://127.0.0.1:8871'
 with sync_playwright() as playwright:
     browser = playwright.chromium.launch(channel='msedge' if sys.platform == 'win32' else None, headless=True)
     page = browser.new_page(viewport={'width': 1024, 'height': 600})
-    page.add_init_script("localStorage.setItem('cimc.studio.preferences', JSON.stringify({autoUpdates:false}));")
+    page.add_init_script("localStorage.setItem('cimc.studio.preferences', JSON.stringify({labels:false,motion:false,shortcuts:true,autoUpdates:false}));")
     page.on('dialog', lambda dialog: dialog.accept())
     errors = []
     page.on('pageerror', lambda error: errors.append(str(error)))
