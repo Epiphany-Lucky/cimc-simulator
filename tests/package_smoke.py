@@ -3,6 +3,8 @@ import base64
 import json
 from pathlib import Path
 import socket
+import statistics
+import struct
 import subprocess
 import sys
 import time
@@ -46,6 +48,19 @@ def boot_select(choice):
     result=verify_application('A' if choice==1 else 'B',f'0x080{choice}0000',choice-1)
     assert result['bootAddress']=='0x08000000',result['bootAddress']
     return result
+
+def scheduler_sample(name,raw):
+    command('load',filename=name,data=base64.b64encode(raw).decode())
+    command('run')
+    time.sleep(.15)  # Exclude loading, native translation and timer setup.
+    first=state();begin=time.monotonic()
+    time.sleep(.6)
+    last=state();elapsed=time.monotonic()-begin
+    command('pause')
+    assert last['status']=='running',last['diagnostics']
+    delta=last['cpu']['instructions']-first['cpu']['instructions']
+    assert delta>0,(name,first['cpu'],last['cpu'])
+    return delta/elapsed
 try:
     for _ in range(120):
         if process.poll() is not None:raise RuntimeError('Packaged engine exited during startup: '+process.stderr.read().decode(errors='replace'))
@@ -133,8 +148,21 @@ try:
         assert restored['bootAddress']=='0x08000000' and restored['status']=='ready',restored['status']
         assert project()['firmwareSet']==saved['firmwareSet']
         boot_select(1)
+    # Relative throughput catches the old per-interrupt 12 ms sleep in the
+    # actual frozen worker. Interleave paired trials to reduce host-load drift;
+    # this is a broad regression threshold, not a real-time MCU speed promise.
+    noirq=struct.pack('<IIHH',0x20010000,0x08000009,0xBF00,0xE7FD)
+    tick=(package/'firmware/systick.hex').read_bytes()
+    rates={'systick':[],'noirq':[]}
+    for order in (('systick','noirq'),('noirq','systick'),('systick','noirq')):
+        for name in order:
+            rates[name].append(scheduler_sample('systick.hex' if name=='systick' else 'noirq.bin',
+                                                tick if name=='systick' else noirq))
+    ratio=statistics.median(rates['systick'])/statistics.median(rates['noirq'])
+    print('Frozen scheduler paired samples: '+json.dumps({'instructionsPerSecond':rates,'systickToNoIrq':ratio}),flush=True)
+    assert ratio>=.25,'SysTick worker loses too much throughput at interrupt boundaries: '+str(ratio)
     print('PASS: packaged engine + Keil HEX/BIN + OLED + UART + ADC + H6 switch + SPI Flash program/erase + '
-          '3-image Bootloader to A/B + direct B + project v3 restore (real UART/VTOR/LED)')
+          '3-image Bootloader to A/B + direct B + project v3 restore (real UART/VTOR/LED) + SysTick scheduler')
 finally:
     if process.poll() is None:
         if sys.platform=='win32':subprocess.run(['taskkill','/PID',str(process.pid),'/T','/F'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)

@@ -49,13 +49,29 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File firmware\build-boot-prob
 2. ICSR 高字节写 1 置 pending、低字节写 0 不重放命令、高字节写 1 清 pending，COUNTFLAG 保持。
 3. v3 工程含非 ASCII 非法 base64 时，CPU 对象、固件集合、状态、日志与诊断保持不变。
 
-## 待补齐：最终界面、安装与发布证据
+## SysTick 调度缺陷：修复与重复测量
+
+用户截图中的问题已在0.3标签和本次修改前快照复现。每个负载使用独立进程、真实worker、初始化结束后测量2秒，交错顺序重复3次；真实`firmware/systick.hex`设置LOAD=999，ISR在SRAM递增计数。观测器只记录预算和时间，不改变调度。
+
+| 负载 | 修复前计数/秒中位数 | 修复后计数/秒中位数 |
+|---|---:|---:|
+| SysTick真实中断 | 36,491 | 729,941 |
+| 无中断NOP/branch对照 | 394,984 | 750,215 |
+| 原有demo稳态 | 193,663 | 449,415 |
+
+真实ISR平均频率由36.33次/秒增至751.64次/秒，LOAD=999下每次中断仍约对应1000条计数；未通过放大计数或伪造输出提速。修复前437次执行调用全部提前返回，仅消耗约5%预算；修复后异常进入/返回在同一预算内继续，并由hook每64条及异常边界检查宿主时间片。具体机器/Unicorn版本、每次试验、源码和固件哈希见[机器可读记录](benchmarks/systick-v0.4.json)。这些数值是本机实测，不是跨机器性能保证或硬件周期证明。
+
+`tests/test_scheduler.py`独立12项通过：大块/小块/单步的完整CPU与SysTick状态一致；pending、PRIMASK、真实BX异常返回、栈恢复；故障和零进展停止；有/无中断的墙钟限制；密集中断暂停/恢复/关闭与临时时间片清理。未降低密集中断1000条/2秒的回归门槛。
+
+新增冻结包交错三组相对吞吐回归，门槛为SysTick/无IRQ中位速率≥0.25。修改前的0.4冻结包已作为负对照实际失败（比值0.0743），因此该测试可识别旧问题。此前的Windows安装通过记录属于修复前；最终包须重新构建验收。
+
+## 最终交付验收表
 
 以下为验收项，不是已完成声明。由主发布流程填入实际命令、报告路径、提交号、摘要和运行链接；未通过的项目保留失败原因。
 
 | 验收项 | 当前证据状态 | 完成时需要记录 |
 |---|---|---|
-| 最终 Windows/Linux 全量源码回归 | Windows已通过，Linux待CI | `python -m unittest discover -s tests -v`：106项，96通过、10项Linux专属跳过；包括清理流程14项与HTTP边界8项 |
+| 最终 Windows/Linux 全量源码回归 | Windows已通过，Linux待CI | `python -m unittest discover -s tests -v`：118项，108通过、10项Linux专属跳过；包括调度12项、清理流程14项与HTTP边界8项；日志artifacts/v04-final-windows-build.log |
 | 多固件对话框和工作台 | Windows源码服务已通过 | `multifirmware_ui_smoke.py`、`ui_smoke.py`、`laptop_smoke.py`、`schematic_smoke.py`；3BIN/8镜像、真实串口选A/B、错误草稿/取消/启动选择、v3工程往返、超过6MiB实际请求；1024×600与390px截图在artifacts/multifirmware-*.png；无JS异常 |
 | Windows/HTML 冻结包 | 待补 | 构建命令；安装后及便携包真实多镜像/MSP/VTOR/SysTick结果；文件摘要 |
 | Windows 安装/覆盖/卸载 | 待补 | 隔离 TestAppId、原生 WPF、用户文件保留、报告路径 |

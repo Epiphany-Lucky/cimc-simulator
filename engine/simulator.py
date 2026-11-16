@@ -114,6 +114,8 @@ class Simulator:
         self.uc=None
         self.image=None
         self.program=None
+        self._slice_deadline=None
+        self._slice_timed_out=False
         self.wires=[]
         self.serial_mode='rs485'
         self._connection_cache={}
@@ -417,14 +419,24 @@ class Simulator:
         return not m.get('dePin') or self.net_level(m['dePin'])==m.get('deActive',1)
 
     def _code_hook(self,uc,address,size,user):
-        self.instructions+=1
+        # Bound uninterrupted native code too, without creating a native timeout
+        # watchdog on each ISR restart (its shutdown adds a per-interrupt delay).
+        if self._slice_deadline is not None and self.instructions&63==0:
+            if time.monotonic()>=self._slice_deadline:
+                self._slice_timed_out=True
+                uc.emu_stop();return
         st=self.systick
+        # This callback precedes execution. Deliver an already-pending exception
+        # without counting or ticking the thread instruction we are about to stop.
+        if st['pending'] and not self.in_exception and not uc.reg_read(UC_ARM_REG_PRIMASK):
+            uc.emu_stop();return
+        self.instructions+=1
         if st['ctrl']&1:
             if st['value']==0:
                 st['value']=st['reload'];st['flag']=True
                 if st['ctrl']&2:st['pending']=True
             else:st['value']-=1
-        if st['pending'] and not self.in_exception and not uc.reg_read(UC_ARM_REG_PRIMASK):uc.emu_stop()
+        # A newly pending exception is delivered at the next instruction boundary.
 
     def _interrupt(self,uc,intno,user):
         if intno==8 and self.in_exception:self.exception_return=True;uc.emu_stop()
@@ -451,23 +463,58 @@ class Simulator:
         u.reg_write(UC_ARM_REG_SP,sp+32)
         self.in_exception=False;self.exception_return=False
 
-    def run_chunk(self,count=10000):
-        if not self.uc:return
+    def run_chunk(self,count=10000,*,max_duration=None):
+        """Consume an instruction budget across exception boundaries.
+
+        Manual calls are deterministic and remain usable after close() stops the
+        worker. The optional wall-time ceiling is only a host responsiveness limit;
+        it does not change the instruction-driven peripheral clock model.
+        """
+        if isinstance(count,bool) or not isinstance(count,int) or count<=0:
+            raise ValueError('指令预算必须为正整数')
+        if max_duration is not None and (isinstance(max_duration,bool) or
+                not isinstance(max_duration,(int,float)) or not math.isfinite(max_duration) or max_duration<=0):
+            raise ValueError('执行时间上限必须为有限正数')
+        if not self.uc or self.status=='faulted':return 0
+        started=self.instructions
+        deadline=time.monotonic()+max_duration if max_duration is not None else None
+        self._slice_deadline=deadline
+        self._slice_timed_out=False
         try:
-            if self.exception_return:self._return_exception()
-            if self.systick['pending'] and not self.in_exception and not self.uc.reg_read(UC_ARM_REG_PRIMASK):self._enter_systick()
-            if self.status=='faulted':return
-            self.uc.emu_start(self.uc.reg_read(UC_ARM_REG_PC)|1,0,count=count)
-            if self.exception_return:self._return_exception()
+            while self.instructions-started<count and self.status!='faulted':
+                if self.exception_return:self._return_exception()
+                if deadline is not None and time.monotonic()>=deadline:break
+                if self.systick['pending'] and not self.in_exception and not self.uc.reg_read(UC_ARM_REG_PRIMASK):
+                    self._enter_systick()
+                if self.status=='faulted':break
+                remaining=count-(self.instructions-started)
+                before=self.instructions
+                self.uc.emu_start(self.uc.reg_read(UC_ARM_REG_PC)|1,0,count=remaining)
+                returning=self.exception_return
+                if returning:self._return_exception()
+                if self.status=='faulted':break
+                if deadline is not None and (self._slice_timed_out or time.monotonic()>=deadline):break
+                eligible=self.systick['pending'] and not self.in_exception and not self.uc.reg_read(UC_ARM_REG_PRIMASK)
+                if self.instructions==before and not returning and not eligible:
+                    self.diagnose('固件执行没有取得进展，也没有可处理的异常边界',pc=f'0x{self.uc.reg_read(UC_ARM_REG_PC):08X}')
+                    break
         except UcError as e:
             if self.status!='faulted':self.diagnose(f'固件停止：{e}',pc=f'0x{self.uc.reg_read(UC_ARM_REG_PC):08X}')
+        finally:
+            self._slice_deadline=None
+            self._slice_timed_out=False
         self._flush_uart()
+        return self.instructions-started
 
     def _worker(self):
         while not self.closed:
+            started=time.monotonic()
             with self.lock:
-                if self.status=='running':self.run_chunk()
-            time.sleep(0.012)
+                if self.status=='running':self.run_chunk(max_duration=0.012)
+            # Exception entry/return do not each incur a host sleep. Only the
+            # unused part of the overall service period is idle; sleep(0) still
+            # yields after an overrun so UI requests can acquire the lock.
+            time.sleep(max(0,0.012-(time.monotonic()-started)))
 
     def _pin_net(self,pin):
         for p in self.board.get('pins',[]):

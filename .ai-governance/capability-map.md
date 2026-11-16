@@ -25,5 +25,6 @@
 | 启动向量与真实Bootloader | 扩展 | engine/simulator.py, firmware/boot_probe.c, firmware/app_probe.c, firmware/build-boot-probes.ps1 | 独立启动向量、MSP/VTOR/BX跨镜像跳转，三份Keil产物与SysTick证据；不扩展为FMC在线IAP |
 | 工程完整固件恢复 | 扩展 | engine/firmware_images.py, engine/simulator.py, tests/test_multifirmware.py | v3保存完整集合和启动选择，整体预检后提交；v1/v2保持兼容，不保存CPU/RAM/SPI运行快照 |
 | 多固件发布与验收证据 | 扩展 | docs/implementation-v0.4.md, docs/validation-v0.4.md, docs/releases/v0.4.0.md, firmware/BOOT_PROBES.md | 区分源码/真实fixture/安装包/在线发布证据；发布验收后清理旧分发附件，保留源码、标签、公告与报告；GHCR仍私有 |
+| SysTick指令预算调度 | 修复并扩展 | engine/simulator.py, tests/test_scheduler.py, tests/package_smoke.py | 异常进入/返回在同预算内连续执行；被截断指令不计数；每64条hook与异常边界检查宿主时间片，按剩余周期休眠；真实固件/分块一致性/响应性/冻结包吞吐验证，保持功能模型边界 |
 
 禁区：不改原板固定网络；不猜测未知连线；不把未建模访问当成功；不上传本地密钥、个人目录或未授权第三方完整工程；不承诺已验证任意Keil固件。

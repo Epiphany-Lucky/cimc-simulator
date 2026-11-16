@@ -120,12 +120,14 @@ class EngineTests(unittest.TestCase):
 
     def test_systick_executes_real_exception_handler(self):
         self.s.load((ROOT/'firmware/systick.hex').read_bytes(),'systick.hex')
-        for _ in range(100):self.s.run_chunk(1000)
+        for _ in range(100):self.assertEqual(self.s.run_chunk(1000),1000)
         ticks=struct.unpack('<I',self.s.uc.mem_read(SRAM,4))[0]
-        self.assertGreater(ticks,10)
-        self.assertLess(ticks,100)
+        self.assertEqual(self.s.instructions,100000)
+        # The probe loads SysTick with 999. It now consumes all 100,000
+        # instructions, including handler work, rather than one ISR per chunk.
+        self.assertGreaterEqual(ticks,99)
+        self.assertLessEqual(ticks,101)
         self.assertNotEqual(self.s.status,'faulted',self.s.diagnostics)
-        self.assertFalse(self.s.in_exception)
 
     def test_uart_interrupt_enable_stops_instead_of_fake_progress(self):
         self.s.command({'action':'demo'})
