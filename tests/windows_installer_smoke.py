@@ -36,7 +36,7 @@ def registry_entry(key_name):
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('package',type=Path)
-    parser.add_argument('--version',default='0.4.0')
+    parser.add_argument('--version',default='0.5.0')
     parser.add_argument('--skip-desktop',action='store_true',help='For CI runners without an interactive WebView2 desktop')
     args=parser.parse_args()
     if os.name!='nt':parser.error('This acceptance test requires Windows')
@@ -85,7 +85,7 @@ def main():
             assert hashlib.sha256((installed/name).read_bytes()).digest()==hashlib.sha256((package/name).read_bytes()).digest(),name
         sentinel.write_text(sentinel_text,encoding='utf-8')
         report['registeredInstallation']=entry
-        report['packageExecution']=run([sys.executable,'-X','utf8',ROOT/'tests/package_smoke.py',installed],timeout=180).strip()
+        report['packageExecution']=run([sys.executable,'-X','utf8',ROOT/'tests/package_smoke.py',installed],timeout=420).strip()
         if not args.skip_desktop:
             report['desktopExecution']=run([sys.executable,'-X','utf8',ROOT/'tests/desktop_smoke.py',installed/'CIMC-Studio.exe',
                                             '--output',test_root/'installed-desktop'],timeout=180).strip()

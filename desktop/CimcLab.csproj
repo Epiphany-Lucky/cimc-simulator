@@ -9,7 +9,7 @@
     <ApplicationIcon>../assets/app.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <RootNamespace>CimcStudio</RootNamespace>
-    <Version>0.4.0</Version>
+    <Version>0.5.0</Version>
     <Description>CIMC Studio — local embedded firmware workbench</Description>
     <PublishSingleFile>true</PublishSingleFile>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>

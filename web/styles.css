@@ -132,6 +132,10 @@ body.schematic-open{overflow:hidden}
 @media(max-width:420px){.topbar .avatar{display:block}.topbar .version{display:none}}
 
 /* Multiple images share one flash session; editing remains in this modal. */
+#board-select{font:inherit;font-size:12px;color:var(--blue);border:1px solid #dbe3ef;background:#f6f9fd;border-radius:7px;padding:4px 7px;margin-left:5px}
+.v2-card{padding:18px}.v2-card label{display:flex;justify-content:space-between;margin-top:15px;font-size:12px;color:#64748b}.v2-card input[type=range]{width:100%;accent-color:var(--blue);margin:10px 0}.v2-card p{font-size:11px;color:#64748b;line-height:1.8}
+.v2-protocol{display:flex;gap:9px;align-items:center;flex-wrap:wrap;padding:10px 18px;border-bottom:1px solid var(--line)}.v2-protocol label{font-size:11px;color:#64748b}.v2-protocol input{width:60px}.v2-protocol input,.v2-protocol select{border:1px solid #dbe3ef;border-radius:6px;padding:6px;background:#fff;color:#425b7b}.v2-protocol .button{font-size:11px;padding:7px 10px;min-height:30px}
+#update-actions{margin-top:12px}#update-progress{width:100%;height:8px;accent-color:var(--blue)}#update-install-status{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;line-height:1.7;margin:10px 0}#update-actions .button{margin-right:8px;margin-bottom:8px}#update-actions .text-button{font-size:11px}
 .firmware-heading-actions{display:flex;align-items:center;gap:10px;min-width:0}
 .firmware-heading-actions .text-button{font-size:10px;padding:2px 0}
 body.firmware-set-open{overflow:hidden}
@@ -168,3 +172,5 @@ body.firmware-set-open{overflow:hidden}
  .firmware-set-footer{padding:12px 16px 16px}.firmware-set-submit-row{flex-direction:column;align-items:stretch;gap:12px}.firmware-set-buttons{justify-content:flex-end}.firmware-set-summary strong{font-size:11px}.firmware-set-summary>span{font-size:9px}
  .firmware-heading-actions{gap:6px}.firmware-heading-actions .text-button{font-size:9px}
 }
+
+@media(max-width:760px){.v2-card{grid-column:1 / -1}#wiring-example{font-size:10px}.board-tools{flex-wrap:wrap;justify-content:flex-end}}

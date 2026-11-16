@@ -1,6 +1,6 @@
 ; The installer owns application files only. User exports and WebView2 data survive removal.
 #ifndef AppVersion
-  #define AppVersion "0.3.0"
+  #define AppVersion "0.5.0"
 #endif
 #ifndef PackageDir
   #error PackageDir must be the complete self-contained Windows release directory.

@@ -121,6 +121,7 @@ class UpdateChecker:
             "available": False, "releaseUrl": None, "publishedAt": None,
             "releaseTitle": "", "releaseNotes": "", "prerelease": False,
             "assets": {kind: None for kind in ASSET_NAMES},
+            "assetDetails": {}, "checksumsUrl": None,
             "checkedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         }
 
@@ -183,11 +184,16 @@ class UpdateChecker:
         if release_url is None or published_at is None or not isinstance(raw_assets, list):
             return None
         assets = {kind: None for kind in ASSET_NAMES}
+        details = {}
+        checksums_url = None
         expected_names = {pattern.format(version=version): kind for kind, pattern in ASSET_NAMES.items()}
         for asset in raw_assets[:100]:
             if not isinstance(asset, dict) or asset.get("state") != "uploaded":
                 continue
             name = asset.get("name")
+            if name == f"SHA256SUMS-{version}.txt":
+                checksums_url = _official_url(asset.get("browser_download_url"),
+                    REPOSITORY_PATH + "download/" + tag + "/" + name)
             if not isinstance(name, str) or name not in expected_names:
                 continue
             size = asset.get("size")
@@ -196,7 +202,12 @@ class UpdateChecker:
             url = _official_url(asset.get("browser_download_url"),
                                 REPOSITORY_PATH + "download/" + tag + "/" + name)
             if url is not None:
-                assets[expected_names[name]] = url
+                kind = expected_names[name]
+                assets[kind] = url
+                digest = asset.get("digest")
+                details[kind] = {"name": name, "url": url, "size": size,
+                    "sha256": digest[7:] if isinstance(digest, str) and
+                    re.fullmatch(r"sha256:[0-9a-fA-F]{64}", digest) else None}
         if not any(assets.values()):
             return None
         return version_key, {
@@ -205,4 +216,5 @@ class UpdateChecker:
             "releaseNotes": _text(release.get("body"), 2000),
             "prerelease": release.get("prerelease") is True or version_key[3] == 0,
             "assets": assets,
+            "assetDetails": details, "checksumsUrl": checksums_url,
         }

@@ -28,3 +28,8 @@
 | SysTick指令预算调度 | 修复并扩展 | engine/simulator.py, tests/test_scheduler.py, tests/package_smoke.py | 异常进入/返回在同预算内连续执行；被截断指令不计数；每64条hook与异常边界检查宿主时间片，按剩余周期休眠；真实固件/分块一致性/响应性/冻结包吞吐验证，保持功能模型边界 |
 
 禁区：不改原板固定网络；不猜测未知连线；不把未建模访问当成功；不上传本地密钥、个人目录或未授权第三方完整工程；不承诺已验证任意Keil固件。
+
+| CIMC V2 板卡与真实用户固件 | 扩展 | web/board-v2.json, scripts/generate-board-v2.py, firmware/v2-manifest.json, engine/simulator.py | 官方照片底稿与新驱动合并，板卡切换、真实 Boot/App 与跨板工程 |
+| 内部 Flash、串口 IRQ 与系统复位 | 新增 | engine/fmc.py, engine/simulator.py | V2 RX/IDLE、FMC锁定/擦写、实际Flash快照、复位；保留V1回归 |
+| V2 ADC/DAC/PT100 | 扩展 | engine/adc.py, engine/v2_devices.py | PC0/PC1、DAC0 PA4、SPI0 PT100子集，输入可随工程保存 |
+| 应用内更新安装 | 扩展 | engine/self_update.py, engine/updates.py, engine/server.py, desktop/App.cs | 固定发行源、异步下载进度、大小/SHA256、同源会话校验、系统安装与重启 |

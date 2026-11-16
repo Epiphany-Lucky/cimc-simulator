@@ -2,6 +2,7 @@
 import argparse
 import json
 import mimetypes
+import os
 import signal
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -14,6 +15,7 @@ from simulator import Simulator
 from desktop_session import APP_ID, DesktopSession, open_browser
 from updates import UpdateChecker
 from app_version import VERSION
+from self_update import SelfUpdater, UPDATE_EXIT_MARKER
 
 
 def main():
@@ -48,6 +50,7 @@ def serve(args,session):
     web=(args.web_root or args.root/'web').resolve()
     simulator=Simulator(args.root)
     updates=UpdateChecker(VERSION)
+    updater=SelfUpdater(updates,args.root)
     stop_event=threading.Event()
     launch_errors=[]
 
@@ -87,7 +90,9 @@ def serve(args,session):
             if path=='/api/updates':
                 result=updates.check(force=urlparse(self.path).query=='force=1')
                 result['platform']='windows' if sys.platform=='win32' else 'linux'
+                result['updater']=dict(updater.info)
                 return self._send(200,result)
+            if path=='/api/updates/status':return self._send(200,updater.state())
             if path=='/api/health':return self._send(200,{'ok':True,'app':APP_ID,'version':VERSION,'desktopSession':bool(session),'instanceId':session.instance_id if session else None})
             if path=='/api/demo':
                 p=args.root/'firmware'/'demo.hex'
@@ -101,7 +106,10 @@ def serve(args,session):
         def do_POST(self):
             if not self._allowed():return self._send(403,{'error':'Only local same-origin requests are allowed'})
             path=urlparse(self.path).path
-            if path not in ('/api/command','/api/session/quit'):return self._send(404,{'error':'Not found'})
+            update_action=path in ('/api/updates/download','/api/updates/install','/api/updates/open')
+            if path not in ('/api/command','/api/session/quit') and not update_action:return self._send(404,{'error':'Not found'})
+            if update_action and (not self.headers.get('Origin') or self.headers.get_content_type()!='application/json'):
+                return self._send(403,{'error':'Update actions require a same-origin JSON request'})
             if path=='/api/session/quit':
                 if not session:return self._send(404,{'error':'No managed desktop session'})
                 if not self.headers.get('Origin') or self.headers.get_content_type()!='application/json':
@@ -111,6 +119,17 @@ def serve(args,session):
                 if not 0<length<=16*1024*1024:return self._send(413,{'error':'Request too large or empty'})
                 data=json.loads(self.rfile.read(length))
                 if not isinstance(data,dict):raise ValueError('Request must be a JSON object')
+                if update_action:
+                    if not updater.authorized(data.get('token')):return self._send(403,{'error':'Invalid update session'})
+                    if path=='/api/updates/download':return self._send(200,updater.start(data.get('version')))
+                    if path=='/api/updates/open':return self._send(200,updater.open_folder())
+                    result=updater.install()
+                    self._send(200,result)
+                    desktop_token=os.environ.get('CIMC_DESKTOP_UPDATE_TOKEN')
+                    if desktop_token:print(UPDATE_EXIT_MARKER+desktop_token,flush=True)
+                    stop_event.set()
+                    if not session:threading.Thread(target=server.shutdown,daemon=True).start()
+                    return
                 if path=='/api/session/quit':
                     if not session.authorized(data.get('instanceId')):return self._send(403,{'error':'Invalid desktop instance'})
                     self._send(200,{'ok':True})

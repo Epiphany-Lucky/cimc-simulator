@@ -1,0 +1,27 @@
+{
+  "source": "User-supplied CIMC V2 board project, 27_0_BootLoader",
+  "clockTicksPerInstruction": 240,
+  "files": [
+    {
+      "file": "v2-bootloader.bin",
+      "source": "27_0_BootLoader/project/Objects/CIMC_GD32_BootLoader.bin",
+      "sha256": "dc898eda73e09865e3e93ae7f5fd20ca9b7b8e523ecb26547ef0b77b792d5916",
+      "size": 13124,
+      "address": "0x8000000"
+    },
+    {
+      "file": "v2-app.bin",
+      "source": "27_1_App/project/Objects/app.bin",
+      "sha256": "64ce6ca208102f41ec37c23b19d9e2ac7c95358cbc4f7e59b7c16819cab6a332",
+      "size": 17276,
+      "address": "0x8011000"
+    },
+    {
+      "file": "v2-app-update.bin",
+      "source": "27_1_App/project/Objects/app_update.bin",
+      "sha256": "eb8663ac3ad1b74717ea27df129965dad4a5d7c7b75c23b1612e76dde7e11f7f",
+      "size": 17284,
+      "address": null
+    }
+  ]
+}

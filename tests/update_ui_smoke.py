@@ -17,9 +17,12 @@ with sync_playwright() as playwright:
     page=browser.new_page(viewport={'width':1024,'height':600})
     errors=[];page.on('pageerror',lambda error:errors.append(str(error)))
     def reply(route):
+        if route.request.url.split('?')[0].endswith('/status'):
+            route.fulfill(status=200,content_type='application/json',body=json.dumps({'status':'idle','message':''}))
+            return
         requests.append(route.request.url)
         route.fulfill(status=200,content_type='application/json',body=json.dumps(fixture))
-    page.route('**/api/updates*',reply)
+    page.route('**/api/updates**',reply)
     page.goto(URL)
     expect(page.locator('#settings-button')).to_have_class('rail-button has-update')
     expect(page.locator('#toast')).to_contain_text('0.4.0 已发布')

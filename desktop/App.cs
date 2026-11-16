@@ -19,6 +19,8 @@ public sealed class App : Application
     private string root = "";
     private readonly List<string> engineLog = new();
     private bool exiting;
+    private bool installingUpdate;
+    private readonly string updateExitToken = Guid.NewGuid().ToString("N");
 
     [STAThread]
     public static void Main(string[] args)
@@ -39,7 +41,7 @@ public sealed class App : Application
             var workArea = SystemParameters.WorkArea;
             var window = new Window
             {
-                Title = "CIMC Studio · 0.4.0",
+                Title = "CIMC Studio · 0.5.0",
                 Width = Math.Min(1280, Math.Max(320, workArea.Width - 32)),
                 Height = Math.Min(820, Math.Max(240, workArea.Height - 32)),
                 WindowStartupLocation = WindowStartupLocation.CenterScreen,
@@ -183,6 +185,8 @@ public sealed class App : Application
         info.CreateNoWindow = true; info.UseShellExecute = false;
         info.RedirectStandardError = true; info.RedirectStandardOutput = true;
         info.Environment["PYTHONIOENCODING"] = "utf-8";
+        info.Environment["CIMC_DESKTOP_PID"] = Environment.ProcessId.ToString();
+        info.Environment["CIMC_DESKTOP_UPDATE_TOKEN"] = updateExitToken;
         engine = new Process { StartInfo = info };
         engine.OutputDataReceived += (_, e) => RecordLog(e.Data);
         engine.ErrorDataReceived += (_, e) => RecordLog(e.Data);
@@ -192,13 +196,32 @@ public sealed class App : Application
     private void RecordLog(string? value)
     {
         if (value is null) return;
+        if (value == "CIMC_UPDATE_EXIT:" + updateExitToken)
+        {
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                installingUpdate = true;
+                MainWindow?.Close();
+            }));
+            return;
+        }
         lock (engineLog) { engineLog.Add(value); if (engineLog.Count > 80) engineLog.RemoveAt(0); }
     }
     private string RecentLog() { lock (engineLog) return string.Join("\n", engineLog.TakeLast(12)); }
     private void StopEngine()
     {
         if (exiting) return; exiting = true;
-        try { if (engine is { HasExited: false }) { engine.Kill(entireProcessTree: true); engine.WaitForExit(3000); } } catch (InvalidOperationException) { }
+        try
+        {
+            if (engine is { HasExited: false })
+            {
+                // The detached installer helper must survive the updating engine.
+                if (!installingUpdate || !engine.WaitForExit(5000))
+                    engine.Kill(entireProcessTree: !installingUpdate);
+                engine.WaitForExit(3000);
+            }
+        }
+        catch (InvalidOperationException) { }
         engine?.Dispose();
     }
     private static string LocateRoot()

@@ -14,12 +14,14 @@ import threading
 import time
 import uuid
 
-from unicorn import Uc, UcError, UC_ARCH_ARM, UC_MODE_THUMB, UC_MODE_MCLASS, UC_HOOK_CODE, UC_HOOK_MEM_READ, UC_HOOK_MEM_WRITE, UC_HOOK_MEM_INVALID, UC_HOOK_INTR, UC_PROT_READ, UC_PROT_WRITE, UC_PROT_EXEC
+from unicorn import Uc, UcError, UC_ARCH_ARM, UC_MODE_THUMB, UC_MODE_MCLASS, UC_HOOK_CODE, UC_HOOK_MEM_READ, UC_HOOK_MEM_WRITE, UC_HOOK_MEM_INVALID, UC_HOOK_INTR, UC_PROT_READ, UC_PROT_WRITE, UC_PROT_EXEC, UC_MEM_WRITE_PROT
 from unicorn.arm_const import *
 from adc import AdcDevice
 from spiflash import SpiFlashDevice
 from app_version import VERSION
 from firmware_images import parse_firmware, parse_image, assemble, prepare_set
+from fmc import InternalFlash
+from v2_devices import V2Devices
 
 FLASH = 0x08000000
 FLASH_SIZE = 0x80000
@@ -29,6 +31,7 @@ CCM = 0x10000000
 CCM_SIZE = 0x10000
 GPIO = {f'P{chr(65+i)}':0x40020000+i*0x400 for i in range(9)}
 UART = {'USART0':0x40011000,'USART1':0x40004400,'USART2':0x40004800,'UART3':0x40004C00,'UART4':0x40005000,'USART5':0x40011400,'UART6':0x40007800,'UART7':0x40007C00}
+UART_IRQ = dict(zip(UART, (37, 38, 39, 52, 53, 71, 82, 83)))
 CORE_REGS = [UC_ARM_REG_R0, UC_ARM_REG_R1, UC_ARM_REG_R2, UC_ARM_REG_R3, UC_ARM_REG_R12, UC_ARM_REG_LR, UC_ARM_REG_PC, UC_ARM_REG_XPSR]
 
 
@@ -106,7 +109,7 @@ class OLED:
 
 
 class Simulator:
-    def __init__(self, root: Path):
+    def __init__(self, root: Path, board_id='cimc-v1'):
         self.root=Path(root)
         self.lock=threading.RLock()
         self.status='idle'
@@ -114,6 +117,8 @@ class Simulator:
         self.uc=None
         self.image=None
         self.program=None
+        self.internal_flash=bytearray()
+        self.flash_dirty=False
         self._slice_deadline=None
         self._slice_timed_out=False
         self.wires=[]
@@ -123,10 +128,12 @@ class Simulator:
         self.diagnostics=[]
         self.sequence=0
         self.closed=False
-        self.board=self._load_board()
+        self.board=self._load_board(board_id)
         self.keys=[False]*len(self.board.get('keyMappings',[]))
         self.adc=AdcDevice(self)
         self.flash=SpiFlashDevice(self)
+        self.fmc=InternalFlash(self)
+        self.v2_devices=V2Devices(self)
         self._reset_devices()
         self.worker=threading.Thread(target=self._worker,daemon=True)
         self.worker.start()
@@ -139,8 +146,10 @@ class Simulator:
         # the worker needs that lock to finish its current 10,000-instruction chunk.
         self.worker.join()
 
-    def _load_board(self):
-        p=self.root/'web'/'board-v1.json'
+    def _load_board(self, board_id='cimc-v1'):
+        if board_id not in ('cimc-v1','cimc-v2'):
+            raise ValueError('不支持的板卡版本')
+        p=self.root/'web'/('board-v1.json' if board_id=='cimc-v1' else 'board-v2.json')
         if p.exists():
             board=json.loads(p.read_text(encoding='utf-8-sig'))
             board['ledMappings']=[{'net':m['terminal'],'active':0 if m.get('activeLow') else 1} for m in board.get('leds',[])]
@@ -157,7 +166,18 @@ class Simulator:
                 nodes=net.get('nodes',[])
                 board['fixedConnections'].extend([[nodes[0],n] for n in nodes[1:]])
             return board
-        raise FileNotFoundError('Missing verified V1 board profile: '+str(p))
+        raise FileNotFoundError('Missing board profile: '+str(p))
+
+    def select_board(self, board_id):
+        board=self._load_board(board_id)
+        with self.lock:
+            if board['id']==self.board['id']:
+                return
+            self.board=board
+            self.wires=[]
+            self.serial_mode='rs485'
+            self._connection_cache.clear()
+            self._install_program(None,None)
 
     def _reset_devices(self):
         if hasattr(self, 'instructions'):self.flash.state()
@@ -166,6 +186,8 @@ class Simulator:
         self.start_time=time.monotonic()
         self.gpio_state={p:{'mode':0,'otype':0,'pull':0,'out':0,'af0':0,'af1':0} for p in GPIO}
         self.rx={p:deque() for p in UART}
+        self.uart_idle={p:False for p in UART}
+        self.uart_status_read={p:False for p in UART}
         self.uart_pending={p:bytearray() for p in UART}
         o=self.board.get('oled',{})
         self.oled=OLED(o.get('width',128),o.get('height',32))
@@ -174,11 +196,18 @@ class Simulator:
         self.in_exception=False
         self.exception_return=False
         self.nvic_enable=0
+        self.nvic_pending=0
+        self.uart_irqs=0
+        self.active_exception=0
+        self.pending_reset=False
+        self._flash_write_pages=set()
         self._conflicts=set()
         self._floating={}
         self._warned=set()
         self.adc.reset()
         self.flash.reset()
+        self.fmc.reset()
+        self.v2_devices.reset()
 
     def diagnose(self,message,level='error',**details):
         self.sequence+=1
@@ -196,7 +225,11 @@ class Simulator:
 
     def _uart_path(self,channel,direction):
         m=self.board['serialMappings'][channel]
-        pin=m[direction];terminal=m[direction+'Terminal']
+        pins=m.get(direction+'Pins',[m[direction]])
+        return any(self._uart_pin_path(m,pin,direction) for pin in pins)
+
+    def _uart_pin_path(self,m,pin,direction):
+        terminal=m[direction+'Terminal']
         nets=self.connected(pin)
         if terminal not in nets:return False
         g=self.gpio_state[pin[:2]];n=int(pin[2:])
@@ -260,6 +293,8 @@ class Simulator:
     def _install_program(self,program,cpu):
         self.program=program
         self.image=program.flash if program else None
+        self.internal_flash=bytearray(program.flash) if program else bytearray()
+        self.flash_dirty=False
         self.logs=[];self.diagnostics=[]
         if program:
             self.base=program.boot_address;self.initial_sp=program.sp;self.entry=program.entry
@@ -274,15 +309,36 @@ class Simulator:
 
     def reset(self):
         with self.lock:
-            if self.program is None:return
-            cpu=self._make_cpu(self.program)
+            if self.program is None:return False
+            try:program=self._current_program()
+            except ValueError as error:
+                self.pending_reset=False
+                self.diagnose('系统复位失败：'+str(error))
+                return False
+            cpu=self._make_cpu(program)
+            self.program=program
+            self.image=program.flash
+            self.flash_dirty=False
+            boot=next(im for im in program.images if im.id==program.boot_image_id)
+            self.firmware={**boot.metadata(),'entry':f'0x{program.entry:08X}'}
             self._reset_devices()
             self.keys=[False]*len(self.board.get('keyMappings',[]))
             self.uc=cpu
             self.regs[0xE000ED08]=self.program.boot_address
             self.status='ready'
+            return True
+
+    def _current_program(self):
+        if not self.flash_dirty:
+            return self.program
+        snapshot=parse_image(bytes(self.internal_flash),'internal-flash.bin',FLASH)
+        return assemble((snapshot,),self.program.boot_address)
 
     def _invalid(self,uc,access,address,size,value,user):
+        if access==UC_MEM_WRITE_PROT and self.board['id']=='cimc-v2' and (0<=address<FLASH_SIZE or FLASH<=address<FLASH+FLASH_SIZE):
+            if self.fmc.program(address,size,value):return True
+            self.diagnose(f'FMC 拒绝 Flash 写入：0x{address:08X}，状态 0x{self.fmc.status:08X}')
+            return False
         self.diagnose(f'未映射或受保护的内存访问：0x{address:08X}',address=f'0x{address:08X}',pc=f'0x{uc.reg_read(UC_ARM_REG_PC):08X}')
         return False
 
@@ -305,6 +361,13 @@ class Simulator:
     def _read(self,a):
         if self.adc.contains(a):return self.adc.read(a)
         if self.flash.contains(a):return self.flash.read(a)
+        if self.fmc.contains(a):return self.fmc.read(a)
+        if self.v2_devices.contains(a):return self.v2_devices.read(a)
+        if 0xE000E100<=a<0xE000E120 or 0xE000E180<=a<0xE000E1A0:
+            return (self.nvic_enable>>(((a&0x7F)//4)*32))&0xFFFFFFFF
+        if 0xE000E200<=a<0xE000E220 or 0xE000E280<=a<0xE000E2A0:
+            return (self._pending_irqs()>>(((a&0x7F)//4)*32))&0xFFFFFFFF
+        if 0xE000E400<=a<0xE000E500 or 0xE000ED18<=a<=0xE000ED20:return self.regs.get(a,0)
         for port,b in GPIO.items():
             if b<=a<b+0x400:
                 g=self.gpio_state[port];o=a-b
@@ -327,8 +390,18 @@ class Simulator:
                 if o==0:
                     control=self.regs.get(b+12,0)
                     if not control&(1<<13):return 0
-                    return (0xC0 if control&(1<<3) else 0)|(0x20 if self.rx[uart] and control&(1<<2) else 0)
-                if o==4:return self.rx[uart].popleft() if self.rx[uart] else 0
+                    self.uart_status_read[uart]=True
+                    return (0xC0 if control&(1<<3) else 0)|(0x20 if self.rx[uart] and control&(1<<2) else 0)|(0x10 if self.uart_idle[uart] else 0)
+                if o==4:
+                    if self.uart_status_read[uart]:self.uart_idle[uart]=False
+                    self.uart_status_read[uart]=False
+                    if not self.rx[uart]:
+                        self._refresh_uart_irq(uart)
+                        return 0
+                    value=self.rx[uart].popleft()
+                    if not self.rx[uart]:self.uart_idle[uart]=True
+                    self._refresh_uart_irq(uart)
+                    return value
                 if o in (8,12,16,20,24):return self.regs.get(a,0)
                 return self._unsupported(a,'读取')
         if 0x40023800<=a<=0x40023898:
@@ -340,6 +413,8 @@ class Simulator:
             if o==0x74:v|=(v&1)<<1
             return v
         if a==0x40023C00:return self.regs.get(a,0)
+        if a==0x40007004 and self.board['id']=='cimc-v2':
+            return self.regs.get(a,0)|(self.regs.get(0x40007000,0)&0x30000)
         if a in (0x40007000,0x40007004):return self.regs.get(a,0)
         if a==0xE000E010:
             v=self.systick['ctrl']|(0x10000 if self.systick['flag'] else 0);self.systick['flag']=False;return v
@@ -350,12 +425,20 @@ class Simulator:
         if a==0xE000ED04:
             # ARM DUI 0553A, ICSR: PENDSTCLR is write-only, PENDSTSET
             # reads the pending state; VECTPENDING/ACTIVE are read-only.
-            return (1<<11)|(15 if self.in_exception else 0)|(((1<<26)|(15<<12)) if self.systick['pending'] else 0)
+            return (1<<11)|self.active_exception|(((1<<26)|(15<<12)) if self.systick['pending'] else 0)
         if a in (0xE000ED04,0xE000ED08,0xE000ED0C,0xE000ED10,0xE000ED14,0xE000ED18,0xE000ED1C,0xE000ED20,0xE000ED24,0xE000ED28,0xE000ED2C,0xE000ED88):return self.regs.get(a,0)
         return self._unsupported(a,'读取')
 
     def _write(self,a,v,size=4,byte_offset=0):
         mask=((1<<(size*8))-1)<<(byte_offset*8)
+        if 0xE000E100<=a<0xE000E120:
+            self.nvic_enable|=(v&mask)<<(((a-0xE000E100)//4)*32);return
+        if 0xE000E180<=a<0xE000E1A0:
+            self.nvic_enable&=~((v&mask)<<(((a-0xE000E180)//4)*32));return
+        if 0xE000E200<=a<0xE000E220:
+            self.nvic_pending|=(v&mask)<<(((a-0xE000E200)//4)*32);return
+        if 0xE000E280<=a<0xE000E2A0:
+            self.nvic_pending&=~((v&mask)<<(((a-0xE000E280)//4)*32));return
         if a==0xE000ED04:
             # Act only on the written bits, never replay a previous W1 command.
             command=v&mask
@@ -373,6 +456,9 @@ class Simulator:
         self.regs[a]=v
         if self.adc.contains(a):return self.adc.write(a,v,size,byte_offset)
         if self.flash.contains(a):return self.flash.write(a,v,size,byte_offset)
+        if self.fmc.contains(a):return self.fmc.write(a,v,size,byte_offset)
+        if self.v2_devices.contains(a):return self.v2_devices.write(a,v,size,byte_offset)
+        if 0xE000E400<=a<0xE000E500:return
         for port,b in GPIO.items():
             if b<=a<b+0x400:
                 g=self.gpio_state[port];o=a-b
@@ -384,8 +470,9 @@ class Simulator:
                 elif o==40:g['out']&=~v&65535
                 elif o not in (8,28,32,36):return self._unsupported(a,'写入')
                 oled=self.board.get('oled',{})
-                if port in (oled.get('scl','')[:2],oled.get('sda','')[:2]):self._i2c_edges()
+                if self.board['id']=='cimc-v2' or port in (oled.get('scl','')[:2],oled.get('sda','')[:2]):self._i2c_edges()
                 self.flash.on_gpio_changed(port)
+                self.v2_devices.on_gpio_changed(port)
                 return
         for uart,b in UART.items():
             if b<=a<b+0x20:
@@ -395,20 +482,27 @@ class Simulator:
                     if self._uart_transmit_enabled(uart):
                         self.uart_pending[uart].append(v&255)
                         if v&255==10 or len(self.uart_pending[uart])>=512:self._serial_log(self._channel(uart),'tx',self.uart_pending[uart]);self.uart_pending[uart].clear()
-                elif o==12 and v&((1<<5)|(1<<6)|(1<<7)):
+                elif o==12 and v&(((1<<6)|(1<<7)) if self.board['id']=='cimc-v2' else ((1<<4)|(1<<5)|(1<<6)|(1<<7))):
                     self.diagnose(f'{uart} 中断模式尚未实现；本版本支持轮询收发')
                 elif o==20 and v&((1<<6)|(1<<7)):
                     self.diagnose(f'{uart} DMA 模式尚未实现')
                 elif o not in (0,8,12,16,20,24):return self._unsupported(a,'写入')
+                self._refresh_uart_irq(uart)
                 return
         if 0x40023800<=a<=0x40023898:
             self.adc.notify_rcu_write(a,v)
+            self.v2_devices.notify_rcu_write(a,v)
             if a==0x40023820 and v&(1<<14):self.flash.reset(controller_only=True)
             return
         if a in (0x40023C00,0x40007000,0x40007004):return
         if a==0xE000E010:self.systick['ctrl']=v&7;return
         if a==0xE000E014:self.systick['reload']=v&0xFFFFFF;return
         if a==0xE000E018:self.systick['value']=0;self.systick['flag']=False;return
+        if a==0xE000ED0C:
+            if v>>16==0x5FA and v&4:
+                self.pending_reset=True
+                self.uc.emu_stop()
+            return
         if a in (0xE000ED04,0xE000ED08,0xE000ED0C,0xE000ED10,0xE000ED14,0xE000ED18,0xE000ED1C,0xE000ED20,0xE000ED24,0xE000ED28,0xE000ED2C,0xE000ED88):return
         return self._unsupported(a,'写入')
 
@@ -419,6 +513,9 @@ class Simulator:
         return not m.get('dePin') or self.net_level(m['dePin'])==m.get('deActive',1)
 
     def _code_hook(self,uc,address,size,user):
+        if self._flash_write_pages:
+            for page in self._flash_write_pages:uc.mem_protect(page,4096,UC_PROT_READ|UC_PROT_EXEC)
+            self._flash_write_pages.clear()
         # Bound uninterrupted native code too, without creating a native timeout
         # watchdog on each ISR restart (its shutdown adds a per-interrupt delay).
         if self._slice_deadline is not None and self.instructions&63==0:
@@ -428,14 +525,15 @@ class Simulator:
         st=self.systick
         # This callback precedes execution. Deliver an already-pending exception
         # without counting or ticking the thread instruction we are about to stop.
-        if st['pending'] and not self.in_exception and not uc.reg_read(UC_ARM_REG_PRIMASK):
+        if self._eligible_exception():
             uc.emu_stop();return
         self.instructions+=1
         if st['ctrl']&1:
-            if st['value']==0:
-                st['value']=st['reload'];st['flag']=True
+            ticks=self.board.get('clockTicksPerInstruction',1)
+            if st['value']<ticks:
+                st['value']=st['reload']-((ticks-st['value']-1)%(st['reload']+1));st['flag']=True
                 if st['ctrl']&2:st['pending']=True
-            else:st['value']-=1
+            else:st['value']-=ticks
         # A newly pending exception is delivered at the next instruction boundary.
 
     def _interrupt(self,uc,intno,user):
@@ -443,25 +541,50 @@ class Simulator:
         else:self.diagnose(f'尚未实现的 CPU 异常：{intno}',pc=f'0x{uc.reg_read(UC_ARM_REG_PC):08X}')
 
     def _enter_systick(self):
+        self._enter_exception(15)
+
+    def _pending_irqs(self):
+        return self.nvic_pending|self.uart_irqs
+
+    def _refresh_uart_irq(self, uart):
+        bit=1<<UART_IRQ[uart]
+        control=self.regs.get(UART[uart]+12,0)
+        active=control&(1<<13) and ((self.rx[uart] and control&(1<<5) and control&(1<<2)) or (self.uart_idle[uart] and control&(1<<4)))
+        if active:self.uart_irqs|=bit
+        else:self.uart_irqs&=~bit
+
+    def _eligible_exception(self):
+        if self.in_exception or not (self.systick['pending'] or self._pending_irqs()&self.nvic_enable):return 0
+        if not self.uc or self.uc.reg_read(UC_ARM_REG_PRIMASK):return 0
+        if self.systick['pending']:return 15
+        if not self.nvic_enable:return 0
+        pending=self._pending_irqs()&self.nvic_enable
+        return (pending&-pending).bit_length()+15 if pending else 0
+
+    def _enter_exception(self, number):
         u=self.uc
         vector=self.regs.get(0xE000ED08,self.base)
-        handler=int.from_bytes(u.mem_read(vector+60,4),'little')
-        if not handler&1 or not FLASH <= (handler&~1)<FLASH+FLASH_SIZE:self.diagnose('SysTick 中断向量无效');return
+        handler=int.from_bytes(u.mem_read(vector+number*4,4),'little')
+        if not handler&1 or not FLASH <= (handler&~1)<FLASH+FLASH_SIZE:
+            self.diagnose('SysTick 中断向量无效' if number==15 else f'异常 {number} 中断向量无效')
+            return
         sp=u.reg_read(UC_ARM_REG_SP)-32
         frame=[u.reg_read(r) for r in CORE_REGS]
         u.mem_write(sp,struct.pack('<8I',*frame))
         u.reg_write(UC_ARM_REG_SP,sp)
         u.reg_write(UC_ARM_REG_LR,0xFFFFFFF9)
-        u.reg_write(UC_ARM_REG_XPSR,(frame[-1]&0xF0000000)|0x0100000F)
+        u.reg_write(UC_ARM_REG_XPSR,(frame[-1]&0xF0000000)|0x01000000|number)
         u.reg_write(UC_ARM_REG_PC,handler)
-        self.in_exception=True;self.systick['pending']=False
+        self.in_exception=True;self.active_exception=number
+        if number==15:self.systick['pending']=False
+        else:self.nvic_pending&=~(1<<(number-16))
 
     def _return_exception(self):
         u=self.uc;sp=u.reg_read(UC_ARM_REG_SP)
         values=struct.unpack('<8I',u.mem_read(sp,32))
         for r,v in zip(CORE_REGS,values):u.reg_write(r,v)
         u.reg_write(UC_ARM_REG_SP,sp+32)
-        self.in_exception=False;self.exception_return=False
+        self.in_exception=False;self.exception_return=False;self.active_exception=0
 
     def run_chunk(self,count=10000,*,max_duration=None):
         """Consume an instruction budget across exception boundaries.
@@ -484,17 +607,29 @@ class Simulator:
             while self.instructions-started<count and self.status!='faulted':
                 if self.exception_return:self._return_exception()
                 if deadline is not None and time.monotonic()>=deadline:break
-                if self.systick['pending'] and not self.in_exception and not self.uc.reg_read(UC_ARM_REG_PRIMASK):
-                    self._enter_systick()
+                exception=self._eligible_exception()
+                if exception:self._enter_exception(exception)
                 if self.status=='faulted':break
                 remaining=count-(self.instructions-started)
                 before=self.instructions
                 self.uc.emu_start(self.uc.reg_read(UC_ARM_REG_PC)|1,0,count=remaining)
+                if self.pending_reset:
+                    was_running=self.status=='running'
+                    executed=self.instructions
+                    try:reset_ok=self.reset()
+                    except ValueError as error:
+                        self.pending_reset=False
+                        self.diagnose('系统复位失败：'+str(error))
+                        break
+                    if not reset_ok:break
+                    self.instructions=executed
+                    if was_running:self.status='running'
+                    continue
                 returning=self.exception_return
                 if returning:self._return_exception()
                 if self.status=='faulted':break
                 if deadline is not None and (self._slice_timed_out or time.monotonic()>=deadline):break
-                eligible=self.systick['pending'] and not self.in_exception and not self.uc.reg_read(UC_ARM_REG_PRIMASK)
+                eligible=self._eligible_exception()
                 if self.instructions==before and not returning and not eligible:
                     self.diagnose('固件执行没有取得进展，也没有可处理的异常边界',pc=f'0x{self.uc.reg_read(UC_ARM_REG_PC):08X}')
                     break
@@ -571,6 +706,9 @@ class Simulator:
     def _i2c_edges(self):
         o=self.board.get('oled',{})
         if not o.get('scl') or not o.get('sda'):return
+        if not self._oled_powered():
+            self.i2c.update(active=False,selected=False,ack=False,ack_drive=False)
+            return
         scl=self.net_level(o['scl']);sda=self.net_level(o['sda'],include_device=False)
         scl=1 if scl is None else scl;sda=1 if sda is None else sda
         st=self.i2c;oldc,oldd=st['scl'],st['sda']
@@ -597,6 +735,29 @@ class Simulator:
             elif st['count']==8:st['ack_drive']=True
         st['scl'],st['sda']=scl,sda
 
+    def _oled_powered(self):
+        if self.board['id']!='cimc-v2':return True
+        oled=self.board.get('oled',{})
+        return self.net_level(oled.get('vccTerminal','OLED_3V3'))==1 and self.net_level(oled.get('gndTerminal','OLED_GND'))==0
+
+    def apply_reference_wiring(self):
+        if self.board['id']!='cimc-v2':raise ValueError('参考接线适用于 V2 板卡')
+        staged=list(self.wires)
+        pairs={frozenset((self._pin_net(w['from']),self._pin_net(w['to']))) for w in staged}
+        for wire in self.board.get('defaultAddedWires',[]):
+            pair=frozenset((self._pin_net(wire['a']),self._pin_net(wire['b'])))
+            if pair in pairs:continue
+            staged.append(self.validate_wire({'from':wire['a'],'to':wire['b']},staged))
+            pairs.add(pair)
+        self.wires=staged
+        self._on_wiring_changed()
+
+    def _on_wiring_changed(self):
+        self._connection_cache.clear()
+        if self.board['id']=='cimc-v2':
+            self._i2c_edges()
+            self.v2_devices.on_gpio_changed('PB')
+
     def command(self,data):
         action=data.get('action','')
         if action=='load':
@@ -605,6 +766,20 @@ class Simulator:
             a=data.get('address',FLASH);a=int(a,0) if isinstance(a,str) else int(a)
             self.load(raw,data.get('filename','firmware.bin'),a)
         elif action=='load_set':self.load_set(data)
+        elif action=='board_select':self.select_board(data.get('boardId'))
+        elif action=='v2_demo':
+            images=[]
+            for filename,address in (('v2-bootloader.bin',FLASH),('v2-app.bin',0x08011000)):
+                path=self.root/'firmware'/filename
+                images.append(parse_image(path.read_bytes(),filename,address))
+            program=assemble(tuple(images),FLASH)
+            cpu=self._make_cpu(program)
+            board=self._load_board('cimc-v2')
+            with self.lock:
+                self.board=board
+                self.wires=[];self.serial_mode='rs485';self._connection_cache.clear()
+                self._install_program(program,cpu)
+                self.apply_reference_wiring()
         elif action=='demo':
             p=self.root/'firmware'/'demo.hex';self.load(p.read_bytes(),'CIMC Lab · Keil demo.hex')
             self.serial_mode='rs485'
@@ -615,7 +790,9 @@ class Simulator:
             self.diagnose(f"已载入真实 Keil 示例固件与 {len(self.wires)} 条可删除示例跳线；原板固定网络未改变",'info')
         else:
             with self.lock:
-                if action=='adc_voltage':self.adc.set_voltage(data.get('voltage'))
+                if action=='adc_voltage':self.adc.set_voltage(data.get('voltage'),data.get('channel',10))
+                elif action=='v2_wiring':self.apply_reference_wiring()
+                elif action=='pt100_temperature':self.v2_devices.set_temperature(data.get('temperature'))
                 elif action=='serial_mode':self.set_serial_mode(data.get('mode'))
                 elif action=='run':
                     if not self.uc:raise ValueError('请先载入固件')
@@ -636,23 +813,31 @@ class Simulator:
                     if mapping is None:raise ValueError('未核验的串口映射')
                     uart=mapping['uart'] if isinstance(mapping,dict) else mapping
                     raw=base64.b64decode(data.get('data',''),validate=True)
-                    if len(raw)>4096:raise ValueError('单次最多发送 4096 字节')
+                    limit=128*1024 if self.board['id']=='cimc-v2' else 4096
+                    if len(raw)>limit:raise ValueError(f'单次最多发送 {limit} 字节')
+                    if len(self.rx[uart])+len(raw)>limit:raise ValueError('串口接收队列已满，请等待 MCU 处理')
                     self._serial_log(channel,'rx',raw)
                     if not self._uart_path(channel,'rx'):
                         self.diagnose('串口接收线路未接通、被短接或 GPIO 复用未配置；请检查 '+', '.join(mapping.get('jumpers',[])),'warning')
                     elif isinstance(mapping,dict) and mapping.get('dePin') and self.net_level(mapping['dePin'])==mapping.get('deActive',1):
                         self.diagnose('RS485 处于发送状态，本次接收未送入 MCU','warning')
+                    elif self.board['id']=='cimc-v2' and mapping.get('dePin') and self.net_level(mapping['dePin'])!=1-mapping.get('deActive',1):
+                        self.diagnose('RS485 方向端子未连接或未配置接收电平，本次接收未送入 MCU','warning')
                     elif self.regs.get(UART[uart]+12,0)&((1<<13)|(1<<2))!=((1<<13)|(1<<2)):
                         self.diagnose(f'{uart} 尚未启用接收，本次输入未送入 MCU','warning')
-                    else:self.rx[uart].extend(raw)
+                    else:
+                        self.rx[uart].extend(raw)
+                        self.uart_idle[uart]=False
+                        self._refresh_uart_irq(uart)
                 elif action=='wire_add':
                     wire=self.validate_wire(data,self.wires)
                     self.wires.append(wire)
-                    self._connection_cache.clear()
+                    self._on_wiring_changed()
                     self.net_level(wire['from'])
                 elif action=='wire_remove':
                     if not any(w['id']==data.get('id') for w in self.wires):raise ValueError('只能删除用户添加的跳线，固定连线不可删除')
-                    self.wires=[w for w in self.wires if w['id']!=data.get('id')];self._connection_cache.clear()
+                    self.wires=[w for w in self.wires if w['id']!=data.get('id')]
+                    self._on_wiring_changed()
                 elif action=='project_load':
                     self.load_project(data.get('project',data))
                 elif action=='clear_log':self.logs=[]
@@ -660,38 +845,62 @@ class Simulator:
         return self.state()
 
     def managed_wires(self):
+        if self.board['id']=='cimc-v2':return []
         patterns=self.board['serialJumperPatterns']
         return [{'id':f'fixed-{kind}-{i}','from':a,'to':b,'color':'#8094ad','locked':True}
                 for kind in ('ch340',self.serial_mode) for i,(a,b) in enumerate(patterns[kind])]
 
-    def set_serial_mode(self,mode):
+    def set_serial_mode(self,mode,*,update_wires=True):
         if mode not in ('rs485','rs232'):raise ValueError('串口模式只允许 RS485 或 RS232')
+        staged=None
+        if self.board['id']=='cimc-v2' and update_wires:
+            patterns=self.board['serialJumperPatterns']
+            pairs={frozenset(pair) for key in ('rs485','rs232') for pair in patterns[key]}
+            staged=[w for w in self.wires if frozenset((w['from'],w['to'])) not in pairs]
+            for a,b in patterns[mode]:staged.append(self.validate_wire({'from':a,'to':b},staged))
         if mode!=self.serial_mode:
             self._flush_uart()
             self.serial_mode=mode
             self.rx['USART1'].clear()
+            self.uart_idle['USART1']=False
+            self.uart_status_read['USART1']=False
+            self._refresh_uart_irq('USART1')
             self._connection_cache.clear()
+        if staged is not None:
+            self.wires=staged
+            self._on_wiring_changed()
 
-    def validate_wire(self,data,wires):
-        ids={p['id'] for p in self.board['pins'] if p.get('connectable',True)}
+    def validate_wire(self,data,wires,board=None):
+        board=self.board if board is None else board
+        ids={p['id'] for p in board['pins'] if p.get('connectable',True)}
         a,b=data.get('from'),data.get('to')
         if a not in ids or b not in ids or a==b:raise ValueError('固定外设引脚不可改接；请选择空闲 GPIO 或 LED/KEY 排针')
         if len(wires)>=200:raise ValueError('用户跳线最多 200 条')
         if any({w['from'],w['to']}=={a,b} for w in wires):raise ValueError('这两个端点已经有用户跳线')
-        if self._pin_net(a)==self._pin_net(b):raise ValueError('两个端点本来就属于同一固定网络')
+        nets={p['id']:p.get('net',p['id']) for p in board['pins']}
+        if nets[a]==nets[b]:raise ValueError('两个端点本来就属于同一固定网络')
+        pins={p['id']:p for p in board['pins']}
+        va,vb=pins[a].get('powerVoltage'),pins[b].get('powerVoltage')
+        if va is not None and vb is not None and va!=vb:raise ValueError('电源端子电位不一致，不能直接连接')
         return {'id':str(uuid.uuid4())[:8],'from':a,'to':b,'color':str(data.get('color','#0071e3'))}
 
     def load_project(self,project):
         if not isinstance(project,dict) or project.get('format')!='cimc-lab-project' or project.get('version') not in (1,2,3):raise ValueError('不支持的工程格式或版本')
-        if project.get('boardId')!=self.board['id']:raise ValueError('工程板卡版本与当前板卡不一致')
+        board=self._load_board(project.get('boardId'))
+        if project['version']!=3 and board['id']!=self.board['id']:raise ValueError('工程板卡版本与当前板卡不一致')
         raw=project.get('wires')
         if not isinstance(raw,list) or len(raw)>200 or any(not isinstance(w,dict) for w in raw):raise ValueError('工程跳线列表无效')
         mode=project.get('serialMode','rs485')
         if mode not in ('rs485','rs232'):raise ValueError('无效的串口模式')
         voltage=project.get('adcVoltage',self.adc.voltage)
         if isinstance(voltage,bool) or not isinstance(voltage,(int,float)) or not math.isfinite(voltage) or not 0<=voltage<=3.3:raise ValueError('工程 ADC 电压无效')
+        adc1=project.get('adc1Voltage',1.65)
+        temperature=project.get('pt100Temperature',25.0)
+        if board['id']=='cimc-v2':
+            if isinstance(adc1,bool) or not isinstance(adc1,(int,float)) or not math.isfinite(adc1) or not 0<=adc1<=3.3:raise ValueError('工程 PC1 电压无效')
+            if isinstance(temperature,bool) or not isinstance(temperature,(int,float)) or not math.isfinite(temperature) or not -50<=temperature<=150:raise ValueError('工程 PT100 温度无效')
         if project['version']==1:
-            patterns={k:{frozenset(pair) for pair in v} for k,v in self.board['serialJumperPatterns'].items()}
+            patterns={k:{frozenset(pair) for pair in v} for k,v in board['serialJumperPatterns'].items()}
             seen=set();remaining=[]
             for w in raw:
                 pair=frozenset((w.get('from'),w.get('to')))
@@ -705,28 +914,57 @@ class Simulator:
                 mode=inferred
             raw=remaining
         staged=[]
-        for w in raw:staged.append(self.validate_wire(w,staged))
+        for w in raw:staged.append(self.validate_wire(w,staged,board))
         # A v3 restore is self-contained. Legacy projects intentionally only
         # restore wiring/settings and retain the machine already loaded.
         program=cpu=None
+        flash_data=None
+        snapshot_error=None
         if project['version']==3:
             if 'firmwareSet' not in project:raise ValueError('v3 工程缺少 firmwareSet')
             saved=project['firmwareSet']
             if saved is not None:
                 program=prepare_set(saved,allow_references=False)
                 cpu=self._make_cpu(program)
-        if project['version']==3:self._install_program(program,cpu)
-        self.set_serial_mode(mode)
+            if 'internalFlashData' in project:
+                encoded=project['internalFlashData']
+                if program is None or board['id']!='cimc-v2' or not isinstance(encoded,str) or len(encoded)>700000:
+                    raise ValueError('工程内部 Flash 快照无效')
+                try:flash_data=base64.b64decode(encoded,validate=True)
+                except (ValueError,TypeError):raise ValueError('工程内部 Flash 快照编码无效') from None
+                if len(flash_data)!=FLASH_SIZE:raise ValueError('工程内部 Flash 快照长度无效')
+                cpu.mem_write(FLASH,flash_data)
+                cpu.mem_write(0,flash_data)
+                try:snapshot_program=assemble((parse_image(flash_data,'internal-flash.bin',FLASH),),program.boot_address)
+                except ValueError as error:snapshot_error=str(error)
+                else:
+                    cpu=self._make_cpu(snapshot_program)
+                    program=snapshot_program
+        if project['version']==3:
+            self.board=board
+            self._connection_cache.clear()
+            self._install_program(program,cpu)
+            if flash_data is not None:
+                self.internal_flash=bytearray(flash_data)
+                self.image=flash_data
+                self.flash_dirty=bool(snapshot_error)
+                if snapshot_error:self.diagnose('Flash 快照无法启动：'+snapshot_error)
+        self.set_serial_mode(mode,update_wires=False)
         self.adc.set_voltage(voltage)
+        if board['id']=='cimc-v2':
+            self.adc.set_voltage(adc1,11)
+            self.v2_devices.set_temperature(temperature)
         self.wires=staged
-        self._connection_cache.clear()
+        self._on_wiring_changed()
 
     def project(self):
         with self.lock:
             return {'format':'cimc-lab-project','version':3,'boardId':self.board.get('id'),
                     'wires':list(self.wires),'firmware':self.firmware,
                     'firmwareSet':self.program.exported() if self.program else None,
-                    'serialMode':self.serial_mode,'adcVoltage':self.adc.voltage}
+                    **({'internalFlashData':base64.b64encode(self.internal_flash).decode('ascii')} if self.flash_dirty else {}),
+                    'serialMode':self.serial_mode,'adcVoltage':self.adc.voltage,
+                    **({'adc1Voltage':self.adc.current_voltage,'pt100Temperature':self.v2_devices.temperature} if self.board['id']=='cimc-v2' else {})}
 
     def state(self):
         with self.lock:
@@ -735,4 +973,5 @@ class Simulator:
             leds=[self.net_level(m.get('net',m.get('pin')))==m.get('active',1) for m in self.board.get('ledMappings',[])]
             pc=self.uc.reg_read(UC_ARM_REG_PC) if self.uc else 0
             sp=self.uc.reg_read(UC_ARM_REG_SP) if self.uc else 0
-            return {'status':self.status,'firmware':self.firmware,'firmwares':[im.metadata() for im in self.program.images] if self.program else [],'bootAddress':f'0x{self.program.boot_address:08X}' if self.program else None,'currentVectorAddress':f"0x{self.regs.get(0xE000ED08,0):08X}" if self.uc else None,'cpu':{'pc':f'0x{pc:08X}','sp':f'0x{sp:08X}','instructions':self.instructions,'model':'Cortex-M4 / Unicorn 2.1.4'},'board':self.board,'leds':leds,'keys':list(self.keys),'oled':{'width':self.oled.width,'height':self.oled.height,'pixels':self.oled.pixels(),'on':self.oled.on},'wires':list(self.wires),'managedWires':self.managed_wires(),'serialMode':self.serial_mode,'adc':self.adc.state(),'flash':self.flash.state(),'serial':list(self.logs),'diagnostics':list(self.diagnostics),'engine':{'version':VERSION,'mode':'functional','cycleAccurate':False,'supported':'GPIO, polling USART, GPIO I2C OLED, basic SysTick, software ADC, SPI1 GD25Q40E'}}
+            oled_visible=self.oled.on and self._oled_powered()
+            return {'status':self.status,'firmware':self.firmware,'firmwares':[im.metadata() for im in self.program.images] if self.program else [],'bootAddress':f'0x{self.program.boot_address:08X}' if self.program else None,'currentVectorAddress':f"0x{self.regs.get(0xE000ED08,0):08X}" if self.uc else None,'cpu':{'pc':f'0x{pc:08X}','sp':f'0x{sp:08X}','instructions':self.instructions,'model':'Cortex-M4 / Unicorn 2.1.4'},'board':self.board,'leds':leds,'keys':list(self.keys),'oled':{'width':self.oled.width,'height':self.oled.height,'pixels':self.oled.pixels() if oled_visible else [0]*(self.oled.width*self.oled.height),'on':oled_visible},'wires':list(self.wires),'managedWires':self.managed_wires(),'serialMode':self.serial_mode,'adc':self.adc.state(),'flash':self.flash.state(),'internalFlash':self.fmc.state(),'analog':self.v2_devices.state(),'serial':list(self.logs),'diagnostics':list(self.diagnostics),'engine':{'version':VERSION,'mode':'functional','cycleAccurate':False,'clockTicksPerInstruction':self.board.get('clockTicksPerInstruction',1),'supported':('GPIO, USART RX/IDLE IRQ, GPIO I2C OLED, SysTick, internal Flash, ADC PC0/PC1/PC2, DAC PA4, SPI0 PT100/GD25Q40E' if self.board['id']=='cimc-v2' else 'GPIO, polling USART, GPIO I2C OLED, basic SysTick, software ADC, SPI1 GD25Q40E')}}

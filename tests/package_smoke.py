@@ -171,6 +171,42 @@ try:
     ratio=statistics.median(rates['systick'])/statistics.median(rates['noirq'])
     print('Frozen scheduler paired samples: '+json.dumps({'instructionsPerSecond':rates,'systickToNoIrq':ratio}),flush=True)
     assert ratio>=.25,'SysTick worker loses too much throughput at interrupt boundaries: '+str(ratio)
+    command('board_select',boardId='cimc-v2')
+    for extension in ('hex','bin'):
+        probe=package/'firmware'/f'v2_spiflash_probe.{extension}'
+        before=state()['flash']
+        command('load',filename=probe.name,data=base64.b64encode(probe.read_bytes()).decode())
+        command('run')
+        current=wait_for(lambda snapshot:snapshot['flash']['writeCount']>=before['writeCount']+2
+                         and snapshot['flash']['eraseCount']>=before['eraseCount']+2,'V2 SPI0 program/erase')
+        assert bytes(current['flash']['preview'][:10])==b'CIMC FLASH',current['flash']
+        assert current['flash']['peripheral']=='SPI0',current['flash']
+        command('pause')
+    loaded=command('v2_demo')
+    assert len(loaded['firmwares'])==2
+    assert any({w['from'],w['to']}=={'PE6','LED1'} for w in loaded['wires'])
+    command('run')
+    deadline=time.monotonic()+240
+    while time.monotonic()<deadline:
+        current=state()
+        assert current['status']!='faulted',current['diagnostics']
+        if has_tx(current,'A5B60001058888000263A1B6A5','rs485'):break
+        time.sleep(.2)
+    else:fail('V2 real Bootloader/App startup timeout',current)
+    assert current['currentVectorAddress']=='0x08011000'
+    assert current['analog']['dac']['enabled']
+    frame=bytearray.fromhex('A5B600010101040002')
+    crc=0xFFFF
+    for byte in frame:
+        crc^=byte
+        for _ in range(8):crc=(crc>>1)^0xA001 if crc&1 else crc>>1
+    frame+=crc.to_bytes(2,'big')+b'\xb6\xa5'
+    command('serial',channel='rs485',data=base64.b64encode(frame.hex().upper().encode()).decode())
+    wait_for(lambda snapshot:has_tx(snapshot,'A5B60001020104040202000100','rs485'),'V2 real version response')
+    command('pause')
+    saved=project()
+    assert saved['boardId']=='cimc-v2' and saved['adc1Voltage']==1.65
+    print('PASS: packaged V2 real Bootloader/App + USART IRQ/CRC version + ADC/DAC/SPI initialization + project export',flush=True)
     print('PASS: packaged engine + Keil HEX/BIN + OLED + UART + ADC + H6 switch + SPI Flash program/erase + '
           '3-image Bootloader to A/B + direct B + project v3 restore (real UART/VTOR/LED) + SysTick scheduler')
 finally:

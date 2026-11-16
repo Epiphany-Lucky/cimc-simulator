@@ -3,1366 +3,2781 @@
   "id": "cimc-v2",
   "name": "CIMC GD32F470VET6 V2.0",
   "verified": false,
-  "evidenceStatus": "partial",
+  "evidenceStatus": "v2-schematic-verified-scope",
   "viewBox": [
     0,
     0,
     1000,
     650
   ],
-  "image": "assets/board-v2.jpg",
+  "image": "assets/board-v2.svg",
   "imageNativeSize": [
     640,
     428
   ],
-  "coordinates": "Measured approximate centers on official photograph scaled to 1000x650; header row order is verified. These are not PCB fabrication coordinates or manufacturer pin numbers.",
+  "coordinates": "Connection diagram. Connector numbers and fixed copper networks follow the five-page V2.0 schematic provided on 2026-11-16.",
   "notes": [
-    "V2.0 header labels are verified against official photographs. Full V2.0 schematic has not been located.",
-    "Do not infer V2.0 copper routing from the V1.0 schematic. V2 USART2 PD8/PD9 differs from V1 PB10/PB11.",
-    "LED and KEY terminals are independent connectors; demo GPIO mappings are visible added jumpers, never immutable board copper.",
-    "LED/KEY polarity, OLED MCU pins and unphotographed internal routing are code-supported model assumptions, not full V2 hardware verification.",
-    "NC terminals are disabled. Power pins are not GPIO."
+    "V2 使用原理图接线视图。U2/U3 及 OLED、LED、KEY、通信跳帽的脚号按 V2.0 五页原图核对。",
+    "板内固定铜线保存在 fixedNets，固件代码的外接线作为可删除示例保存。",
+    "OLED 的 PB8/PB9 和供电、PC0 的板载 VR1、USART 固定引出与 RS485 方向线按原图保持。",
+    "原图暴露的 GPIO 排针允许新增跳线，新增线与原有固定网络共同参与电平解析。",
+    "PA5/PA7 等与 DAC/Ethernet 共享的原网络保持，外接 PT100 示例通过实际排针连接。",
+    "用户于 2026-11-16 提供的 27_0_BootLoader 作为 V2 软件行为和示例接线依据。"
   ],
   "pins": [
     {
-      "id": "PB12",
-      "label": "PB12",
-      "net": "PB12",
-      "x": 343.75,
-      "y": 309.81,
-      "group": "U3",
-      "rowFromTop": 1,
-      "column": "left",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PB13",
-      "label": "PB13",
-      "net": "PB13",
-      "x": 365.62,
-      "y": 309.81,
-      "group": "U3",
-      "rowFromTop": 1,
-      "column": "right",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PB14",
-      "label": "PB14",
-      "net": "PB14",
-      "x": 343.75,
-      "y": 323.03,
-      "group": "U3",
-      "rowFromTop": 2,
-      "column": "left",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PB15",
-      "label": "PB15",
-      "net": "PB15",
-      "x": 365.62,
-      "y": 323.03,
-      "group": "U3",
-      "rowFromTop": 2,
-      "column": "right",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PD8",
-      "label": "PD8",
-      "net": "PD8",
-      "x": 343.75,
-      "y": 336.24,
-      "group": "U3",
-      "rowFromTop": 3,
-      "column": "left",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PD9",
-      "label": "PD9",
-      "net": "PD9",
-      "x": 365.62,
-      "y": 336.24,
-      "group": "U3",
-      "rowFromTop": 3,
-      "column": "right",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PD10",
-      "label": "PD10",
-      "net": "PD10",
-      "x": 343.75,
-      "y": 349.45,
-      "group": "U3",
-      "rowFromTop": 4,
-      "column": "left",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PD11",
-      "label": "PD11",
-      "net": "PD11",
-      "x": 365.62,
-      "y": 349.45,
-      "group": "U3",
-      "rowFromTop": 4,
-      "column": "right",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PD12",
-      "label": "PD12",
-      "net": "PD12",
-      "x": 343.75,
-      "y": 362.66,
-      "group": "U3",
-      "rowFromTop": 5,
-      "column": "left",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PD13",
-      "label": "PD13",
-      "net": "PD13",
-      "x": 365.62,
-      "y": 362.66,
-      "group": "U3",
-      "rowFromTop": 5,
-      "column": "right",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PD14",
-      "label": "PD14",
-      "net": "PD14",
-      "x": 343.75,
-      "y": 375.88,
-      "group": "U3",
-      "rowFromTop": 6,
-      "column": "left",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PD15",
-      "label": "PD15",
-      "net": "PD15",
-      "x": 365.62,
-      "y": 375.88,
-      "group": "U3",
-      "rowFromTop": 6,
-      "column": "right",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PC6",
-      "label": "PC6",
-      "net": "PC6",
-      "x": 343.75,
-      "y": 389.09,
-      "group": "U3",
-      "rowFromTop": 7,
-      "column": "left",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PC7",
-      "label": "PC7",
-      "net": "PC7",
-      "x": 365.62,
-      "y": 389.09,
-      "group": "U3",
-      "rowFromTop": 7,
-      "column": "right",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PC8",
-      "label": "PC8",
-      "net": "PC8",
-      "x": 343.75,
-      "y": 402.3,
-      "group": "U3",
-      "rowFromTop": 8,
-      "column": "left",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PC9",
-      "label": "PC9",
-      "net": "PC9",
-      "x": 365.62,
-      "y": 402.3,
-      "group": "U3",
-      "rowFromTop": 8,
-      "column": "right",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PA8",
-      "label": "PA8",
-      "net": "PA8",
-      "x": 343.75,
-      "y": 415.51,
-      "group": "U3",
-      "rowFromTop": 9,
-      "column": "left",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PA11",
-      "label": "PA11",
-      "net": "PA11",
-      "x": 365.62,
-      "y": 415.51,
-      "group": "U3",
-      "rowFromTop": 9,
-      "column": "right",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PA12",
-      "label": "PA12",
-      "net": "PA12",
-      "x": 343.75,
-      "y": 428.73,
-      "group": "U3",
-      "rowFromTop": 10,
-      "column": "left",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PA15",
-      "label": "PA15",
-      "net": "PA15",
-      "x": 365.62,
-      "y": 428.73,
-      "group": "U3",
-      "rowFromTop": 10,
-      "column": "right",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PC10",
-      "label": "PC10",
-      "net": "PC10",
-      "x": 343.75,
-      "y": 441.94,
-      "group": "U3",
-      "rowFromTop": 11,
-      "column": "left",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PC11",
-      "label": "PC11",
-      "net": "PC11",
-      "x": 365.62,
-      "y": 441.94,
-      "group": "U3",
-      "rowFromTop": 11,
-      "column": "right",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PC12",
-      "label": "PC12",
-      "net": "PC12",
-      "x": 343.75,
-      "y": 455.15,
-      "group": "U3",
-      "rowFromTop": 12,
-      "column": "left",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PD0",
-      "label": "PD0",
-      "net": "PD0",
-      "x": 365.62,
-      "y": 455.15,
-      "group": "U3",
-      "rowFromTop": 12,
-      "column": "right",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PD1",
-      "label": "PD1",
-      "net": "PD1",
-      "x": 343.75,
-      "y": 468.36,
-      "group": "U3",
-      "rowFromTop": 13,
-      "column": "left",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PD2",
-      "label": "PD2",
-      "net": "PD2",
-      "x": 365.62,
-      "y": 468.36,
-      "group": "U3",
-      "rowFromTop": 13,
-      "column": "right",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PD3",
-      "label": "PD3",
-      "net": "PD3",
-      "x": 343.75,
-      "y": 481.58,
-      "group": "U3",
-      "rowFromTop": 14,
-      "column": "left",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PD4",
-      "label": "PD4",
-      "net": "PD4",
-      "x": 365.62,
-      "y": 481.58,
-      "group": "U3",
-      "rowFromTop": 14,
-      "column": "right",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PD5",
-      "label": "PD5",
-      "net": "PD5",
-      "x": 343.75,
-      "y": 494.79,
-      "group": "U3",
-      "rowFromTop": 15,
-      "column": "left",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PD6",
-      "label": "PD6",
-      "net": "PD6",
-      "x": 365.62,
-      "y": 494.79,
-      "group": "U3",
-      "rowFromTop": 15,
-      "column": "right",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PD7",
-      "label": "PD7",
-      "net": "PD7",
-      "x": 343.75,
-      "y": 508.0,
-      "group": "U3",
-      "rowFromTop": 16,
-      "column": "left",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PB3",
-      "label": "PB3",
-      "net": "PB3",
-      "x": 365.62,
-      "y": 508.0,
-      "group": "U3",
-      "rowFromTop": 16,
-      "column": "right",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PB4",
-      "label": "PB4",
-      "net": "PB4",
-      "x": 343.75,
-      "y": 521.21,
-      "group": "U3",
-      "rowFromTop": 17,
-      "column": "left",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PB5",
-      "label": "PB5",
-      "net": "PB5",
-      "x": 365.62,
-      "y": 521.21,
-      "group": "U3",
-      "rowFromTop": 17,
-      "column": "right",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PB6",
-      "label": "PB6",
-      "net": "PB6",
-      "x": 343.75,
-      "y": 534.43,
-      "group": "U3",
-      "rowFromTop": 18,
-      "column": "left",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PB7",
-      "label": "PB7",
-      "net": "PB7",
-      "x": 365.62,
-      "y": 534.43,
-      "group": "U3",
-      "rowFromTop": 18,
-      "column": "right",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PB8",
-      "label": "PB8",
-      "net": "PB8",
-      "x": 343.75,
-      "y": 547.64,
-      "group": "U3",
-      "rowFromTop": 19,
-      "column": "left",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PB9",
-      "label": "PB9",
-      "net": "PB9",
-      "x": 365.62,
-      "y": 547.64,
-      "group": "U3",
-      "rowFromTop": 19,
-      "column": "right",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PE0",
-      "label": "PE0",
-      "net": "PE0",
-      "x": 343.75,
-      "y": 560.85,
-      "group": "U3",
-      "rowFromTop": 20,
-      "column": "left",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PE1",
-      "label": "PE1",
-      "net": "PE1",
-      "x": 365.62,
-      "y": 560.85,
-      "group": "U3",
-      "rowFromTop": 20,
-      "column": "right",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "U2_R01_L",
-      "label": "3V3",
-      "net": "3V3",
-      "x": 625.0,
-      "y": 309.81,
+      "id": "PE2",
+      "label": "U2.1 · PE2",
+      "net": "PE2",
+      "x": 685,
+      "y": 160,
       "group": "U2",
       "rowFromTop": 1,
       "column": "left",
       "connectable": true,
-      "kind": "power",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "U2_R01_R",
-      "label": "DGND",
-      "net": "DGND",
-      "x": 646.88,
-      "y": 309.81,
-      "group": "U2",
-      "rowFromTop": 1,
-      "column": "right",
-      "connectable": true,
-      "kind": "power",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "U2_R02_L",
-      "label": "3V3",
-      "net": "3V3",
-      "x": 625.0,
-      "y": 323.03,
-      "group": "U2",
-      "rowFromTop": 2,
-      "column": "left",
-      "connectable": true,
-      "kind": "power",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "U2_R02_R",
-      "label": "DGND",
-      "net": "DGND",
-      "x": 646.88,
-      "y": 323.03,
-      "group": "U2",
-      "rowFromTop": 2,
-      "column": "right",
-      "connectable": true,
-      "kind": "power",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "U2_R03_L",
-      "label": "3V3",
-      "net": "3V3",
-      "x": 625.0,
-      "y": 336.24,
-      "group": "U2",
-      "rowFromTop": 3,
-      "column": "left",
-      "connectable": true,
-      "kind": "power",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "U2_R03_R",
-      "label": "DGND",
-      "net": "DGND",
-      "x": 646.88,
-      "y": 336.24,
-      "group": "U2",
-      "rowFromTop": 3,
-      "column": "right",
-      "connectable": true,
-      "kind": "power",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "U2_R04_L",
-      "label": "NC",
-      "net": null,
-      "x": 625.0,
-      "y": 349.45,
-      "group": "U2",
-      "rowFromTop": 4,
-      "column": "left",
-      "connectable": false,
-      "kind": "nc",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "U2_R04_R",
-      "label": "NC",
-      "net": null,
-      "x": 646.88,
-      "y": 349.45,
-      "group": "U2",
-      "rowFromTop": 4,
-      "column": "right",
-      "connectable": false,
-      "kind": "nc",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "U2_R05_L",
-      "label": "NC",
-      "net": null,
-      "x": 625.0,
-      "y": 362.66,
-      "group": "U2",
-      "rowFromTop": 5,
-      "column": "left",
-      "connectable": false,
-      "kind": "nc",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PB11",
-      "label": "PB11",
-      "net": "PB11",
-      "x": 646.88,
-      "y": 362.66,
-      "group": "U2",
-      "rowFromTop": 5,
-      "column": "right",
-      "connectable": true,
       "kind": "gpio",
       "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PB10",
-      "label": "PB10",
-      "net": "PB10",
-      "x": 625.0,
-      "y": 375.88,
-      "group": "U2",
-      "rowFromTop": 6,
-      "column": "left",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PE15",
-      "label": "PE15",
-      "net": "PE15",
-      "x": 646.88,
-      "y": 375.88,
-      "group": "U2",
-      "rowFromTop": 6,
-      "column": "right",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PE14",
-      "label": "PE14",
-      "net": "PE14",
-      "x": 625.0,
-      "y": 389.09,
-      "group": "U2",
-      "rowFromTop": 7,
-      "column": "left",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PE13",
-      "label": "PE13",
-      "net": "PE13",
-      "x": 646.88,
-      "y": 389.09,
-      "group": "U2",
-      "rowFromTop": 7,
-      "column": "right",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PE12",
-      "label": "PE12",
-      "net": "PE12",
-      "x": 625.0,
-      "y": 402.3,
-      "group": "U2",
-      "rowFromTop": 8,
-      "column": "left",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PE11",
-      "label": "PE11",
-      "net": "PE11",
-      "x": 646.88,
-      "y": 402.3,
-      "group": "U2",
-      "rowFromTop": 8,
-      "column": "right",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PE10",
-      "label": "PE10",
-      "net": "PE10",
-      "x": 625.0,
-      "y": 415.51,
-      "group": "U2",
-      "rowFromTop": 9,
-      "column": "left",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PE9",
-      "label": "PE9",
-      "net": "PE9",
-      "x": 646.88,
-      "y": 415.51,
-      "group": "U2",
-      "rowFromTop": 9,
-      "column": "right",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PE8",
-      "label": "PE8",
-      "net": "PE8",
-      "x": 625.0,
-      "y": 428.73,
-      "group": "U2",
-      "rowFromTop": 10,
-      "column": "left",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PE7",
-      "label": "PE7",
-      "net": "PE7",
-      "x": 646.88,
-      "y": 428.73,
-      "group": "U2",
-      "rowFromTop": 10,
-      "column": "right",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PB1",
-      "label": "PB1",
-      "net": "PB1",
-      "x": 625.0,
-      "y": 441.94,
-      "group": "U2",
-      "rowFromTop": 11,
-      "column": "left",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PB0",
-      "label": "PB0",
-      "net": "PB0",
-      "x": 646.88,
-      "y": 441.94,
-      "group": "U2",
-      "rowFromTop": 11,
-      "column": "right",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PC5",
-      "label": "PC5",
-      "net": "PC5",
-      "x": 625.0,
-      "y": 455.15,
-      "group": "U2",
-      "rowFromTop": 12,
-      "column": "left",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PC4",
-      "label": "PC4",
-      "net": "PC4",
-      "x": 646.88,
-      "y": 455.15,
-      "group": "U2",
-      "rowFromTop": 12,
-      "column": "right",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PA7",
-      "label": "PA7",
-      "net": "PA7",
-      "x": 625.0,
-      "y": 468.36,
-      "group": "U2",
-      "rowFromTop": 13,
-      "column": "left",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PA6",
-      "label": "PA6",
-      "net": "PA6",
-      "x": 646.88,
-      "y": 468.36,
-      "group": "U2",
-      "rowFromTop": 13,
-      "column": "right",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PA5",
-      "label": "PA5",
-      "net": "PA5",
-      "x": 625.0,
-      "y": 481.58,
-      "group": "U2",
-      "rowFromTop": 14,
-      "column": "left",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PA4",
-      "label": "PA4",
-      "net": "PA4",
-      "x": 646.88,
-      "y": 481.58,
-      "group": "U2",
-      "rowFromTop": 14,
-      "column": "right",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PA1",
-      "label": "PA1",
-      "net": "PA1",
-      "x": 625.0,
-      "y": 494.79,
-      "group": "U2",
-      "rowFromTop": 15,
-      "column": "left",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PA0",
-      "label": "PA0",
-      "net": "PA0",
-      "x": 646.88,
-      "y": 494.79,
-      "group": "U2",
-      "rowFromTop": 15,
-      "column": "right",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PC3",
-      "label": "PC3",
-      "net": "PC3",
-      "x": 625.0,
-      "y": 508.0,
-      "group": "U2",
-      "rowFromTop": 16,
-      "column": "left",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PC2",
-      "label": "PC2",
-      "net": "PC2",
-      "x": 646.88,
-      "y": 508.0,
-      "group": "U2",
-      "rowFromTop": 16,
-      "column": "right",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PC1",
-      "label": "PC1",
-      "net": "PC1",
-      "x": 625.0,
-      "y": 521.21,
-      "group": "U2",
-      "rowFromTop": 17,
-      "column": "left",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PC0",
-      "label": "PC0",
-      "net": "PC0",
-      "x": 646.88,
-      "y": 521.21,
-      "group": "U2",
-      "rowFromTop": 17,
-      "column": "right",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PC13",
-      "label": "PC13",
-      "net": "PC13",
-      "x": 625.0,
-      "y": 534.43,
-      "group": "U2",
-      "rowFromTop": 18,
-      "column": "left",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PE6",
-      "label": "PE6",
-      "net": "PE6",
-      "x": 646.88,
-      "y": 534.43,
-      "group": "U2",
-      "rowFromTop": 18,
-      "column": "right",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PE5",
-      "label": "PE5",
-      "net": "PE5",
-      "x": 625.0,
-      "y": 547.64,
-      "group": "U2",
-      "rowFromTop": 19,
-      "column": "left",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
-    },
-    {
-      "id": "PE4",
-      "label": "PE4",
-      "net": "PE4",
-      "x": 646.88,
-      "y": 547.64,
-      "group": "U2",
-      "rowFromTop": 19,
-      "column": "right",
-      "connectable": true,
-      "kind": "gpio",
-      "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+      "evidence": "V2 schematic physical page 1, U2 pin 1",
+      "photoPosition": {
+        "x": 646.88,
+        "y": 560.85,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 1
     },
     {
       "id": "PE3",
-      "label": "PE3",
+      "label": "U2.2 · PE3",
       "net": "PE3",
-      "x": 625.0,
-      "y": 560.85,
+      "x": 715,
+      "y": 160,
       "group": "U2",
+      "rowFromTop": 1,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U2 pin 2",
+      "photoPosition": {
+        "x": 625.0,
+        "y": 560.85,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 2
+    },
+    {
+      "id": "PE4",
+      "label": "U2.3 · PE4",
+      "net": "PE4",
+      "x": 685,
+      "y": 180,
+      "group": "U2",
+      "rowFromTop": 2,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U2 pin 3",
+      "photoPosition": {
+        "x": 646.88,
+        "y": 547.64,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 3
+    },
+    {
+      "id": "PE5",
+      "label": "U2.4 · PE5",
+      "net": "PE5",
+      "x": 715,
+      "y": 180,
+      "group": "U2",
+      "rowFromTop": 2,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U2 pin 4",
+      "photoPosition": {
+        "x": 625.0,
+        "y": 547.64,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 4
+    },
+    {
+      "id": "PE6",
+      "label": "U2.5 · PE6",
+      "net": "PE6",
+      "x": 685,
+      "y": 200,
+      "group": "U2",
+      "rowFromTop": 3,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U2 pin 5",
+      "photoPosition": {
+        "x": 646.88,
+        "y": 534.43,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 5
+    },
+    {
+      "id": "PC13",
+      "label": "U2.6 · PC13",
+      "net": "PC13",
+      "x": 715,
+      "y": 200,
+      "group": "U2",
+      "rowFromTop": 3,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U2 pin 6",
+      "photoPosition": {
+        "x": 625.0,
+        "y": 534.43,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 6
+    },
+    {
+      "id": "PC0",
+      "label": "U2.7 · PC0",
+      "net": "PC0",
+      "x": 685,
+      "y": 220,
+      "group": "U2",
+      "rowFromTop": 4,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U2 pin 7",
+      "photoPosition": {
+        "x": 646.88,
+        "y": 521.21,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 7
+    },
+    {
+      "id": "PC1",
+      "label": "U2.8 · PC1",
+      "net": "PC1",
+      "x": 715,
+      "y": 220,
+      "group": "U2",
+      "rowFromTop": 4,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U2 pin 8",
+      "photoPosition": {
+        "x": 625.0,
+        "y": 521.21,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 8
+    },
+    {
+      "id": "PC2",
+      "label": "U2.9 · PC2",
+      "net": "PC2",
+      "x": 685,
+      "y": 240,
+      "group": "U2",
+      "rowFromTop": 5,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U2 pin 9",
+      "photoPosition": {
+        "x": 646.88,
+        "y": 508.0,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 9
+    },
+    {
+      "id": "PC3",
+      "label": "U2.10 · PC3",
+      "net": "PC3",
+      "x": 715,
+      "y": 240,
+      "group": "U2",
+      "rowFromTop": 5,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U2 pin 10",
+      "photoPosition": {
+        "x": 625.0,
+        "y": 508.0,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 10
+    },
+    {
+      "id": "PA0",
+      "label": "U2.11 · PA0",
+      "net": "PA0",
+      "x": 685,
+      "y": 260,
+      "group": "U2",
+      "rowFromTop": 6,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U2 pin 11",
+      "photoPosition": {
+        "x": 646.88,
+        "y": 494.79,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 11
+    },
+    {
+      "id": "PA1",
+      "label": "U2.12 · PA1",
+      "net": "PA1",
+      "x": 715,
+      "y": 260,
+      "group": "U2",
+      "rowFromTop": 6,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U2 pin 12",
+      "photoPosition": {
+        "x": 625.0,
+        "y": 494.79,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 12
+    },
+    {
+      "id": "PA4",
+      "label": "U2.13 · PA4",
+      "net": "PA4",
+      "x": 685,
+      "y": 280,
+      "group": "U2",
+      "rowFromTop": 7,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U2 pin 13",
+      "photoPosition": {
+        "x": 646.88,
+        "y": 481.58,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 13
+    },
+    {
+      "id": "PA5",
+      "label": "U2.14 · PA5",
+      "net": "PA5",
+      "x": 715,
+      "y": 280,
+      "group": "U2",
+      "rowFromTop": 7,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U2 pin 14",
+      "photoPosition": {
+        "x": 625.0,
+        "y": 481.58,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 14
+    },
+    {
+      "id": "PA6",
+      "label": "U2.15 · PA6",
+      "net": "PA6",
+      "x": 685,
+      "y": 300,
+      "group": "U2",
+      "rowFromTop": 8,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U2 pin 15",
+      "photoPosition": {
+        "x": 646.88,
+        "y": 468.36,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 15
+    },
+    {
+      "id": "PA7",
+      "label": "U2.16 · PA7",
+      "net": "PA7",
+      "x": 715,
+      "y": 300,
+      "group": "U2",
+      "rowFromTop": 8,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U2 pin 16",
+      "photoPosition": {
+        "x": 625.0,
+        "y": 468.36,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 16
+    },
+    {
+      "id": "PC4",
+      "label": "U2.17 · PC4",
+      "net": "PC4",
+      "x": 685,
+      "y": 320,
+      "group": "U2",
+      "rowFromTop": 9,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U2 pin 17",
+      "photoPosition": {
+        "x": 646.88,
+        "y": 455.15,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 17
+    },
+    {
+      "id": "PC5",
+      "label": "U2.18 · PC5",
+      "net": "PC5",
+      "x": 715,
+      "y": 320,
+      "group": "U2",
+      "rowFromTop": 9,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U2 pin 18",
+      "photoPosition": {
+        "x": 625.0,
+        "y": 455.15,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 18
+    },
+    {
+      "id": "PB0",
+      "label": "U2.19 · PB0",
+      "net": "PB0",
+      "x": 685,
+      "y": 340,
+      "group": "U2",
+      "rowFromTop": 10,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U2 pin 19",
+      "photoPosition": {
+        "x": 646.88,
+        "y": 441.94,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 19
+    },
+    {
+      "id": "PB1",
+      "label": "U2.20 · PB1",
+      "net": "PB1",
+      "x": 715,
+      "y": 340,
+      "group": "U2",
+      "rowFromTop": 10,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U2 pin 20",
+      "photoPosition": {
+        "x": 625.0,
+        "y": 441.94,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 20
+    },
+    {
+      "id": "PE7",
+      "label": "U2.21 · PE7",
+      "net": "PE7",
+      "x": 685,
+      "y": 360,
+      "group": "U2",
+      "rowFromTop": 11,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U2 pin 21",
+      "photoPosition": {
+        "x": 646.88,
+        "y": 428.73,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 21
+    },
+    {
+      "id": "PE8",
+      "label": "U2.22 · PE8",
+      "net": "PE8",
+      "x": 715,
+      "y": 360,
+      "group": "U2",
+      "rowFromTop": 11,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U2 pin 22",
+      "photoPosition": {
+        "x": 625.0,
+        "y": 428.73,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 22
+    },
+    {
+      "id": "PE9",
+      "label": "U2.23 · PE9",
+      "net": "PE9",
+      "x": 685,
+      "y": 380,
+      "group": "U2",
+      "rowFromTop": 12,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U2 pin 23",
+      "photoPosition": {
+        "x": 646.88,
+        "y": 415.51,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 23
+    },
+    {
+      "id": "PE10",
+      "label": "U2.24 · PE10",
+      "net": "PE10",
+      "x": 715,
+      "y": 380,
+      "group": "U2",
+      "rowFromTop": 12,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U2 pin 24",
+      "photoPosition": {
+        "x": 625.0,
+        "y": 415.51,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 24
+    },
+    {
+      "id": "PE11",
+      "label": "U2.25 · PE11",
+      "net": "PE11",
+      "x": 685,
+      "y": 400,
+      "group": "U2",
+      "rowFromTop": 13,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U2 pin 25",
+      "photoPosition": {
+        "x": 646.88,
+        "y": 402.3,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 25
+    },
+    {
+      "id": "PE12",
+      "label": "U2.26 · PE12",
+      "net": "PE12",
+      "x": 715,
+      "y": 400,
+      "group": "U2",
+      "rowFromTop": 13,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U2 pin 26",
+      "photoPosition": {
+        "x": 625.0,
+        "y": 402.3,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 26
+    },
+    {
+      "id": "PE13",
+      "label": "U2.27 · PE13",
+      "net": "PE13",
+      "x": 685,
+      "y": 420,
+      "group": "U2",
+      "rowFromTop": 14,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U2 pin 27",
+      "photoPosition": {
+        "x": 646.88,
+        "y": 389.09,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 27
+    },
+    {
+      "id": "PE14",
+      "label": "U2.28 · PE14",
+      "net": "PE14",
+      "x": 715,
+      "y": 420,
+      "group": "U2",
+      "rowFromTop": 14,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U2 pin 28",
+      "photoPosition": {
+        "x": 625.0,
+        "y": 389.09,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 28
+    },
+    {
+      "id": "PE15",
+      "label": "U2.29 · PE15",
+      "net": "PE15",
+      "x": 685,
+      "y": 440,
+      "group": "U2",
+      "rowFromTop": 15,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U2 pin 29",
+      "photoPosition": {
+        "x": 646.88,
+        "y": 375.88,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 29
+    },
+    {
+      "id": "PB10",
+      "label": "U2.30 · PB10",
+      "net": "PB10",
+      "x": 715,
+      "y": 440,
+      "group": "U2",
+      "rowFromTop": 15,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U2 pin 30",
+      "photoPosition": {
+        "x": 625.0,
+        "y": 375.88,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 30
+    },
+    {
+      "id": "PB11",
+      "label": "U2.31 · PB11",
+      "net": "PB11",
+      "x": 685,
+      "y": 460,
+      "group": "U2",
+      "rowFromTop": 16,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U2 pin 31",
+      "photoPosition": {
+        "x": 646.88,
+        "y": 362.66,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 31
+    },
+    {
+      "id": "U2.32",
+      "label": "U2.32 · NC",
+      "net": "NC",
+      "x": 715,
+      "y": 460,
+      "group": "U2",
+      "rowFromTop": 16,
+      "column": "right",
+      "connectable": false,
+      "kind": "nc",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U2 pin 32",
+      "photoPosition": {
+        "x": 625.0,
+        "y": 362.66,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 32
+    },
+    {
+      "id": "U2.33",
+      "label": "U2.33 · NC",
+      "net": "NC",
+      "x": 685,
+      "y": 480,
+      "group": "U2",
+      "rowFromTop": 17,
+      "column": "left",
+      "connectable": false,
+      "kind": "nc",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U2 pin 33",
+      "photoPosition": {
+        "x": 646.88,
+        "y": 349.45,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 33
+    },
+    {
+      "id": "U2.34",
+      "label": "U2.34 · NC",
+      "net": "NC",
+      "x": 715,
+      "y": 480,
+      "group": "U2",
+      "rowFromTop": 17,
+      "column": "right",
+      "connectable": false,
+      "kind": "nc",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U2 pin 34",
+      "photoPosition": {
+        "x": 625.0,
+        "y": 349.45,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 34
+    },
+    {
+      "id": "U2.35",
+      "label": "U2.35 · DGND",
+      "net": "DGND",
+      "x": 685,
+      "y": 500,
+      "group": "U2",
+      "rowFromTop": 18,
+      "column": "left",
+      "connectable": true,
+      "kind": "power",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U2 pin 35",
+      "photoPosition": {
+        "x": 646.88,
+        "y": 336.24,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "powerVoltage": 0,
+      "powerRole": "supply",
+      "number": 35
+    },
+    {
+      "id": "U2.36",
+      "label": "U2.36 · 3V3",
+      "net": "3V3",
+      "x": 715,
+      "y": 500,
+      "group": "U2",
+      "rowFromTop": 18,
+      "column": "right",
+      "connectable": true,
+      "kind": "power",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U2 pin 36",
+      "photoPosition": {
+        "x": 625.0,
+        "y": 336.24,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "powerVoltage": 3.3,
+      "powerRole": "supply",
+      "number": 36
+    },
+    {
+      "id": "U2.37",
+      "label": "U2.37 · DGND",
+      "net": "DGND",
+      "x": 685,
+      "y": 520,
+      "group": "U2",
+      "rowFromTop": 19,
+      "column": "left",
+      "connectable": true,
+      "kind": "power",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U2 pin 37",
+      "photoPosition": {
+        "x": 646.88,
+        "y": 323.03,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "powerVoltage": 0,
+      "powerRole": "supply",
+      "number": 37
+    },
+    {
+      "id": "U2.38",
+      "label": "U2.38 · 3V3",
+      "net": "3V3",
+      "x": 715,
+      "y": 520,
+      "group": "U2",
+      "rowFromTop": 19,
+      "column": "right",
+      "connectable": true,
+      "kind": "power",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U2 pin 38",
+      "photoPosition": {
+        "x": 625.0,
+        "y": 323.03,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "powerVoltage": 3.3,
+      "powerRole": "supply",
+      "number": 38
+    },
+    {
+      "id": "U2.39",
+      "label": "U2.39 · DGND",
+      "net": "DGND",
+      "x": 685,
+      "y": 540,
+      "group": "U2",
+      "rowFromTop": 20,
+      "column": "left",
+      "connectable": true,
+      "kind": "power",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U2 pin 39",
+      "photoPosition": {
+        "x": 646.88,
+        "y": 309.81,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "powerVoltage": 0,
+      "powerRole": "supply",
+      "number": 39
+    },
+    {
+      "id": "U2.40",
+      "label": "U2.40 · 3V3",
+      "net": "3V3",
+      "x": 715,
+      "y": 540,
+      "group": "U2",
+      "rowFromTop": 20,
+      "column": "right",
+      "connectable": true,
+      "kind": "power",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U2 pin 40",
+      "photoPosition": {
+        "x": 625.0,
+        "y": 309.81,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "powerVoltage": 3.3,
+      "powerRole": "supply",
+      "number": 40
+    },
+    {
+      "id": "PB12",
+      "label": "U3.1 · PB12",
+      "net": "PB12",
+      "x": 285,
+      "y": 160,
+      "group": "U3",
+      "rowFromTop": 1,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U3 pin 1",
+      "photoPosition": {
+        "x": 343.75,
+        "y": 309.81,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 1
+    },
+    {
+      "id": "PB13",
+      "label": "U3.2 · PB13",
+      "net": "PB13",
+      "x": 315,
+      "y": 160,
+      "group": "U3",
+      "rowFromTop": 1,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U3 pin 2",
+      "photoPosition": {
+        "x": 365.62,
+        "y": 309.81,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 2
+    },
+    {
+      "id": "PB14",
+      "label": "U3.3 · PB14",
+      "net": "PB14",
+      "x": 285,
+      "y": 180,
+      "group": "U3",
+      "rowFromTop": 2,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U3 pin 3",
+      "photoPosition": {
+        "x": 343.75,
+        "y": 323.03,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 3
+    },
+    {
+      "id": "PB15",
+      "label": "U3.4 · PB15",
+      "net": "PB15",
+      "x": 315,
+      "y": 180,
+      "group": "U3",
+      "rowFromTop": 2,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U3 pin 4",
+      "photoPosition": {
+        "x": 365.62,
+        "y": 323.03,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 4
+    },
+    {
+      "id": "PD8",
+      "label": "U3.5 · PD8",
+      "net": "PD8",
+      "x": 285,
+      "y": 200,
+      "group": "U3",
+      "rowFromTop": 3,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U3 pin 5",
+      "photoPosition": {
+        "x": 343.75,
+        "y": 336.24,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 5
+    },
+    {
+      "id": "PD9",
+      "label": "U3.6 · PD9",
+      "net": "PD9",
+      "x": 315,
+      "y": 200,
+      "group": "U3",
+      "rowFromTop": 3,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U3 pin 6",
+      "photoPosition": {
+        "x": 365.62,
+        "y": 336.24,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 6
+    },
+    {
+      "id": "PD10",
+      "label": "U3.7 · PD10",
+      "net": "PD10",
+      "x": 285,
+      "y": 220,
+      "group": "U3",
+      "rowFromTop": 4,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U3 pin 7",
+      "photoPosition": {
+        "x": 343.75,
+        "y": 349.45,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 7
+    },
+    {
+      "id": "PD11",
+      "label": "U3.8 · PD11",
+      "net": "PD11",
+      "x": 315,
+      "y": 220,
+      "group": "U3",
+      "rowFromTop": 4,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U3 pin 8",
+      "photoPosition": {
+        "x": 365.62,
+        "y": 349.45,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 8
+    },
+    {
+      "id": "PD12",
+      "label": "U3.9 · PD12",
+      "net": "PD12",
+      "x": 285,
+      "y": 240,
+      "group": "U3",
+      "rowFromTop": 5,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U3 pin 9",
+      "photoPosition": {
+        "x": 343.75,
+        "y": 362.66,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 9
+    },
+    {
+      "id": "PD13",
+      "label": "U3.10 · PD13",
+      "net": "PD13",
+      "x": 315,
+      "y": 240,
+      "group": "U3",
+      "rowFromTop": 5,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U3 pin 10",
+      "photoPosition": {
+        "x": 365.62,
+        "y": 362.66,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 10
+    },
+    {
+      "id": "PD14",
+      "label": "U3.11 · PD14",
+      "net": "PD14",
+      "x": 285,
+      "y": 260,
+      "group": "U3",
+      "rowFromTop": 6,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U3 pin 11",
+      "photoPosition": {
+        "x": 343.75,
+        "y": 375.88,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 11
+    },
+    {
+      "id": "PD15",
+      "label": "U3.12 · PD15",
+      "net": "PD15",
+      "x": 315,
+      "y": 260,
+      "group": "U3",
+      "rowFromTop": 6,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U3 pin 12",
+      "photoPosition": {
+        "x": 365.62,
+        "y": 375.88,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 12
+    },
+    {
+      "id": "PC6",
+      "label": "U3.13 · PC6",
+      "net": "PC6",
+      "x": 285,
+      "y": 280,
+      "group": "U3",
+      "rowFromTop": 7,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U3 pin 13",
+      "photoPosition": {
+        "x": 343.75,
+        "y": 389.09,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 13
+    },
+    {
+      "id": "PC7",
+      "label": "U3.14 · PC7",
+      "net": "PC7",
+      "x": 315,
+      "y": 280,
+      "group": "U3",
+      "rowFromTop": 7,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U3 pin 14",
+      "photoPosition": {
+        "x": 365.62,
+        "y": 389.09,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 14
+    },
+    {
+      "id": "PC8",
+      "label": "U3.15 · PC8",
+      "net": "PC8",
+      "x": 285,
+      "y": 300,
+      "group": "U3",
+      "rowFromTop": 8,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U3 pin 15",
+      "photoPosition": {
+        "x": 343.75,
+        "y": 402.3,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 15
+    },
+    {
+      "id": "PC9",
+      "label": "U3.16 · PC9",
+      "net": "PC9",
+      "x": 315,
+      "y": 300,
+      "group": "U3",
+      "rowFromTop": 8,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U3 pin 16",
+      "photoPosition": {
+        "x": 365.62,
+        "y": 402.3,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 16
+    },
+    {
+      "id": "PA8",
+      "label": "U3.17 · PA8",
+      "net": "PA8",
+      "x": 285,
+      "y": 320,
+      "group": "U3",
+      "rowFromTop": 9,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U3 pin 17",
+      "photoPosition": {
+        "x": 343.75,
+        "y": 415.51,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 17
+    },
+    {
+      "id": "PA11",
+      "label": "U3.18 · PA11",
+      "net": "PA11",
+      "x": 315,
+      "y": 320,
+      "group": "U3",
+      "rowFromTop": 9,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U3 pin 18",
+      "photoPosition": {
+        "x": 365.62,
+        "y": 415.51,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 18
+    },
+    {
+      "id": "PA12",
+      "label": "U3.19 · PA12",
+      "net": "PA12",
+      "x": 285,
+      "y": 340,
+      "group": "U3",
+      "rowFromTop": 10,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U3 pin 19",
+      "photoPosition": {
+        "x": 343.75,
+        "y": 428.73,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 19
+    },
+    {
+      "id": "PA15",
+      "label": "U3.20 · PA15",
+      "net": "PA15",
+      "x": 315,
+      "y": 340,
+      "group": "U3",
+      "rowFromTop": 10,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U3 pin 20",
+      "photoPosition": {
+        "x": 365.62,
+        "y": 428.73,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 20
+    },
+    {
+      "id": "PC10",
+      "label": "U3.21 · PC10",
+      "net": "PC10",
+      "x": 285,
+      "y": 360,
+      "group": "U3",
+      "rowFromTop": 11,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U3 pin 21",
+      "photoPosition": {
+        "x": 343.75,
+        "y": 441.94,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 21
+    },
+    {
+      "id": "PC11",
+      "label": "U3.22 · PC11",
+      "net": "PC11",
+      "x": 315,
+      "y": 360,
+      "group": "U3",
+      "rowFromTop": 11,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U3 pin 22",
+      "photoPosition": {
+        "x": 365.62,
+        "y": 441.94,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 22
+    },
+    {
+      "id": "PC12",
+      "label": "U3.23 · PC12",
+      "net": "PC12",
+      "x": 285,
+      "y": 380,
+      "group": "U3",
+      "rowFromTop": 12,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U3 pin 23",
+      "photoPosition": {
+        "x": 343.75,
+        "y": 455.15,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 23
+    },
+    {
+      "id": "PD0",
+      "label": "U3.24 · PD0",
+      "net": "PD0",
+      "x": 315,
+      "y": 380,
+      "group": "U3",
+      "rowFromTop": 12,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U3 pin 24",
+      "photoPosition": {
+        "x": 365.62,
+        "y": 455.15,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 24
+    },
+    {
+      "id": "PD1",
+      "label": "U3.25 · PD1",
+      "net": "PD1",
+      "x": 285,
+      "y": 400,
+      "group": "U3",
+      "rowFromTop": 13,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U3 pin 25",
+      "photoPosition": {
+        "x": 343.75,
+        "y": 468.36,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 25
+    },
+    {
+      "id": "PD2",
+      "label": "U3.26 · PD2",
+      "net": "PD2",
+      "x": 315,
+      "y": 400,
+      "group": "U3",
+      "rowFromTop": 13,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U3 pin 26",
+      "photoPosition": {
+        "x": 365.62,
+        "y": 468.36,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 26
+    },
+    {
+      "id": "PD3",
+      "label": "U3.27 · PD3",
+      "net": "PD3",
+      "x": 285,
+      "y": 420,
+      "group": "U3",
+      "rowFromTop": 14,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U3 pin 27",
+      "photoPosition": {
+        "x": 343.75,
+        "y": 481.58,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 27
+    },
+    {
+      "id": "PD4",
+      "label": "U3.28 · PD4",
+      "net": "PD4",
+      "x": 315,
+      "y": 420,
+      "group": "U3",
+      "rowFromTop": 14,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U3 pin 28",
+      "photoPosition": {
+        "x": 365.62,
+        "y": 481.58,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 28
+    },
+    {
+      "id": "PD5",
+      "label": "U3.29 · PD5",
+      "net": "PD5",
+      "x": 285,
+      "y": 440,
+      "group": "U3",
+      "rowFromTop": 15,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U3 pin 29",
+      "photoPosition": {
+        "x": 343.75,
+        "y": 494.79,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 29
+    },
+    {
+      "id": "PD6",
+      "label": "U3.30 · PD6",
+      "net": "PD6",
+      "x": 315,
+      "y": 440,
+      "group": "U3",
+      "rowFromTop": 15,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U3 pin 30",
+      "photoPosition": {
+        "x": 365.62,
+        "y": 494.79,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 30
+    },
+    {
+      "id": "PD7",
+      "label": "U3.31 · PD7",
+      "net": "PD7",
+      "x": 285,
+      "y": 460,
+      "group": "U3",
+      "rowFromTop": 16,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U3 pin 31",
+      "photoPosition": {
+        "x": 343.75,
+        "y": 508.0,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 31
+    },
+    {
+      "id": "PB3",
+      "label": "U3.32 · PB3",
+      "net": "PB3",
+      "x": 315,
+      "y": 460,
+      "group": "U3",
+      "rowFromTop": 16,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U3 pin 32",
+      "photoPosition": {
+        "x": 365.62,
+        "y": 508.0,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 32
+    },
+    {
+      "id": "PB4",
+      "label": "U3.33 · PB4",
+      "net": "PB4",
+      "x": 285,
+      "y": 480,
+      "group": "U3",
+      "rowFromTop": 17,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U3 pin 33",
+      "photoPosition": {
+        "x": 343.75,
+        "y": 521.21,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 33
+    },
+    {
+      "id": "PB5",
+      "label": "U3.34 · PB5",
+      "net": "PB5",
+      "x": 315,
+      "y": 480,
+      "group": "U3",
+      "rowFromTop": 17,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U3 pin 34",
+      "photoPosition": {
+        "x": 365.62,
+        "y": 521.21,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 34
+    },
+    {
+      "id": "PB6",
+      "label": "U3.35 · PB6",
+      "net": "PB6",
+      "x": 285,
+      "y": 500,
+      "group": "U3",
+      "rowFromTop": 18,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U3 pin 35",
+      "photoPosition": {
+        "x": 343.75,
+        "y": 534.43,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 35
+    },
+    {
+      "id": "PB7",
+      "label": "U3.36 · PB7",
+      "net": "PB7",
+      "x": 315,
+      "y": 500,
+      "group": "U3",
+      "rowFromTop": 18,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U3 pin 36",
+      "photoPosition": {
+        "x": 365.62,
+        "y": 534.43,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 36
+    },
+    {
+      "id": "PB8",
+      "label": "U3.37 · PB8",
+      "net": "PB8",
+      "x": 285,
+      "y": 520,
+      "group": "U3",
+      "rowFromTop": 19,
+      "column": "left",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U3 pin 37",
+      "photoPosition": {
+        "x": 343.75,
+        "y": 547.64,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 37
+    },
+    {
+      "id": "PB9",
+      "label": "U3.38 · PB9",
+      "net": "PB9",
+      "x": 315,
+      "y": 520,
+      "group": "U3",
+      "rowFromTop": 19,
+      "column": "right",
+      "connectable": true,
+      "kind": "gpio",
+      "verified": true,
+      "evidence": "V2 schematic physical page 1, U3 pin 38",
+      "photoPosition": {
+        "x": 365.62,
+        "y": 547.64,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 38
+    },
+    {
+      "id": "PE0",
+      "label": "U3.39 · PE0",
+      "net": "PE0",
+      "x": 285,
+      "y": 540,
+      "group": "U3",
       "rowFromTop": 20,
       "column": "left",
       "connectable": true,
       "kind": "gpio",
       "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+      "evidence": "V2 schematic physical page 1, U3 pin 39",
+      "photoPosition": {
+        "x": 343.75,
+        "y": 560.85,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 39
     },
     {
-      "id": "PE2",
-      "label": "PE2",
-      "net": "PE2",
-      "x": 646.88,
-      "y": 560.85,
-      "group": "U2",
+      "id": "PE1",
+      "label": "U3.40 · PE1",
+      "net": "PE1",
+      "x": 315,
+      "y": 540,
+      "group": "U3",
       "rowFromTop": 20,
       "column": "right",
       "connectable": true,
       "kind": "gpio",
       "verified": true,
-      "evidence": "S1/S2: V2 photo silkscreen; positions approximate within header"
+      "evidence": "V2 schematic physical page 1, U3 pin 40",
+      "photoPosition": {
+        "x": 365.62,
+        "y": 560.85,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 40
     },
     {
       "id": "LED1",
-      "label": "LED1",
+      "label": "H4.6 · LED1",
       "net": "LED1",
-      "x": 125.0,
-      "y": 86.57,
+      "x": 120,
+      "y": 175,
       "group": "H4",
       "rowFromTop": 1,
       "column": "single",
       "connectable": true,
       "kind": "led",
       "verified": true,
-      "evidence": "S1/S2: separate V2 header terminal; LED2 label on product photo has a printing/legibility ambiguity"
+      "evidence": "V2 schematic p2 H4 pin 6",
+      "photoPosition": {
+        "x": 125.0,
+        "y": 86.57,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 6
     },
     {
       "id": "LED2",
-      "label": "LED2",
+      "label": "H4.5 · LED2",
       "net": "LED2",
-      "x": 125.0,
-      "y": 99.47,
+      "x": 120,
+      "y": 201,
       "group": "H4",
       "rowFromTop": 2,
       "column": "single",
       "connectable": true,
       "kind": "led",
       "verified": true,
-      "evidence": "S1/S2: separate V2 header terminal; LED2 label on product photo has a printing/legibility ambiguity"
+      "evidence": "V2 schematic p2 H4 pin 5",
+      "photoPosition": {
+        "x": 125.0,
+        "y": 99.47,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 5
     },
     {
       "id": "LED3",
-      "label": "LED3",
+      "label": "H4.4 · LED3",
       "net": "LED3",
-      "x": 125.0,
-      "y": 112.38,
+      "x": 120,
+      "y": 227,
       "group": "H4",
       "rowFromTop": 3,
       "column": "single",
       "connectable": true,
       "kind": "led",
       "verified": true,
-      "evidence": "S1/S2: separate V2 header terminal; LED2 label on product photo has a printing/legibility ambiguity"
+      "evidence": "V2 schematic p2 H4 pin 4",
+      "photoPosition": {
+        "x": 125.0,
+        "y": 112.38,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 4
     },
     {
       "id": "LED4",
-      "label": "LED4",
+      "label": "H4.3 · LED4",
       "net": "LED4",
-      "x": 125.0,
-      "y": 125.29,
+      "x": 120,
+      "y": 253,
       "group": "H4",
       "rowFromTop": 4,
       "column": "single",
       "connectable": true,
       "kind": "led",
       "verified": true,
-      "evidence": "S1/S2: separate V2 header terminal; LED2 label on product photo has a printing/legibility ambiguity"
+      "evidence": "V2 schematic p2 H4 pin 3",
+      "photoPosition": {
+        "x": 125.0,
+        "y": 125.29,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 3
     },
     {
       "id": "LED5",
-      "label": "LED5",
+      "label": "H4.2 · LED5",
       "net": "LED5",
-      "x": 125.0,
-      "y": 138.2,
+      "x": 120,
+      "y": 279,
       "group": "H4",
       "rowFromTop": 5,
       "column": "single",
       "connectable": true,
       "kind": "led",
       "verified": true,
-      "evidence": "S1/S2: separate V2 header terminal; LED2 label on product photo has a printing/legibility ambiguity"
+      "evidence": "V2 schematic p2 H4 pin 2",
+      "photoPosition": {
+        "x": 125.0,
+        "y": 138.2,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 2
     },
     {
       "id": "LED6",
-      "label": "LED6",
+      "label": "H4.1 · LED6",
       "net": "LED6",
-      "x": 125.0,
-      "y": 151.11,
+      "x": 120,
+      "y": 305,
       "group": "H4",
       "rowFromTop": 6,
       "column": "single",
       "connectable": true,
       "kind": "led",
       "verified": true,
-      "evidence": "S1/S2: separate V2 header terminal; LED2 label on product photo has a printing/legibility ambiguity"
+      "evidence": "V2 schematic p2 H4 pin 1",
+      "photoPosition": {
+        "x": 125.0,
+        "y": 151.11,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 1
     },
     {
       "id": "KEY1",
-      "label": "KEY1",
-      "net": "KEY1",
-      "x": 845.31,
-      "y": 290.07,
+      "label": "H3.6 · KEY1",
+      "net": "FUN_KEY1",
+      "x": 880,
+      "y": 175,
       "group": "H3",
       "rowFromTop": 1,
       "column": "single",
       "connectable": true,
       "kind": "key",
       "verified": true,
-      "evidence": "S1/S2: separate V2 header terminal; LED2 label on product photo has a printing/legibility ambiguity"
+      "evidence": "V2 schematic p2 H3 pin 6",
+      "photoPosition": {
+        "x": 845.31,
+        "y": 290.07,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 6
     },
     {
       "id": "KEY2",
-      "label": "KEY2",
-      "net": "KEY2",
-      "x": 845.31,
-      "y": 304.04,
+      "label": "H3.5 · KEY2",
+      "net": "FUN_KEY2",
+      "x": 880,
+      "y": 201,
       "group": "H3",
       "rowFromTop": 2,
       "column": "single",
       "connectable": true,
       "kind": "key",
       "verified": true,
-      "evidence": "S1/S2: separate V2 header terminal; LED2 label on product photo has a printing/legibility ambiguity"
+      "evidence": "V2 schematic p2 H3 pin 5",
+      "photoPosition": {
+        "x": 845.31,
+        "y": 304.04,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 5
     },
     {
       "id": "KEY3",
-      "label": "KEY3",
-      "net": "KEY3",
-      "x": 845.31,
-      "y": 318.01,
+      "label": "H3.4 · KEY3",
+      "net": "FUN_KEY3",
+      "x": 880,
+      "y": 227,
       "group": "H3",
       "rowFromTop": 3,
       "column": "single",
       "connectable": true,
       "kind": "key",
       "verified": true,
-      "evidence": "S1/S2: separate V2 header terminal; LED2 label on product photo has a printing/legibility ambiguity"
+      "evidence": "V2 schematic p2 H3 pin 4",
+      "photoPosition": {
+        "x": 845.31,
+        "y": 318.01,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 4
     },
     {
       "id": "KEY4",
-      "label": "KEY4",
-      "net": "KEY4",
-      "x": 845.31,
-      "y": 331.99,
+      "label": "H3.3 · KEY4",
+      "net": "FUN_KEY4",
+      "x": 880,
+      "y": 253,
       "group": "H3",
       "rowFromTop": 4,
       "column": "single",
       "connectable": true,
       "kind": "key",
       "verified": true,
-      "evidence": "S1/S2: separate V2 header terminal; LED2 label on product photo has a printing/legibility ambiguity"
+      "evidence": "V2 schematic p2 H3 pin 3",
+      "photoPosition": {
+        "x": 845.31,
+        "y": 331.99,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 3
     },
     {
       "id": "KEY5",
-      "label": "KEY5",
-      "net": "KEY5",
-      "x": 845.31,
-      "y": 345.96,
+      "label": "H3.2 · KEY5",
+      "net": "FUN_KEY5",
+      "x": 880,
+      "y": 279,
       "group": "H3",
       "rowFromTop": 5,
       "column": "single",
       "connectable": true,
       "kind": "key",
       "verified": true,
-      "evidence": "S1/S2: separate V2 header terminal; LED2 label on product photo has a printing/legibility ambiguity"
+      "evidence": "V2 schematic p2 H3 pin 2",
+      "photoPosition": {
+        "x": 845.31,
+        "y": 345.96,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 2
     },
     {
       "id": "KEY6",
-      "label": "KEY6",
-      "net": "KEY6",
-      "x": 845.31,
-      "y": 359.93,
+      "label": "H3.1 · KEY6",
+      "net": "FUN_KEY6",
+      "x": 880,
+      "y": 305,
       "group": "H3",
       "rowFromTop": 6,
       "column": "single",
       "connectable": true,
       "kind": "key",
       "verified": true,
-      "evidence": "S1/S2: separate V2 header terminal; LED2 label on product photo has a printing/legibility ambiguity"
+      "evidence": "V2 schematic p2 H3 pin 1",
+      "photoPosition": {
+        "x": 845.31,
+        "y": 359.93,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 1
     },
     {
       "id": "OLED_SDA",
-      "label": "SDA",
-      "net": "OLED_SDA",
-      "x": 206.25,
-      "y": 192.87,
+      "label": "OLED · SDA",
+      "net": "OLED_DAT",
+      "x": 120,
+      "y": 405,
       "group": "OLED",
       "rowFromTop": 1,
       "connectable": true,
       "kind": "signal",
       "verified": true,
-      "evidence": "S2: visible four contacts SDA/SCL/VCC/GND; MCU-side routing unverified for V2"
+      "evidence": "V2 schematic p2 OLED1 pin 4",
+      "photoPosition": {
+        "x": 206.25,
+        "y": 192.87,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 4
     },
     {
       "id": "OLED_SCL",
-      "label": "SCL",
-      "net": "OLED_SCL",
-      "x": 206.25,
-      "y": 208.06,
+      "label": "OLED · SCL",
+      "net": "OLED_CLK",
+      "x": 120,
+      "y": 430,
       "group": "OLED",
       "rowFromTop": 2,
       "connectable": true,
       "kind": "signal",
       "verified": true,
-      "evidence": "S2: visible four contacts SDA/SCL/VCC/GND; MCU-side routing unverified for V2"
+      "evidence": "V2 schematic p2 OLED1 pin 3",
+      "photoPosition": {
+        "x": 206.25,
+        "y": 208.06,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "number": 3
     },
     {
       "id": "OLED_3V3",
-      "label": "3V3",
-      "net": "OLED_3V3",
-      "x": 206.25,
-      "y": 223.25,
+      "label": "OLED · 3V3",
+      "net": "3V3",
+      "x": 120,
+      "y": 455,
       "group": "OLED",
       "rowFromTop": 3,
       "connectable": true,
       "kind": "power",
       "verified": true,
-      "evidence": "S2: visible four contacts SDA/SCL/VCC/GND; MCU-side routing unverified for V2"
+      "evidence": "V2 schematic p2 OLED1 pin 2",
+      "photoPosition": {
+        "x": 206.25,
+        "y": 223.25,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "powerVoltage": 3.3,
+      "powerRole": "input",
+      "number": 2
     },
     {
       "id": "OLED_GND",
-      "label": "GND",
-      "net": "OLED_GND",
-      "x": 206.25,
-      "y": 238.43,
+      "label": "OLED · GND",
+      "net": "DGND",
+      "x": 120,
+      "y": 480,
       "group": "OLED",
       "rowFromTop": 4,
       "connectable": true,
       "kind": "power",
       "verified": true,
-      "evidence": "S2: visible four contacts SDA/SCL/VCC/GND; MCU-side routing unverified for V2"
+      "evidence": "V2 schematic p2 OLED1 pin 1",
+      "photoPosition": {
+        "x": 206.25,
+        "y": 238.43,
+        "viewBox": [
+          0,
+          0,
+          1000,
+          650
+        ]
+      },
+      "powerVoltage": 0,
+      "powerRole": "input",
+      "number": 1
+    },
+    {
+      "id": "485_DE",
+      "net": "485_DE",
+      "label": "485_DE",
+      "group": "RS485",
+      "kind": "signal",
+      "verified": true,
+      "physicalPinVerified": false,
+      "evidence": "V2 schematic p1/p2/p3/p4 fixed peripheral net",
+      "x": 120,
+      "y": 530,
+      "connectable": true
+    },
+    {
+      "id": "PT100_SCK",
+      "net": "PT100_SCK",
+      "label": "PT100_SCK",
+      "group": "PT100",
+      "kind": "signal",
+      "verified": false,
+      "physicalPinVerified": false,
+      "evidence": "Functional endpoint from user V2 driver; physical connector number pending schematic",
+      "x": 450,
+      "y": 185,
+      "connectable": true
+    },
+    {
+      "id": "PT100_MISO",
+      "net": "PT100_MISO",
+      "label": "PT100_MISO",
+      "group": "PT100",
+      "kind": "signal",
+      "verified": false,
+      "physicalPinVerified": false,
+      "evidence": "Functional endpoint from user V2 driver; physical connector number pending schematic",
+      "x": 450,
+      "y": 208,
+      "connectable": true
+    },
+    {
+      "id": "PT100_MOSI",
+      "net": "PT100_MOSI",
+      "label": "PT100_MOSI",
+      "group": "PT100",
+      "kind": "signal",
+      "verified": false,
+      "physicalPinVerified": false,
+      "evidence": "Functional endpoint from user V2 driver; physical connector number pending schematic",
+      "x": 450,
+      "y": 231,
+      "connectable": true
+    },
+    {
+      "id": "PT100_CS",
+      "net": "PT100_CS",
+      "label": "PT100_CS",
+      "group": "PT100",
+      "kind": "signal",
+      "verified": false,
+      "physicalPinVerified": false,
+      "evidence": "Functional endpoint from user V2 driver; physical connector number pending schematic",
+      "x": 450,
+      "y": 254,
+      "connectable": true
+    },
+    {
+      "id": "ADC_IN10",
+      "net": "ADC_IN10",
+      "label": "ADC_IN10",
+      "group": "ANALOG",
+      "kind": "signal",
+      "verified": true,
+      "physicalPinVerified": false,
+      "evidence": "V2 schematic p1/p2/p3/p4 fixed peripheral net",
+      "x": 450,
+      "y": 471,
+      "connectable": true
+    },
+    {
+      "id": "ADC_IN1",
+      "net": "ADC_IN1",
+      "label": "ADC_IN1",
+      "group": "ANALOG",
+      "kind": "signal",
+      "verified": false,
+      "physicalPinVerified": false,
+      "evidence": "Functional endpoint from user V2 driver; physical connector number pending schematic",
+      "x": 450,
+      "y": 497,
+      "connectable": true
+    },
+    {
+      "id": "DAC_OUT0",
+      "net": "DAC_OUT0",
+      "label": "DAC_OUT0",
+      "group": "ANALOG",
+      "kind": "signal",
+      "verified": false,
+      "physicalPinVerified": false,
+      "evidence": "Functional endpoint from user V2 driver; physical connector number pending schematic",
+      "x": 450,
+      "y": 523,
+      "connectable": true
+    },
+    {
+      "id": "ADC_IN12",
+      "net": "ADC_IN12",
+      "label": "ADC_IN12",
+      "group": "H7",
+      "kind": "signal",
+      "verified": true,
+      "physicalPinVerified": true,
+      "evidence": "V2 schematic p3 H7 pin 1",
+      "x": 840,
+      "y": 535,
+      "connectable": true,
+      "number": 1
+    },
+    {
+      "id": "3V3_REF",
+      "net": "3V3_REF",
+      "label": "3V3_REF",
+      "group": "H7",
+      "kind": "power",
+      "verified": true,
+      "physicalPinVerified": true,
+      "evidence": "V2 schematic p3 H7 pin 2 3.3VREF",
+      "x": 840,
+      "y": 560,
+      "connectable": true,
+      "number": 2,
+      "powerVoltage": 3.3,
+      "powerRole": "supply"
+    },
+    {
+      "id": "H10.1",
+      "net": "485_RX",
+      "label": "H10.1 · 485_RX",
+      "group": "H10",
+      "number": 1,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V2 schematic p4 H10 pin 1",
+      "x": 470,
+      "y": 80,
+      "connectable": true
+    },
+    {
+      "id": "H10.2",
+      "net": "485_TX",
+      "label": "H10.2 · 485_TX",
+      "group": "H10",
+      "number": 2,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V2 schematic p4 H10 pin 2",
+      "x": 530,
+      "y": 80,
+      "connectable": true
+    },
+    {
+      "id": "H10.3",
+      "net": "USART1_TX",
+      "label": "H10.3 · USART1_TX",
+      "group": "H10",
+      "number": 3,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V2 schematic p4 H10 pin 3",
+      "x": 470,
+      "y": 104,
+      "connectable": true
+    },
+    {
+      "id": "H10.4",
+      "net": "USART1_RX",
+      "label": "H10.4 · USART1_RX",
+      "group": "H10",
+      "number": 4,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V2 schematic p4 H10 pin 4",
+      "x": 530,
+      "y": 104,
+      "connectable": true
+    },
+    {
+      "id": "H10.5",
+      "net": "232_RX",
+      "label": "H10.5 · 232_RX",
+      "group": "H10",
+      "number": 5,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V2 schematic p4 H10 pin 5",
+      "x": 470,
+      "y": 128,
+      "connectable": true
+    },
+    {
+      "id": "H10.6",
+      "net": "232_TX",
+      "label": "H10.6 · 232_TX",
+      "group": "H10",
+      "number": 6,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V2 schematic p4 H10 pin 6",
+      "x": 530,
+      "y": 128,
+      "connectable": true
+    },
+    {
+      "id": "H12.1",
+      "net": "USB_RX",
+      "label": "H12.1 · USB_RX",
+      "group": "H12",
+      "number": 1,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V2 schematic p4 H12 pin 1",
+      "x": 470,
+      "y": 566,
+      "connectable": true
+    },
+    {
+      "id": "H12.2",
+      "net": "USB_TX",
+      "label": "H12.2 · USB_TX",
+      "group": "H12",
+      "number": 2,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V2 schematic p4 H12 pin 2",
+      "x": 530,
+      "y": 566,
+      "connectable": true
+    },
+    {
+      "id": "H12.3",
+      "net": "USART0_TX",
+      "label": "H12.3 · USART0_TX",
+      "group": "H12",
+      "number": 3,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V2 schematic p4 H12 pin 3",
+      "x": 470,
+      "y": 590,
+      "connectable": true
+    },
+    {
+      "id": "H12.4",
+      "net": "USART0_RX",
+      "label": "H12.4 · USART0_RX",
+      "group": "H12",
+      "number": 4,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V2 schematic p4 H12 pin 4",
+      "x": 530,
+      "y": 590,
+      "connectable": true
+    },
+    {
+      "id": "H11.1",
+      "net": "TTL_OUT_RX",
+      "label": "H11.1 · TTL_OUT_RX",
+      "group": "H11",
+      "number": 1,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V2 schematic p4 H11 pin 1",
+      "x": 865,
+      "y": 400,
+      "connectable": true
+    },
+    {
+      "id": "H11.2",
+      "net": "TTL_OUT_TX",
+      "label": "H11.2 · TTL_OUT_TX",
+      "group": "H11",
+      "number": 2,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V2 schematic p4 H11 pin 2",
+      "x": 925,
+      "y": 400,
+      "connectable": true
+    },
+    {
+      "id": "H11.3",
+      "net": "USART2_TX",
+      "label": "H11.3 · USART2_TX",
+      "group": "H11",
+      "number": 3,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V2 schematic p4 H11 pin 3",
+      "x": 865,
+      "y": 424,
+      "connectable": true
+    },
+    {
+      "id": "H11.4",
+      "net": "USART2_RX",
+      "label": "H11.4 · USART2_RX",
+      "group": "H11",
+      "number": 4,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V2 schematic p4 H11 pin 4",
+      "x": 925,
+      "y": 424,
+      "connectable": true
+    },
+    {
+      "id": "H11.5",
+      "net": "ESP_RX",
+      "label": "H11.5 · ESP_RX",
+      "group": "H11",
+      "number": 5,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V2 schematic p4 H11 pin 5",
+      "x": 865,
+      "y": 448,
+      "connectable": true
+    },
+    {
+      "id": "H11.6",
+      "net": "ESP_TX",
+      "label": "H11.6 · ESP_TX",
+      "group": "H11",
+      "number": 6,
+      "kind": "signal",
+      "verified": true,
+      "evidence": "V2 schematic p4 H11 pin 6",
+      "x": 925,
+      "y": 448,
+      "connectable": true
     }
   ],
   "leds": [
@@ -1371,115 +2786,133 @@
       "pin": null,
       "terminal": "LED1",
       "activeLow": false,
-      "polarityVerified": false,
-      "polarityEvidence": "S3 local firmware and S4 V1 schematic agree; not independently verified for V2",
-      "requiresJumper": true
+      "polarityVerified": true,
+      "polarityEvidence": "V2 schematic p2 LED series resistor and cathode-to-DGND",
+      "requiresJumper": true,
+      "resistorOhms": 2000
     },
     {
       "id": "LED2",
       "pin": null,
       "terminal": "LED2",
       "activeLow": false,
-      "polarityVerified": false,
-      "polarityEvidence": "S3 local firmware and S4 V1 schematic agree; not independently verified for V2",
-      "requiresJumper": true
+      "polarityVerified": true,
+      "polarityEvidence": "V2 schematic p2 LED series resistor and cathode-to-DGND",
+      "requiresJumper": true,
+      "resistorOhms": 2000
     },
     {
       "id": "LED3",
       "pin": null,
       "terminal": "LED3",
       "activeLow": false,
-      "polarityVerified": false,
-      "polarityEvidence": "S3 local firmware and S4 V1 schematic agree; not independently verified for V2",
-      "requiresJumper": true
+      "polarityVerified": true,
+      "polarityEvidence": "V2 schematic p2 LED series resistor and cathode-to-DGND",
+      "requiresJumper": true,
+      "resistorOhms": 2000
     },
     {
       "id": "LED4",
       "pin": null,
       "terminal": "LED4",
       "activeLow": false,
-      "polarityVerified": false,
-      "polarityEvidence": "S3 local firmware and S4 V1 schematic agree; not independently verified for V2",
-      "requiresJumper": true
+      "polarityVerified": true,
+      "polarityEvidence": "V2 schematic p2 LED series resistor and cathode-to-DGND",
+      "requiresJumper": true,
+      "resistorOhms": 2000
     },
     {
       "id": "LED5",
       "pin": null,
       "terminal": "LED5",
       "activeLow": false,
-      "polarityVerified": false,
-      "polarityEvidence": "S3 local firmware and S4 V1 schematic agree; not independently verified for V2",
-      "requiresJumper": true
+      "polarityVerified": true,
+      "polarityEvidence": "V2 schematic p2 LED series resistor and cathode-to-DGND",
+      "requiresJumper": true,
+      "resistorOhms": 2000
     },
     {
       "id": "LED6",
       "pin": null,
       "terminal": "LED6",
       "activeLow": false,
-      "polarityVerified": false,
-      "polarityEvidence": "S3 local firmware and S4 V1 schematic agree; not independently verified for V2",
-      "requiresJumper": true
+      "polarityVerified": true,
+      "polarityEvidence": "V2 schematic p2 LED series resistor and cathode-to-DGND",
+      "requiresJumper": true,
+      "resistorOhms": 2000
     }
   ],
   "keys": [
     {
       "id": "KEY1",
       "pin": null,
-      "terminal": "KEY1",
+      "terminal": "FUN_KEY1",
       "activeLow": true,
-      "polarityVerified": false,
-      "polarityEvidence": "S3 local firmware and S4 V1 schematic agree; not independently verified for V2",
-      "requiresJumper": true
+      "polarityVerified": true,
+      "polarityEvidence": "V2 schematic p2 10k pull-up, switch-to-DGND",
+      "requiresJumper": true,
+      "idle": 1,
+      "pullUpOhms": 10000
     },
     {
       "id": "KEY2",
       "pin": null,
-      "terminal": "KEY2",
+      "terminal": "FUN_KEY2",
       "activeLow": true,
-      "polarityVerified": false,
-      "polarityEvidence": "S3 local firmware and S4 V1 schematic agree; not independently verified for V2",
-      "requiresJumper": true
+      "polarityVerified": true,
+      "polarityEvidence": "V2 schematic p2 10k pull-up, switch-to-DGND",
+      "requiresJumper": true,
+      "idle": 1,
+      "pullUpOhms": 10000
     },
     {
       "id": "KEY3",
       "pin": null,
-      "terminal": "KEY3",
+      "terminal": "FUN_KEY3",
       "activeLow": true,
-      "polarityVerified": false,
-      "polarityEvidence": "S3 local firmware and S4 V1 schematic agree; not independently verified for V2",
-      "requiresJumper": true
+      "polarityVerified": true,
+      "polarityEvidence": "V2 schematic p2 10k pull-up, switch-to-DGND",
+      "requiresJumper": true,
+      "idle": 1,
+      "pullUpOhms": 10000
     },
     {
       "id": "KEY4",
       "pin": null,
-      "terminal": "KEY4",
+      "terminal": "FUN_KEY4",
       "activeLow": true,
-      "polarityVerified": false,
-      "polarityEvidence": "S3 local firmware and S4 V1 schematic agree; not independently verified for V2",
-      "requiresJumper": true
+      "polarityVerified": true,
+      "polarityEvidence": "V2 schematic p2 10k pull-up, switch-to-DGND",
+      "requiresJumper": true,
+      "idle": 1,
+      "pullUpOhms": 10000
     },
     {
       "id": "KEY5",
       "pin": null,
-      "terminal": "KEY5",
+      "terminal": "FUN_KEY5",
       "activeLow": true,
-      "polarityVerified": false,
-      "polarityEvidence": "S3 local firmware and S4 V1 schematic agree; not independently verified for V2",
-      "requiresJumper": true
+      "polarityVerified": true,
+      "polarityEvidence": "V2 schematic p2 10k pull-up, switch-to-DGND",
+      "requiresJumper": true,
+      "idle": 1,
+      "pullUpOhms": 10000
     },
     {
       "id": "KEY6",
       "pin": null,
-      "terminal": "KEY6",
+      "terminal": "FUN_KEY6",
       "activeLow": true,
-      "polarityVerified": false,
-      "polarityEvidence": "S3 local firmware and S4 V1 schematic agree; not independently verified for V2",
-      "requiresJumper": true
+      "polarityVerified": true,
+      "polarityEvidence": "V2 schematic p2 10k pull-up, switch-to-DGND",
+      "requiresJumper": true,
+      "idle": 1,
+      "pullUpOhms": 10000
     }
   ],
   "oled": {
-    "scl": "PB8",
-    "sda": "PB9",
+    "scl": "OLED_SCL",
+    "sda": "OLED_SDA",
     "sclTerminal": "OLED_SCL",
     "sdaTerminal": "OLED_SDA",
     "address": 60,
@@ -1493,729 +2926,106 @@
       "y": 184,
       "width": 154,
       "height": 45
-    }
+    },
+    "powerTerminal": "OLED_3V3",
+    "groundTerminal": "OLED_GND",
+    "locked": false,
+    "vccTerminal": "OLED_3V3",
+    "gndTerminal": "OLED_GND"
   },
   "uart": {
-    "ch340": {
-      "instance": "USART0",
-      "tx": "PA9",
-      "rx": "PA10",
-      "verified": false,
-      "evidenceStatus": "photo-and-code-supported"
-    },
     "rs485": {
-      "instance": "USART1",
-      "tx": "PA2",
-      "rx": "PA3",
-      "de": "PA1",
-      "verified": false,
-      "evidenceStatus": "code-supported"
+      "uart": "USART1",
+      "tx": "PD5",
+      "rx": "PD6",
+      "af": 7,
+      "txPins": [
+        "PD5",
+        "PA2"
+      ],
+      "rxPins": [
+        "PD6",
+        "PA3"
+      ],
+      "txTerminal": "485_RX",
+      "rxTerminal": "485_TX",
+      "de": "485_DE",
+      "deExamplePin": "PE8",
+      "deTerminal": "485_DE",
+      "jumpers": [
+        "H10.1 ↔ H10.3",
+        "H10.2 ↔ H10.4"
+      ],
+      "evidence": "27_0_BootLoader/Driver/USART/usart.c",
+      "mappingSource": "removable-driver-example"
     },
     "rs232": {
-      "instance": "USART1",
-      "tx": null,
-      "rx": null,
-      "verified": false,
-      "evidenceStatus": "unresolved-shared-selector"
+      "uart": "USART1",
+      "tx": "PD5",
+      "rx": "PD6",
+      "af": 7,
+      "txPins": [
+        "PD5",
+        "PA2"
+      ],
+      "rxPins": [
+        "PD6",
+        "PA3"
+      ],
+      "txTerminal": "232_RX",
+      "rxTerminal": "232_TX",
+      "jumpers": [
+        "H10.3 ↔ H10.5",
+        "H10.4 ↔ H10.6"
+      ]
+    },
+    "ch340": {
+      "uart": "USART0",
+      "tx": "PA9",
+      "rx": "PA10",
+      "af": 7,
+      "txPins": [
+        "PA9"
+      ],
+      "rxPins": [
+        "PA10"
+      ],
+      "txTerminal": "USB_RX",
+      "rxTerminal": "USB_TX",
+      "jumpers": [
+        "H12.1 ↔ H12.3",
+        "H12.2 ↔ H12.4"
+      ]
     },
     "ttl": {
-      "instance": "USART2",
+      "uart": "USART2",
       "tx": "PD8",
       "rx": "PD9",
-      "verified": false,
-      "evidenceStatus": "photo-silkscreen-supported"
+      "af": 7,
+      "txPins": [
+        "PD8"
+      ],
+      "rxPins": [
+        "PD9"
+      ],
+      "txTerminal": "TTL_OUT_RX",
+      "rxTerminal": "TTL_OUT_TX",
+      "jumpers": [
+        "H11.1 ↔ H11.3",
+        "H11.2 ↔ H11.4"
+      ]
     }
   },
   "fixedNets": [
     {
-      "id": "header_PB12",
+      "id": "header_PE2",
       "nodes": [
-        "MCU.PB12",
-        "PB12"
+        "MCU.PE2",
+        "PE2"
       ],
       "locked": true,
       "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PB13",
-      "nodes": [
-        "MCU.PB13",
-        "PB13"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PB14",
-      "nodes": [
-        "MCU.PB14",
-        "PB14"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PB15",
-      "nodes": [
-        "MCU.PB15",
-        "PB15"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PD8",
-      "nodes": [
-        "MCU.PD8",
-        "PD8"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PD9",
-      "nodes": [
-        "MCU.PD9",
-        "PD9"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PD10",
-      "nodes": [
-        "MCU.PD10",
-        "PD10"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PD11",
-      "nodes": [
-        "MCU.PD11",
-        "PD11"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PD12",
-      "nodes": [
-        "MCU.PD12",
-        "PD12"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PD13",
-      "nodes": [
-        "MCU.PD13",
-        "PD13"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PD14",
-      "nodes": [
-        "MCU.PD14",
-        "PD14"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PD15",
-      "nodes": [
-        "MCU.PD15",
-        "PD15"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PC6",
-      "nodes": [
-        "MCU.PC6",
-        "PC6"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PC7",
-      "nodes": [
-        "MCU.PC7",
-        "PC7"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PC8",
-      "nodes": [
-        "MCU.PC8",
-        "PC8"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PC9",
-      "nodes": [
-        "MCU.PC9",
-        "PC9"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PA8",
-      "nodes": [
-        "MCU.PA8",
-        "PA8"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PA11",
-      "nodes": [
-        "MCU.PA11",
-        "PA11"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PA12",
-      "nodes": [
-        "MCU.PA12",
-        "PA12"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PA15",
-      "nodes": [
-        "MCU.PA15",
-        "PA15"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PC10",
-      "nodes": [
-        "MCU.PC10",
-        "PC10"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PC11",
-      "nodes": [
-        "MCU.PC11",
-        "PC11"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PC12",
-      "nodes": [
-        "MCU.PC12",
-        "PC12"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PD0",
-      "nodes": [
-        "MCU.PD0",
-        "PD0"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PD1",
-      "nodes": [
-        "MCU.PD1",
-        "PD1"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PD2",
-      "nodes": [
-        "MCU.PD2",
-        "PD2"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PD3",
-      "nodes": [
-        "MCU.PD3",
-        "PD3"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PD4",
-      "nodes": [
-        "MCU.PD4",
-        "PD4"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PD5",
-      "nodes": [
-        "MCU.PD5",
-        "PD5"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PD6",
-      "nodes": [
-        "MCU.PD6",
-        "PD6"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PD7",
-      "nodes": [
-        "MCU.PD7",
-        "PD7"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PB3",
-      "nodes": [
-        "MCU.PB3",
-        "PB3"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PB4",
-      "nodes": [
-        "MCU.PB4",
-        "PB4"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PB5",
-      "nodes": [
-        "MCU.PB5",
-        "PB5"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PB6",
-      "nodes": [
-        "MCU.PB6",
-        "PB6"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PB7",
-      "nodes": [
-        "MCU.PB7",
-        "PB7"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PB8",
-      "nodes": [
-        "MCU.PB8",
-        "PB8"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PB9",
-      "nodes": [
-        "MCU.PB9",
-        "PB9"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PE0",
-      "nodes": [
-        "MCU.PE0",
-        "PE0"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PE1",
-      "nodes": [
-        "MCU.PE1",
-        "PE1"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PB11",
-      "nodes": [
-        "MCU.PB11",
-        "PB11"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PB10",
-      "nodes": [
-        "MCU.PB10",
-        "PB10"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PE15",
-      "nodes": [
-        "MCU.PE15",
-        "PE15"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PE14",
-      "nodes": [
-        "MCU.PE14",
-        "PE14"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PE13",
-      "nodes": [
-        "MCU.PE13",
-        "PE13"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PE12",
-      "nodes": [
-        "MCU.PE12",
-        "PE12"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PE11",
-      "nodes": [
-        "MCU.PE11",
-        "PE11"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PE10",
-      "nodes": [
-        "MCU.PE10",
-        "PE10"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PE9",
-      "nodes": [
-        "MCU.PE9",
-        "PE9"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PE8",
-      "nodes": [
-        "MCU.PE8",
-        "PE8"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PE7",
-      "nodes": [
-        "MCU.PE7",
-        "PE7"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PB1",
-      "nodes": [
-        "MCU.PB1",
-        "PB1"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PB0",
-      "nodes": [
-        "MCU.PB0",
-        "PB0"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PC5",
-      "nodes": [
-        "MCU.PC5",
-        "PC5"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PC4",
-      "nodes": [
-        "MCU.PC4",
-        "PC4"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PA7",
-      "nodes": [
-        "MCU.PA7",
-        "PA7"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PA6",
-      "nodes": [
-        "MCU.PA6",
-        "PA6"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PA5",
-      "nodes": [
-        "MCU.PA5",
-        "PA5"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PA4",
-      "nodes": [
-        "MCU.PA4",
-        "PA4"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PA1",
-      "nodes": [
-        "MCU.PA1",
-        "PA1"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PA0",
-      "nodes": [
-        "MCU.PA0",
-        "PA0"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PC3",
-      "nodes": [
-        "MCU.PC3",
-        "PC3"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PC2",
-      "nodes": [
-        "MCU.PC2",
-        "PC2"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PC1",
-      "nodes": [
-        "MCU.PC1",
-        "PC1"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PC0",
-      "nodes": [
-        "MCU.PC0",
-        "PC0"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PC13",
-      "nodes": [
-        "MCU.PC13",
-        "PC13"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PE6",
-      "nodes": [
-        "MCU.PE6",
-        "PE6"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PE5",
-      "nodes": [
-        "MCU.PE5",
-        "PE5"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    },
-    {
-      "id": "header_PE4",
-      "nodes": [
-        "MCU.PE4",
-        "PE4"
-      ],
-      "locked": true,
-      "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
+      "evidence": "V2 schematic p1 U2 pin 1"
     },
     {
       "id": "header_PE3",
@@ -2225,178 +3035,1280 @@
       ],
       "locked": true,
       "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
+      "evidence": "V2 schematic p1 U2 pin 2"
     },
     {
-      "id": "header_PE2",
+      "id": "header_PE4",
       "nodes": [
-        "MCU.PE2",
-        "PE2"
+        "MCU.PE4",
+        "PE4"
       ],
       "locked": true,
       "verified": true,
-      "evidence": "S1/S2 printed MCU pin breakout"
-    }
-  ],
-  "provisionalFixedNets": [
+      "evidence": "V2 schematic p1 U2 pin 3"
+    },
     {
-      "id": "OLED_SCL_MODEL",
+      "id": "header_PE5",
+      "nodes": [
+        "MCU.PE5",
+        "PE5"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U2 pin 4"
+    },
+    {
+      "id": "header_PE6",
+      "nodes": [
+        "MCU.PE6",
+        "PE6"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U2 pin 5"
+    },
+    {
+      "id": "header_PC13",
+      "nodes": [
+        "MCU.PC13",
+        "PC13"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U2 pin 6"
+    },
+    {
+      "id": "header_PC0",
+      "nodes": [
+        "MCU.PC0",
+        "PC0"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U2 pin 7"
+    },
+    {
+      "id": "header_PC1",
+      "nodes": [
+        "MCU.PC1",
+        "PC1"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U2 pin 8"
+    },
+    {
+      "id": "header_PC2",
+      "nodes": [
+        "MCU.PC2",
+        "PC2"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U2 pin 9"
+    },
+    {
+      "id": "header_PC3",
+      "nodes": [
+        "MCU.PC3",
+        "PC3"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U2 pin 10"
+    },
+    {
+      "id": "header_PA0",
+      "nodes": [
+        "MCU.PA0",
+        "PA0"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U2 pin 11"
+    },
+    {
+      "id": "header_PA1",
+      "nodes": [
+        "MCU.PA1",
+        "PA1"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U2 pin 12"
+    },
+    {
+      "id": "header_PA4",
+      "nodes": [
+        "MCU.PA4",
+        "PA4"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U2 pin 13"
+    },
+    {
+      "id": "header_PA5",
+      "nodes": [
+        "MCU.PA5",
+        "PA5"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U2 pin 14"
+    },
+    {
+      "id": "header_PA6",
+      "nodes": [
+        "MCU.PA6",
+        "PA6"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U2 pin 15"
+    },
+    {
+      "id": "header_PA7",
+      "nodes": [
+        "MCU.PA7",
+        "PA7"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U2 pin 16"
+    },
+    {
+      "id": "header_PC4",
+      "nodes": [
+        "MCU.PC4",
+        "PC4"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U2 pin 17"
+    },
+    {
+      "id": "header_PC5",
+      "nodes": [
+        "MCU.PC5",
+        "PC5"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U2 pin 18"
+    },
+    {
+      "id": "header_PB0",
+      "nodes": [
+        "MCU.PB0",
+        "PB0"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U2 pin 19"
+    },
+    {
+      "id": "header_PB1",
+      "nodes": [
+        "MCU.PB1",
+        "PB1"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U2 pin 20"
+    },
+    {
+      "id": "header_PE7",
+      "nodes": [
+        "MCU.PE7",
+        "PE7"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U2 pin 21"
+    },
+    {
+      "id": "header_PE8",
+      "nodes": [
+        "MCU.PE8",
+        "PE8"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U2 pin 22"
+    },
+    {
+      "id": "header_PE9",
+      "nodes": [
+        "MCU.PE9",
+        "PE9"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U2 pin 23"
+    },
+    {
+      "id": "header_PE10",
+      "nodes": [
+        "MCU.PE10",
+        "PE10"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U2 pin 24"
+    },
+    {
+      "id": "header_PE11",
+      "nodes": [
+        "MCU.PE11",
+        "PE11"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U2 pin 25"
+    },
+    {
+      "id": "header_PE12",
+      "nodes": [
+        "MCU.PE12",
+        "PE12"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U2 pin 26"
+    },
+    {
+      "id": "header_PE13",
+      "nodes": [
+        "MCU.PE13",
+        "PE13"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U2 pin 27"
+    },
+    {
+      "id": "header_PE14",
+      "nodes": [
+        "MCU.PE14",
+        "PE14"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U2 pin 28"
+    },
+    {
+      "id": "header_PE15",
+      "nodes": [
+        "MCU.PE15",
+        "PE15"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U2 pin 29"
+    },
+    {
+      "id": "header_PB10",
+      "nodes": [
+        "MCU.PB10",
+        "PB10"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U2 pin 30"
+    },
+    {
+      "id": "header_PB11",
+      "nodes": [
+        "MCU.PB11",
+        "PB11"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U2 pin 31"
+    },
+    {
+      "id": "header_PB12",
+      "nodes": [
+        "MCU.PB12",
+        "PB12"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 1"
+    },
+    {
+      "id": "header_PB13",
+      "nodes": [
+        "MCU.PB13",
+        "PB13"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 2"
+    },
+    {
+      "id": "header_PB14",
+      "nodes": [
+        "MCU.PB14",
+        "PB14"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 3"
+    },
+    {
+      "id": "header_PB15",
+      "nodes": [
+        "MCU.PB15",
+        "PB15"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 4"
+    },
+    {
+      "id": "header_PD8",
+      "nodes": [
+        "MCU.PD8",
+        "PD8"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 5"
+    },
+    {
+      "id": "header_PD9",
+      "nodes": [
+        "MCU.PD9",
+        "PD9"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 6"
+    },
+    {
+      "id": "header_PD10",
+      "nodes": [
+        "MCU.PD10",
+        "PD10"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 7"
+    },
+    {
+      "id": "header_PD11",
+      "nodes": [
+        "MCU.PD11",
+        "PD11"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 8"
+    },
+    {
+      "id": "header_PD12",
+      "nodes": [
+        "MCU.PD12",
+        "PD12"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 9"
+    },
+    {
+      "id": "header_PD13",
+      "nodes": [
+        "MCU.PD13",
+        "PD13"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 10"
+    },
+    {
+      "id": "header_PD14",
+      "nodes": [
+        "MCU.PD14",
+        "PD14"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 11"
+    },
+    {
+      "id": "header_PD15",
+      "nodes": [
+        "MCU.PD15",
+        "PD15"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 12"
+    },
+    {
+      "id": "header_PC6",
+      "nodes": [
+        "MCU.PC6",
+        "PC6"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 13"
+    },
+    {
+      "id": "header_PC7",
+      "nodes": [
+        "MCU.PC7",
+        "PC7"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 14"
+    },
+    {
+      "id": "header_PC8",
+      "nodes": [
+        "MCU.PC8",
+        "PC8"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 15"
+    },
+    {
+      "id": "header_PC9",
+      "nodes": [
+        "MCU.PC9",
+        "PC9"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 16"
+    },
+    {
+      "id": "header_PA8",
+      "nodes": [
+        "MCU.PA8",
+        "PA8"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 17"
+    },
+    {
+      "id": "header_PA11",
+      "nodes": [
+        "MCU.PA11",
+        "PA11"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 18"
+    },
+    {
+      "id": "header_PA12",
+      "nodes": [
+        "MCU.PA12",
+        "PA12"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 19"
+    },
+    {
+      "id": "header_PA15",
+      "nodes": [
+        "MCU.PA15",
+        "PA15"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 20"
+    },
+    {
+      "id": "header_PC10",
+      "nodes": [
+        "MCU.PC10",
+        "PC10"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 21"
+    },
+    {
+      "id": "header_PC11",
+      "nodes": [
+        "MCU.PC11",
+        "PC11"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 22"
+    },
+    {
+      "id": "header_PC12",
+      "nodes": [
+        "MCU.PC12",
+        "PC12"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 23"
+    },
+    {
+      "id": "header_PD0",
+      "nodes": [
+        "MCU.PD0",
+        "PD0"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 24"
+    },
+    {
+      "id": "header_PD1",
+      "nodes": [
+        "MCU.PD1",
+        "PD1"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 25"
+    },
+    {
+      "id": "header_PD2",
+      "nodes": [
+        "MCU.PD2",
+        "PD2"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 26"
+    },
+    {
+      "id": "header_PD3",
+      "nodes": [
+        "MCU.PD3",
+        "PD3"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 27"
+    },
+    {
+      "id": "header_PD4",
+      "nodes": [
+        "MCU.PD4",
+        "PD4"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 28"
+    },
+    {
+      "id": "header_PD5",
+      "nodes": [
+        "MCU.PD5",
+        "PD5"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 29"
+    },
+    {
+      "id": "header_PD6",
+      "nodes": [
+        "MCU.PD6",
+        "PD6"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 30"
+    },
+    {
+      "id": "header_PD7",
+      "nodes": [
+        "MCU.PD7",
+        "PD7"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 31"
+    },
+    {
+      "id": "header_PB3",
+      "nodes": [
+        "MCU.PB3",
+        "PB3"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 32"
+    },
+    {
+      "id": "header_PB4",
+      "nodes": [
+        "MCU.PB4",
+        "PB4"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 33"
+    },
+    {
+      "id": "header_PB5",
+      "nodes": [
+        "MCU.PB5",
+        "PB5"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 34"
+    },
+    {
+      "id": "header_PB6",
+      "nodes": [
+        "MCU.PB6",
+        "PB6"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 35"
+    },
+    {
+      "id": "header_PB7",
+      "nodes": [
+        "MCU.PB7",
+        "PB7"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 36"
+    },
+    {
+      "id": "header_PB8",
+      "nodes": [
+        "MCU.PB8",
+        "PB8"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 37"
+    },
+    {
+      "id": "header_PB9",
+      "nodes": [
+        "MCU.PB9",
+        "PB9"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 38"
+    },
+    {
+      "id": "header_PE0",
+      "nodes": [
+        "MCU.PE0",
+        "PE0"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 39"
+    },
+    {
+      "id": "header_PE1",
+      "nodes": [
+        "MCU.PE1",
+        "PE1"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 U3 pin 40"
+    },
+    {
+      "id": "schematic_OLED_CLK",
       "nodes": [
         "PB8",
-        "OLED_SCL"
+        "OLED_CLK",
+        "OLED_SCL",
+        "E_SCL"
       ],
       "locked": true,
-      "verified": false,
-      "evidence": "S3 firmware; V2 copper unverified"
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
     },
     {
-      "id": "OLED_SDA_MODEL",
+      "id": "schematic_OLED_DAT",
       "nodes": [
         "PB9",
-        "OLED_SDA"
+        "OLED_DAT",
+        "OLED_SDA",
+        "E_SDA"
       ],
       "locked": true,
-      "verified": false,
-      "evidence": "S3 firmware; V2 copper unverified"
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
     },
     {
-      "id": "OLED_POWER_MODEL",
+      "id": "schematic_OLED_POWER",
       "nodes": [
         "3V3",
         "OLED_3V3"
       ],
       "locked": true,
-      "verified": false,
-      "evidence": "V2 photo adjacent 3V3/GND labels and S4 historical schematic; full V2 power net unverified"
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
     },
     {
-      "id": "OLED_GROUND_MODEL",
+      "id": "schematic_OLED_GROUND",
       "nodes": [
         "DGND",
+        "GND",
+        "AGND",
         "OLED_GND"
       ],
       "locked": true,
-      "verified": false,
-      "evidence": "V2 photo adjacent 3V3/GND labels and S4 historical schematic; full V2 power net unverified"
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_ADC_IN10",
+      "nodes": [
+        "PC0",
+        "ADC_IN10"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_ADC_IN12",
+      "nodes": [
+        "PC2",
+        "ADC_IN12"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_USART1_TX",
+      "nodes": [
+        "PD5",
+        "USART1_TX"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_USART1_RX",
+      "nodes": [
+        "PD6",
+        "USART1_RX"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_USART0_TX",
+      "nodes": [
+        "PA9",
+        "USART0_TX"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_USART0_RX",
+      "nodes": [
+        "PA10",
+        "USART0_RX"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_USART2_TX",
+      "nodes": [
+        "PD8",
+        "USART2_TX"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_USART2_RX",
+      "nodes": [
+        "PD9",
+        "USART2_RX"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_485_CS",
+      "nodes": [
+        "PE8",
+        "485_CS",
+        "485_DE"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_FLASH_CS",
+      "nodes": [
+        "PA15",
+        "FLASH_CS"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_SPI_SCK",
+      "nodes": [
+        "PB3",
+        "SPI_SCK"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_SPI_MISO",
+      "nodes": [
+        "PB4",
+        "SPI_MISO"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_SPI_MOSI",
+      "nodes": [
+        "PB5",
+        "SPI_MOSI"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_SPI3_SCK",
+      "nodes": [
+        "PE12",
+        "SPI3_SCK",
+        "S_SCK",
+        "W_SPI_SCK"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_SPI3_MISO",
+      "nodes": [
+        "PE13",
+        "SPI3_MISO",
+        "S_MISO",
+        "W_SPI_MISO"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_SPI3_MOSI",
+      "nodes": [
+        "PE14",
+        "SPI3_MOSI",
+        "S_MOSI",
+        "W_SPI_MOSI"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_S_SPI_CS",
+      "nodes": [
+        "PE10",
+        "S_SPI_CS",
+        "S_CS"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_W_SPI_CS",
+      "nodes": [
+        "PE9",
+        "W_SPI_CS"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_USART5_TX",
+      "nodes": [
+        "PC6",
+        "USART5_TX",
+        "S_UARTRX"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_USART5_RX",
+      "nodes": [
+        "PC7",
+        "USART5_RX",
+        "S_UARTTX"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_SD_CD",
+      "nodes": [
+        "PE2",
+        "SD_CD"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_SD_DAT0",
+      "nodes": [
+        "PC8",
+        "SD_DAT0"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_SD_DAT1",
+      "nodes": [
+        "PC9",
+        "SD_DAT1"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_SD_DAT2",
+      "nodes": [
+        "PC10",
+        "SD_DAT2"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_SD_DAT3",
+      "nodes": [
+        "PC11",
+        "SD_DAT3"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_SD_CLK",
+      "nodes": [
+        "PC12",
+        "SD_CLK"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_SD_CMD",
+      "nodes": [
+        "PD2",
+        "SD_CMD"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_WK_UP",
+      "nodes": [
+        "PA0",
+        "WK_UP"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_W_RST",
+      "nodes": [
+        "PA3",
+        "W_RST",
+        "W_GPIO7"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_PHY_RST",
+      "nodes": [
+        "PD3",
+        "PHY_RST"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_DAC0_OUT",
+      "nodes": [
+        "PA4",
+        "DAC0_OUT"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_DAC1_OUT",
+      "nodes": [
+        "PA5",
+        "DAC1_OUT"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_ETH_MDC",
+      "nodes": [
+        "PC1",
+        "ETH_MDC"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_ETH_MDIO",
+      "nodes": [
+        "PA2",
+        "ETH_MDIO"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_ETH_REF_CLK",
+      "nodes": [
+        "PA1",
+        "ETH_REF_CLK"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_ETH_CRS_DV",
+      "nodes": [
+        "PA7",
+        "ETH_CRS_DV"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_ETH_RXD0",
+      "nodes": [
+        "PC4",
+        "ETH_RXD0"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_ETH_RXD1",
+      "nodes": [
+        "PC5",
+        "ETH_RXD1"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_ETH_TX_EN",
+      "nodes": [
+        "PB11",
+        "ETH_TX_EN"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_ETH_TXD0",
+      "nodes": [
+        "PB12",
+        "ETH_TXD0"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
+    },
+    {
+      "id": "schematic_ETH_TXD1",
+      "nodes": [
+        "PB13",
+        "ETH_TXD1"
+      ],
+      "locked": true,
+      "verified": true,
+      "evidence": "V2 schematic p1 MCU net labels and p2/p4 peripheral terminals"
     }
   ],
+  "provisionalFixedNets": [],
   "defaultAddedWires": [
     {
-      "id": "demo_led_1",
-      "a": "PD10",
+      "id": "v2-example-h10.3",
+      "a": "H10.1",
+      "b": "H10.3",
+      "evidence": "User V2 driver example, 2026-11-16",
+      "verified": false,
+      "editable": true
+    },
+    {
+      "id": "v2-example-h10.4",
+      "a": "H10.2",
+      "b": "H10.4",
+      "evidence": "User V2 driver example, 2026-11-16",
+      "verified": false,
+      "editable": true
+    },
+    {
+      "id": "v2-example-h12.3",
+      "a": "H12.1",
+      "b": "H12.3",
+      "evidence": "User V2 driver example, 2026-11-16",
+      "verified": false,
+      "editable": true
+    },
+    {
+      "id": "v2-example-h12.4",
+      "a": "H12.2",
+      "b": "H12.4",
+      "evidence": "User V2 driver example, 2026-11-16",
+      "verified": false,
+      "editable": true
+    },
+    {
+      "id": "v2-example-h11.3",
+      "a": "H11.1",
+      "b": "H11.3",
+      "evidence": "User V2 driver example, 2026-11-16",
+      "verified": false,
+      "editable": true
+    },
+    {
+      "id": "v2-example-h11.4",
+      "a": "H11.2",
+      "b": "H11.4",
+      "evidence": "User V2 driver example, 2026-11-16",
+      "verified": false,
+      "editable": true
+    },
+    {
+      "id": "v2-example-adc_in1",
+      "a": "PC1",
+      "b": "ADC_IN1",
+      "evidence": "User V2 driver example, 2026-11-16",
+      "verified": false,
+      "editable": true
+    },
+    {
+      "id": "v2-example-dac_out0",
+      "a": "PA4",
+      "b": "DAC_OUT0",
+      "evidence": "User V2 driver example, 2026-11-16",
+      "verified": false,
+      "editable": true
+    },
+    {
+      "id": "v2-example-pt100_sck",
+      "a": "PA5",
+      "b": "PT100_SCK",
+      "evidence": "User V2 driver example, 2026-11-16",
+      "verified": false,
+      "editable": true
+    },
+    {
+      "id": "v2-example-pt100_miso",
+      "a": "PA6",
+      "b": "PT100_MISO",
+      "evidence": "User V2 driver example, 2026-11-16",
+      "verified": false,
+      "editable": true
+    },
+    {
+      "id": "v2-example-pt100_mosi",
+      "a": "PA7",
+      "b": "PT100_MOSI",
+      "evidence": "User V2 driver example, 2026-11-16",
+      "verified": false,
+      "editable": true
+    },
+    {
+      "id": "v2-example-pt100_cs",
+      "a": "PB10",
+      "b": "PT100_CS",
+      "evidence": "User V2 driver example, 2026-11-16",
+      "verified": false,
+      "editable": true
+    },
+    {
+      "id": "v2-example-led1",
+      "a": "PE6",
       "b": "LED1",
-      "fromPin": "PD10",
-      "toPin": "LED1",
-      "kind": "added-jumper",
-      "locked": false
-    },
-    {
-      "id": "demo_led_2",
-      "a": "PD11",
-      "b": "LED2",
-      "fromPin": "PD11",
-      "toPin": "LED2",
-      "kind": "added-jumper",
-      "locked": false
-    },
-    {
-      "id": "demo_led_3",
-      "a": "PD12",
-      "b": "LED3",
-      "fromPin": "PD12",
-      "toPin": "LED3",
-      "kind": "added-jumper",
-      "locked": false
-    },
-    {
-      "id": "demo_led_4",
-      "a": "PD13",
-      "b": "LED4",
-      "fromPin": "PD13",
-      "toPin": "LED4",
-      "kind": "added-jumper",
-      "locked": false
-    },
-    {
-      "id": "demo_led_5",
-      "a": "PD14",
-      "b": "LED5",
-      "fromPin": "PD14",
-      "toPin": "LED5",
-      "kind": "added-jumper",
-      "locked": false
-    },
-    {
-      "id": "demo_led_6",
-      "a": "PD15",
-      "b": "LED6",
-      "fromPin": "PD15",
-      "toPin": "LED6",
-      "kind": "added-jumper",
-      "locked": false
-    },
-    {
-      "id": "demo_key_1",
-      "a": "PE7",
-      "b": "KEY1",
-      "fromPin": "PE7",
-      "toPin": "KEY1",
-      "kind": "added-jumper",
-      "locked": false
-    },
-    {
-      "id": "demo_key_2",
-      "a": "PE8",
-      "b": "KEY2",
-      "fromPin": "PE8",
-      "toPin": "KEY2",
-      "kind": "added-jumper",
-      "locked": false
-    },
-    {
-      "id": "demo_key_3",
-      "a": "PE9",
-      "b": "KEY3",
-      "fromPin": "PE9",
-      "toPin": "KEY3",
-      "kind": "added-jumper",
-      "locked": false
-    },
-    {
-      "id": "demo_key_4",
-      "a": "PE10",
-      "b": "KEY4",
-      "fromPin": "PE10",
-      "toPin": "KEY4",
-      "kind": "added-jumper",
-      "locked": false
-    },
-    {
-      "id": "demo_key_5",
-      "a": "PE11",
-      "b": "KEY5",
-      "fromPin": "PE11",
-      "toPin": "KEY5",
-      "kind": "added-jumper",
-      "locked": false
-    },
-    {
-      "id": "demo_key_6",
-      "a": "PE12",
-      "b": "KEY6",
-      "fromPin": "PE12",
-      "toPin": "KEY6",
-      "kind": "added-jumper",
-      "locked": false
+      "evidence": "User V2 driver example, 2026-11-16",
+      "verified": false,
+      "editable": true
     }
   ],
   "gpio_leds": [],
   "gpio_keys": [],
   "uart_channels": {
-    "ch340": "USART0",
     "rs485": "USART1",
-    "ttl": "USART2",
-    "rs232": null
+    "rs232": "USART1",
+    "ch340": "USART0",
+    "ttl": "USART2"
   },
   "sources": [
     {
@@ -2436,6 +4348,20 @@
       "id": "S7",
       "title": "GD32F470xx Datasheet Rev2.1: physical page 64 TCM data-bus restriction; physical page 15 BKP SRAM memory map",
       "url": "https://www.gd32mcu.com/data/documents/datasheet/GD32F470xx%20Datasheet_Rev2.1.pdf"
+    },
+    {
+      "id": "S8",
+      "title": "User confirmed CIMC V2 Bootloader and App driver",
+      "local": "../27_0_BootLoader",
+      "date": "2026-11-16"
+    },
+    {
+      "id": "S9",
+      "title": "GD32F470 Development Kit V2.0 five-page schematic",
+      "local": "D:\\Edge_Download\\GD32F470+Development+Kit+V2.0+原理图.pdf",
+      "sha256": "6289165231ed57c3dc1b15c1ebc0b90172f9b805d441accecb619a906aacc1ef",
+      "packaged": "assets/schematics/GD32F470-V2.0-schematic.pdf",
+      "date": "2026-11-16"
     }
   ],
   "mcu": {
@@ -2480,5 +4406,208 @@
       "Additional 4 KiB backup SRAM at 0x40024000 is a separate peripheral-domain resource, not main SRAM.",
       "Flash program/erase writes require the flash controller; ordinary store instructions must not silently alter flash."
     ]
-  }
+  },
+  "clockTicksPerInstruction": 240,
+  "serialJumperPatterns": {
+    "ch340": [],
+    "rs485": [
+      [
+        "H10.1",
+        "H10.3"
+      ],
+      [
+        "H10.2",
+        "H10.4"
+      ]
+    ],
+    "rs232": [
+      [
+        "H10.3",
+        "H10.5"
+      ],
+      [
+        "H10.4",
+        "H10.6"
+      ]
+    ]
+  },
+  "memory": {
+    "flash": {
+      "base": "0x08000000",
+      "bytes": 524288
+    },
+    "sram": {
+      "base": "0x20000000",
+      "bytes": 196608
+    },
+    "tcm": {
+      "base": "0x10000000",
+      "bytes": 65536,
+      "executable": false
+    }
+  },
+  "adc": {
+    "pin": "PC0",
+    "channel": 10,
+    "pins": [
+      "PC0",
+      "PC1",
+      "PC2"
+    ],
+    "terminals": [
+      "ADC_IN10",
+      "ADC_IN1",
+      "ADC_IN12"
+    ],
+    "referenceVoltage": 3.3,
+    "locked": false
+  },
+  "dac": {
+    "pin": "PA4",
+    "channel": 0,
+    "terminal": "DAC_OUT0",
+    "locked": false
+  },
+  "pt100": {
+    "peripheral": "SPI0",
+    "cs": "PB10",
+    "sck": "PA5",
+    "miso": "PA6",
+    "mosi": "PA7",
+    "csTerminal": "PT100_CS",
+    "sckTerminal": "PT100_SCK",
+    "misoTerminal": "PT100_MISO",
+    "mosiTerminal": "PT100_MOSI"
+  },
+  "referenceImage": "assets/board-v2.jpg",
+  "fixedVisualWires": [
+    {
+      "id": "fixed-v2-oled-sda",
+      "from": "OLED_SDA",
+      "to": "PB9",
+      "color": "#cab1ed",
+      "label": "OLED SDA · V2 原理图固定铜线",
+      "locked": true,
+      "points": [
+        [
+          120,
+          405
+        ],
+        [
+          180,
+          405
+        ],
+        [
+          180,
+          565
+        ],
+        [
+          340,
+          565
+        ],
+        [
+          340,
+          520
+        ],
+        [
+          315,
+          520
+        ]
+      ]
+    },
+    {
+      "id": "fixed-v2-oled-scl",
+      "from": "OLED_SCL",
+      "to": "PB8",
+      "color": "#63d6c7",
+      "label": "OLED SCL · V2 原理图固定铜线",
+      "locked": true,
+      "points": [
+        [
+          120,
+          430
+        ],
+        [
+          205,
+          430
+        ],
+        [
+          205,
+          520
+        ],
+        [
+          285,
+          520
+        ]
+      ]
+    },
+    {
+      "id": "fixed-v2-oled-vcc",
+      "from": "OLED_3V3",
+      "to": "U2.36",
+      "color": "#e99291",
+      "label": "OLED 3V3 · V2 原理图固定铜线",
+      "locked": true,
+      "points": [
+        [
+          120,
+          455
+        ],
+        [
+          160,
+          455
+        ],
+        [
+          160,
+          600
+        ],
+        [
+          775,
+          600
+        ],
+        [
+          775,
+          500
+        ],
+        [
+          715,
+          500
+        ]
+      ]
+    },
+    {
+      "id": "fixed-v2-oled-gnd",
+      "from": "OLED_GND",
+      "to": "U2.35",
+      "color": "#a5b5c9",
+      "label": "OLED GND · V2 原理图固定铜线",
+      "locked": true,
+      "points": [
+        [
+          120,
+          480
+        ],
+        [
+          140,
+          480
+        ],
+        [
+          140,
+          585
+        ],
+        [
+          650,
+          585
+        ],
+        [
+          650,
+          500
+        ],
+        [
+          685,
+          500
+        ]
+      ]
+    }
+  ]
 }

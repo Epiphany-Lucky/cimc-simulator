@@ -1,4 +1,4 @@
-"""Polling GD32 SPI1 + the V1 board's GD25Q40E, a functional SPI model.
+"""GD25Q40E via V1 SPI1 or V2's shared SPI0 functional controller.
 
 SPI bytes complete atomically. Flash WIP uses simulated instruction time (not
 wall time): PP 256, sector 2048, block 4096, chip 8192 instructions. These are
@@ -37,7 +37,10 @@ class SpiFlashDevice:
         self.reset()
 
     def contains(self, address):
-        return SPI1 <= address < SPI1 + 0x400
+        return not self._v2() and SPI1 <= address < SPI1 + 0x400
+
+    def _v2(self):
+        return getattr(self.sim, 'board', {}).get('id') == 'cimc-v2'
 
     def reset(self, controller_only=False):
         """Reset MCU SPI registers, retaining the separately powered flash.
@@ -89,7 +92,7 @@ class SpiFlashDevice:
         return bool(self.sim.regs.get(RCU_APB1EN,0) & (1 << 14)) and not self.sim.regs.get(0x40023820,0) & (1 << 14)
 
     def on_gpio_changed(self, port):
-        if port != 'PB':
+        if port != 'PB' and not self._v2():
             return
         self._advance()
         # FLASH_CS has the schematic's R8 10k pull-up. An indeterminate net is
@@ -102,6 +105,38 @@ class SpiFlashDevice:
                 self._finish()
                 self._clear_transaction()
             self.selected = active
+
+    def exchange_shared(self, value, registers):
+        """Use V2's single SPI0 controller with its schematic PB3/4/5 route.
+
+        Return None when this slave has no routed, selected connection. SPI0
+        register flags and the other possible slave belong to V2Devices.
+        """
+        self._advance()
+        self.on_gpio_changed('PA')
+        if not self._v2() or not self.selected:
+            return None
+        if self.sim.regs.get(RCU_AHB1EN, 0) & 3 != 3:
+            return None
+        gpio = self.sim.gpio_state['PB']
+        af = self.sim.regs.get(GPIOB + 32, 0)
+        for pin, terminal in ((3, 'SPI_SCK'), (4, 'SPI_MISO'), (5, 'SPI_MOSI')):
+            if (gpio['mode'] >> (2 * pin)) & 3 != 2 or (af >> (4 * pin)) & 15 != 5:
+                return None
+            nets = self.sim.connected(f'PB{pin}')
+            if terminal not in nets or nets & {'GND', 'DGND', 'AGND', '3V3', '5V'}:
+                return None
+            for net in nets:
+                if net != f'PB{pin}' and net[:2] in self.sim.gpio_state and net[2:].isdigit():
+                    number = int(net[2:])
+                    if number < 16 and (self.sim.gpio_state[net[:2]]['mode'] >> (number * 2)) & 3 == 1:
+                        return None
+        if (self.sim.gpio_state['PA']['mode'] >> 30) & 3 != 1:
+            return None
+        if registers[0] & 3 not in (0, 3):
+            self._error('GD25Q40E 需要 SPI0 mode 0 或 3')
+            return 255
+        return self._exchange(value)
 
     def _bus_valid(self):
         ctl = self.registers[0]
@@ -294,4 +329,7 @@ class SpiFlashDevice:
                 'readCount':self.read_count,'writeCount':self.write_count,'eraseCount':self.erase_count,
                 'programmedBytes':self.programmed_bytes,'writeEnabled':self.wel,'selected':self.selected,
                 'previewAddress':0,'preview':list(self.memory[:64]),
-                'persistence':'session','timing':'instruction-based functional timing'}
+                'persistence':'session','timing':'instruction-based functional timing',
+                'peripheral':'SPI0' if self._v2() else 'SPI1',
+                'pins':{'cs':'PA15','sck':'PB3','miso':'PB4','mosi':'PB5'} if self._v2()
+                       else {'cs':'PB12','sck':'PB13','miso':'PB14','mosi':'PB15'}}

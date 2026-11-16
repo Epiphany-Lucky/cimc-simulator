@@ -11,11 +11,12 @@
   let adcPreview = 1.65, adcPending = null, adcSending = false, adcDragging = false, adcDragOrigin = null;
   let schematicPage = 1, schematicReturnFocus = null;
   let firmwareDraft = [], firmwareDraftBoot = null, firmwareDraftSequence = 0, firmwareSetBusy = false, firmwareSetReturnFocus = null;
-  const schematicTitles = ['MCU 与排针','板载外设','电源','串口通信'];
+  let schematicTitles = ['MCU 与排针','板载外设','电源','串口通信'];
   const heldKeys = new Set();
   const preferences = readStorage('cimc.studio.preferences', { labels: false, motion: false, shortcuts: true });
   preferences.autoUpdates ??= true;
   let checkingUpdate = false, lastUpdateAttempt = 0, notifiedVersion = '';
+  let updateMetadata = null, updateToken = '', updatePollTimer = null;
 
   function readStorage(key, fallback) { try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch { return fallback; } }
   function node(tag, cls, text) { const n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined) n.textContent = text; return n; }
@@ -89,6 +90,9 @@
     $('serial-mode').disabled = !connected || busy;
     const adcReady = connected && !!state?.adc;
     $('adc-slider').disabled = !adcReady;
+    $('board-select').disabled = !connected || busy;
+    $('adc1-slider').disabled = !adcReady;
+    $('pt100-slider').disabled = !adcReady;
     $('adc-knob').setAttribute('aria-disabled',String(!adcReady));
     $('adc-knob').tabIndex = adcReady ? 0 : -1;
     document.querySelectorAll('[data-channel]').forEach(b => { b.disabled = !channelMapping(b.dataset.channel); b.title = b.disabled ? `${b.dataset.channel.toUpperCase()} 固定映射待 V1 原理图核验` : ''; });
@@ -131,6 +135,7 @@
     renderOled(next.oled);
     renderAdc(next.adc);
     renderFlash(next.flash);
+    renderV2Devices(next);
     if (['rs485','rs232'].includes(next.serialMode)) $('serial-mode').value = next.serialMode;
     renderWires(next.wires || []);
     renderSerial();
@@ -142,21 +147,47 @@
   function updateChannelNote() {
     const mapping = channelMapping(channel);
     $('serial-mode-label').textContent = typeof mapping === 'string' ? mapping : mapping?.uart || '待核验';
-    const message = channel.startsWith('rs') ? `H6 当前选择 ${(state?.serialMode || 'rs485').toUpperCase()}。RS232 / RS485 共用 USART1；通过右侧接口选择切换，页签只切换终端视图。` : channel === 'ch340' ? 'H7 · CH340 固定连接 USART0，无需手动接线。' : 'CN1 · USART2：PB10 TX / PB11 RX，TTL 调试通道。';
+    const message = board?.id === 'cimc-v2' ? 'V2 USART1 固定 PD5/PD6、PE8 方向控制，H10 跳帽可拆接。外接示例跳线可自行增删。协议发送 ASCII 十六进制帧，升级 BIN 按原始字节发送。' : channel.startsWith('rs') ? `H6 当前选择 ${(state?.serialMode || 'rs485').toUpperCase()}。RS232 / RS485 共用 USART1；通过右侧接口选择切换，页签只切换终端视图。` : channel === 'ch340' ? 'H7 · CH340 固定连接 USART0，无需手动接线。' : 'CN1 · USART2：PB10 TX / PB11 RX，TTL 调试通道。';
     $('channel-note').textContent = message;
     $('channel-note').hidden = !message;
   }
 
   function setBoard(profile) {
     board = profile;
+    const v2 = profile.id === 'cimc-v2';
+    $('board-select').value = profile.id;
+    $('board-image').alt = v2 ? 'CIMC V2 原理图接线视图' : 'CIMC V1.0 原理图接线视图';
+    $('spi-flash-card').hidden = false;
+    document.querySelector('#spi-flash-card .flash-foot').textContent = v2 ? '原图固定 SPI0 · PB3–PB5 · PA15 CS' : '板载固定连接 · PB12–PB15';
+    $('v2-devices').hidden = !v2;
+    $('v2-protocol').hidden = !v2;
+    document.querySelector('label[for="adc-slider"] span').textContent = v2 ? 'ADC_IN0 · 参考 PC0' : 'VR1 · PC0';
+    $('keys').closest('.key-group').hidden = profile.keys?.length === 0;
+    $('serial-mode').closest('label').hidden = false;
+    $('serial-mode').closest('label').firstChild.textContent = v2 ? 'H10 接口' : 'H6 接口';
+    $('schematic-button').disabled = false;
+    $('wiring-example').hidden = !v2;
+    $('schematic-button').title = v2 ? 'V2 接线视图与参考跳线' : 'V1.0 原理图';
+    $('demo-button').lastElementChild?.remove();
+    $('demo-button').replaceChildren(document.createTextNode(v2 ? '载入 V2 Bootloader + App' : '载入示例固件'));
+    if (!profile.uart_channels?.[channel]) channel = v2 ? 'rs485' : 'ch340';
+    document.querySelectorAll('[data-channel]').forEach(button => button.classList.toggle('active', button.dataset.channel === channel));
     const photo = $('board-image');
     if (profile.image) {
       photo.onload = () => { photo.hidden = false; $('board-placeholder').hidden = true; };
       photo.onerror = () => { photo.hidden = true; $('board-placeholder').hidden = false; $('board-placeholder').querySelector('span').textContent = '板卡图片暂未载入'; };
       photo.src = profile.image;
+      schematicTitles = v2 ? ['MCU 与排针','板载外设','电源','串口通信','以太网'] : ['MCU 与排针','板载外设','电源','串口通信'];
+      $('schematic-page-select').replaceChildren(...schematicTitles.map((title, index) => { const option = node('option', '', title); option.value = String(index + 1); return option; }));
+      const drawing = v2 ? 'assets/schematics/GD32F470-V2.0-schematic.pdf' : 'assets/schematics/GD32F470-V1.0-schematic.pdf';
+      $('schematic-download').href = drawing;
+      $('schematic-download').download = v2 ? 'GD32F470-V2.0-schematic.pdf' : 'GD32F470-V1.0-schematic.pdf';
+      $('schematic-download').lastChild.textContent = '下载 PDF';
+      $('schematic-open-pdf').href = drawing;
+      $('schematic-dialog').querySelector('.schematic-header p').textContent = v2 ? 'GD32F470 · V2.0' : 'GD32F470 · V1.0';
     }
     if (profile.verified === false) {
-      $('board-info-button').firstChild.textContent = 'V1 原理图 · 接线视图';
+      $('board-info-button').firstChild.textContent = v2 ? 'V2 接线视图 · 示例可编辑' : 'V1 原理图 · 接线视图';
       $('board-info-button').title = '点击查看原理图证据与仿真范围';
     }
     const viewBox = profile.viewBox || [0, 0, 1000, 650];
@@ -175,11 +206,43 @@
       b.addEventListener('click', () => choosePin(pin));
       $('pin-layer').append(b);
     }
-    buildHardwareControls(profile.keys?.length || 6, profile.leds?.length || 6);
+    buildHardwareControls(profile.keys?.length ?? 6, profile.leds?.length ?? 6);
     lastWires = '';
     renderWires(state?.wires || []);
     updateEnabled();
   }
+
+  function renderV2Devices(next) {
+    if (board?.id !== 'cimc-v2') return;
+    const voltage = next.adc?.inputVoltages?.['11'] ?? 1.65;
+    if (document.activeElement !== $('adc1-slider')) $('adc1-slider').value = voltage;
+    const pc1 = next.adc?.channelValues?.['11'];
+    $('adc1-voltage').value = `${Number(voltage).toFixed(3)} V${pc1 === null || pc1 === undefined ? '' : ` · ${pc1} / ${2 ** (next.adc?.channelBits?.['11'] || 12) - 1}`}`;
+    const devices = next.analog || {};
+    const temperature = devices.pt100?.temperature ?? 25;
+    if (document.activeElement !== $('pt100-slider')) $('pt100-slider').value = temperature;
+    $('pt100-temperature').value = `${Number(temperature).toFixed(1)} °C`;
+    $('dac-output').textContent = devices.dac?.enabled
+      ? devices.dac.connected === false || devices.dac.voltage === null ? `DAC0 · ${devices.dac.value} / 4095 · 输出端待接线` : `DAC0 · ${devices.dac.value} / 4095 · ${Number(devices.dac.voltage).toFixed(3)} V`
+      : 'DAC0 · 等待固件输出';
+    const flash = next.internalFlash;
+    if (flash) $('internal-flash-state').textContent = `内部 Flash · 写入 ${flash.programCount ?? flash.writes ?? 0} · 擦除 ${flash.eraseCount ?? flash.erases ?? 0}`;
+  }
+
+  $('wiring-example').addEventListener('click', async () => { if (await command('v2_wiring')) toast('参考跳线已添加，可在接线面板逐条删除。'); });
+  $('board-select').addEventListener('change', async event => {
+    const target = event.target.value;
+    if (hasFirmware() && !confirm('切换板卡会清空当前固件和接线。已导出的工程可重新打开。继续切换？')) {
+      event.target.value = board.id; return;
+    }
+    releaseKeys();
+    if (await command('board_select', { boardId: target })) {
+      serialCutoff = -1; diagnosticCutoff = 0; clearPinSelection();
+      lastSerial = ''; lastOled = ''; toast('板卡已切换。');
+    } else event.target.value = board.id;
+  });
+  $('adc1-slider').addEventListener('change', event => void command('adc_voltage', { channel: 11, voltage: Number(event.target.value) }));
+  $('pt100-slider').addEventListener('change', event => void command('pt100_temperature', { temperature: Number(event.target.value) }));
 
   async function choosePin(pin) {
     if (!connected || pin.connectable === false || pin.locked) return;
@@ -318,8 +381,10 @@
   function renderAdc(adc) {
     if (!adc) return;
     if (!adcDragging && !adcSending && adcPending === null) showAdcInput(adc.voltage);
-    const sampled = Number(adc.sampleCount) > 0 && adc.value !== null && adc.value !== undefined;
-    $('adc-sample').textContent = sampled ? `采样 ${adc.value} / ${2 ** (adc.bits || 12) - 1}` : '待固件采样';
+    const value = board?.id === 'cimc-v2' ? adc.channelValues?.['10'] : adc.value;
+    const bits = board?.id === 'cimc-v2' ? adc.channelBits?.['10'] : adc.bits;
+    const sampled = Number(adc.sampleCount) > 0 && value !== null && value !== undefined;
+    $('adc-sample').textContent = sampled ? `采样 ${value} / ${2 ** (bits || 12) - 1}` : '待固件采样';
     $('adc-sample').title = sampled ? `固件最近一次 ADC 转换结果；已转换 ${adc.sampleCount} 次` : '输入电压已设置，等待 MCU 固件发起 ADC 转换';
   }
 
@@ -402,9 +467,9 @@
 
   async function loadDemo() {
     busy = true; updateEnabled();
-    const result = await command('demo');
+    const result = await command(board?.id === 'cimc-v2' ? 'v2_demo' : 'demo');
     busy = false; serialCutoff = -1; diagnosticCutoff = 0; updateEnabled();
-    if (result) toast(`示例固件与 ${state?.wires?.length || 0} 条 LED/KEY 跳线已载入，板载连接保持固定。点击运行。`);
+    if (result) toast(board?.id === 'cimc-v2' ? 'V2 Bootloader、App 与参考跳线已载入。跳线可自行增删，点击运行。' : `示例固件与 ${state?.wires?.length || 0} 条 LED/KEY 跳线已载入，板载连接保持固定。点击运行。`);
   }
 
   function setFirmwareDraftError(message = '') {
@@ -612,6 +677,30 @@
     if (e.key in values) { e.preventDefault(); setAdcInput(values[e.key]); }
   });
   $('serial-format').addEventListener('change',() => { $('serial-input').placeholder = $('serial-format').value === 'hex' ? '输入十六进制字节，例如 48 65 6C 6C 6F…' : '输入消息，按 Enter 发送…'; renderSerial(true); });
+  $('serial-send-file').addEventListener('click', () => $('serial-bin-file').click());
+  $('serial-bin-file').addEventListener('change', async event => {
+    const file = event.target.files[0];
+    try {
+      if (!file) return;
+      if (file.size < 1 || file.size > 131072) throw new Error('V2 升级包须为 1–131072 字节。');
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      if (await command('serial', { channel: 'rs485', data: toBase64(bytes) })) toast(`${file.name} 已送入 USART1 接收队列，等待固件处理。`);
+    } catch (error) { toast(error.message, true); }
+    finally { event.target.value = ''; }
+  });
+  $('v2-send-command').addEventListener('click', async () => {
+    const id = Number($('v2-device-id').value), value = parseInt($('v2-command').value, 16);
+    if (!Number.isInteger(id) || id < 1 || id > 65535) { toast('设备 ID 须为 1–65535。', true); return; }
+    const bytes = [0xA5, 0xB6, id >> 8, id & 255, 1, value >> 8, value & 255, 0, 2];
+    let crc = 0xFFFF;
+    for (const byte of bytes) {
+      crc ^= byte;
+      for (let bit = 0; bit < 8; bit++) crc = crc & 1 ? (crc >> 1) ^ 0xA001 : crc >> 1;
+    }
+    bytes.push(crc >> 8, crc & 255, 0xB6, 0xA5);
+    const frame = bytes.map(byte => byte.toString(16).padStart(2, '0')).join('').toUpperCase();
+    await command('serial', { channel: 'rs485', data: toBase64(new TextEncoder().encode(frame)) });
+  });
 
   document.querySelectorAll('[data-nav]').forEach(b => b.addEventListener('click',() => { document.querySelectorAll('[data-nav]').forEach(x => x.classList.toggle('active',x === b)); const target = b.dataset.nav; if (target === 'workbench') $('workbench').scrollIntoView({behavior:'smooth'}); else { activatePanel(target); $('console-card').scrollIntoView({behavior:'smooth',block:'start'}); } }));
   document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click',() => b.closest('dialog')?.close()));
@@ -649,10 +738,10 @@
     $('schematic-next').disabled = schematicPage === schematicTitles.length;
     const image = $('schematic-image');
     image.hidden = true;
-    image.alt = `GD32F470 V1.0 原理图，第 ${schematicPage} 页：${schematicTitles[schematicPage-1]}`;
+    image.alt = `GD32F470 ${board?.id === 'cimc-v2' ? 'V2.0' : 'V1.0'} 接线图，第 ${schematicPage} 页 ${schematicTitles[schematicPage-1]}`;
     $('schematic-loading').textContent = '正在载入原理图…';
     $('schematic-loading').hidden = false;
-    image.src = `assets/schematics/v1-page-${schematicPage}.png`;
+    image.src = `assets/schematics/${board?.id === 'cimc-v2' ? 'v2' : 'v1'}-page-${schematicPage}.png`;
     $('schematic-viewport').scrollTo({top:0,left:0,behavior:'instant'});
   }
   $('schematic-image').addEventListener('load',()=>{applySchematicZoom();$('schematic-image').hidden=false;$('schematic-loading').hidden=true;});
@@ -683,12 +772,12 @@
     const settings = node('button', 'button secondary full-width', '软件更新与设置');
     settings.id = 'about-settings-button';
     settings.addEventListener('click', () => { $('info-dialog').close(); $('settings-dialog').showModal(); });
-    showInfo('CIMC Studio','PREVIEW 0.4',[node('p','','Windows、Linux 与浏览器共用的嵌入式仿真工作台。'),node('p','','共同烧录 Bootloader 与多个 ARM 应用，从选定向量启动。'),node('p','','当前为功能预览版，具体外设支持范围以交付文档和运行诊断为准。CIMC Studio 为独立开发项目，非赛事官方软件。'),settings]);
+    showInfo('CIMC Studio','PREVIEW 0.5',[node('p','','Windows、Linux 与浏览器共用的嵌入式仿真工作台。'),node('p','','共同烧录 Bootloader 与多个 ARM 应用，从选定向量启动。'),node('p','','当前为功能预览版，具体外设支持范围以交付文档和运行诊断为准。CIMC Studio 为独立开发项目，非赛事官方软件。'),settings]);
   });
   $('board-info-button').addEventListener('click',() => {
     const content = [];
-    for (const [label,value] of [['板卡',board?.name || 'GD32F470 V1.0'],['资料状态',board?.verified ? '已核验' : 'V1 原理图已核对；外设功能为子集'],['可见端点',String(board?.pins?.length || 0)],['线路规则','固定网络只读；仅增删自己的跳线']]) { const row=node('div','info-row');row.append(node('span','',label),node('strong','',value));content.push(row); }
-    if (board?.verified === false) content.push(node('p','','连接按 V1.0 原理图核对。视图表示接线拓扑，不表示 PCB 物理位置。ADC 旋钮固定接 PC0；SPI Flash 固定接 PB12–PB15。被板载外设占用的引脚已锁定，用户只能从空闲 GPIO 给 LED/KEY 添加跳线。'));
+    for (const [label,value] of [['板卡',board?.name || 'GD32F470 V1.0'],['资料状态',board?.verified ? '已核验' : board?.id === 'cimc-v2' ? 'V2 五页原理图已核对，代码提供参考跳线' : 'V1 原理图已核对；外设功能为子集'],['可见端点',String(board?.pins?.length || 0)],['线路规则','固定网络只读；仅增删自己的跳线']]) { const row=node('div','info-row');row.append(node('span','',label),node('strong','',value));content.push(row); }
+    if (board?.id === 'cimc-v1' && board?.verified === false) content.push(node('p','','连接按 V1.0 原理图核对。视图表示接线拓扑，不表示 PCB 物理位置。ADC 旋钮固定接 PC0；SPI Flash 固定接 PB12–PB15。被板载外设占用的引脚已锁定，用户只能从空闲 GPIO 给 LED/KEY 添加跳线。'));
     if (board?.notes?.length) content.push(node('p','',Array.isArray(board.notes) ? board.notes.join('\n') : board.notes));
     showInfo('开发板信息','BOARD PROFILE',content);
   });
@@ -714,6 +803,8 @@
     try {
       const result = await api('/api/updates' + (manual ? '?force=1' : ''));
       if (sessionExited) return;
+      updateMetadata = result;
+      updateToken = result.updater?.token || updateToken;
       $('update-current').textContent = `当前版本 ${result.currentVersion}`;
       $('update-status').textContent = result.message;
       const release = updateLink(result.releaseUrl);
@@ -724,6 +815,12 @@
       $('settings-button').setAttribute('aria-label', available ? '设置，有新版本可用' : '设置');
       $('update-downloads').replaceChildren();
       $('update-downloads').hidden = !available;
+      $('update-actions').hidden = !available;
+      if (available) {
+        $('download-update').disabled = false;
+        $('update-install-status').textContent = result.updater?.message || '';
+        void pollUpdateDownload();
+      }
       if (available) {
         const choices = result.platform === 'windows'
           ? [['Windows 安装包', result.assets?.windowsInstaller], ['HTML 版', result.assets?.html]]
@@ -746,6 +843,52 @@
     }
   }
   $('check-updates').addEventListener('click', () => void checkUpdates(true));
+  function renderUpdateDownload(result) {
+    updateToken = result.token || updateToken;
+    const downloading = result.status === 'downloading', ready = result.status === 'ready';
+    $('update-progress').value = result.percent || 0;
+    $('update-progress').hidden = result.status === 'idle';
+    $('update-install-status').textContent = downloading
+      ? `正在下载 ${bytesLabel(result.receivedBytes || 0)} / ${bytesLabel(result.totalBytes || 0)} · ${result.percent || 0}%`
+      : result.message || '';
+    $('download-update').disabled = downloading || ready || result.status === 'installing';
+    $('download-update').textContent = result.status === 'error' ? '重新下载' : '下载更新';
+    $('install-update').hidden = !ready;
+    $('install-update').textContent = result.canInstall ? '安装并重启' : '打开已校验文件夹';
+    $('install-update').dataset.install = String(!!result.canInstall);
+    if (ready && result.filePath) $('update-install-status').textContent += `\n${result.filePath}`;
+    if (result.willExit) {
+      sessionExited = true;
+      clearTimeout(pollTimer); clearTimeout(updatePollTimer);
+      $('update-install-status').textContent = '正在退出当前应用并安装更新。安装完成后将重新启动。';
+    }
+  }
+  async function pollUpdateDownload() {
+    clearTimeout(updatePollTimer);
+    if (sessionExited) return;
+    try {
+      const result = await api('/api/updates/status');
+      renderUpdateDownload(result);
+      if (result.status === 'downloading') updatePollTimer = setTimeout(pollUpdateDownload, 500);
+    } catch (error) { $('update-install-status').textContent = error.message; }
+  }
+  $('download-update').addEventListener('click', async () => {
+    if (!updateMetadata?.latestVersion || !updateToken) return;
+    $('download-update').disabled = true;
+    try {
+      renderUpdateDownload(await api('/api/updates/download', { token: updateToken, version: updateMetadata.latestVersion }));
+      void pollUpdateDownload();
+    } catch (error) { $('download-update').disabled = false; $('update-install-status').textContent = error.message; }
+  });
+  $('update-save-project').addEventListener('click', () => $('save-project').click());
+  $('install-update').addEventListener('click', async () => {
+    const install = $('install-update').dataset.install === 'true';
+    if (install && !confirm('安装将退出当前仿真会话。请先保存工程。现在安装并重新启动？')) return;
+    $('install-update').disabled = true;
+    try { renderUpdateDownload(await api(install ? '/api/updates/install' : '/api/updates/open', { token: updateToken })); }
+    catch (error) { $('update-install-status').textContent = error.message; }
+    finally { $('install-update').disabled = false; }
+  });
   function periodicUpdate() { if (preferences.autoUpdates && connected && !document.hidden && Date.now() - lastUpdateAttempt >= 6 * 60 * 60 * 1000) void checkUpdates(false); }
   setInterval(periodicUpdate, 60 * 1000);
   document.addEventListener('visibilitychange', periodicUpdate);
