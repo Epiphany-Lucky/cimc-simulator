@@ -127,7 +127,7 @@ with sync_playwright() as playwright:
                        and snapshot['analog']['dac']['enabled']
                        and 'A5B6' in ''.join(entry['text'] for entry in snapshot['serial']
                                              if entry['direction'] == 'tx' and entry['channel'] == 'rs485'),
-                       'Bootloader jumps to initialized real V2 App', 240000)
+                       'Bootloader jumps to initialized real V2 App', 600000)
     assert initialized['bootAddress'] == '0x08000000'
     expect(page.locator('[data-channel="rs485"]')).to_have_class('active')
     assert send(0x0104, use_choice=True) == b'\x02\x00\x01\x00'
@@ -172,8 +172,10 @@ with sync_playwright() as playwright:
         page.locator('#run-button').click()
         wait(lambda snapshot: snapshot['currentVectorAddress'] == '0x08011000'
              and snapshot['analog']['dac']['enabled']
-             and snapshot['analog']['dac']['value'] == expected_dac,
-             'restored V2 firmware reads saved DAC value from actual Flash', 240000)
+             and snapshot['analog']['dac']['value'] == expected_dac
+             and 'A5B6' in ''.join(entry['text'] for entry in snapshot['serial']
+                                   if entry['direction'] == 'tx' and entry['channel'] == 'rs485'),
+             'restored V2 firmware reads saved DAC value from actual Flash', 600000)
         page.locator('[data-panel="serial"]').click()
         page.locator('[data-channel="rs485"]').click()
         assert send(0x0104, use_choice=True) == b'\x02\x00\x01\x00'

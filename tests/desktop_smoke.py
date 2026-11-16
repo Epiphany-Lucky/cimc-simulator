@@ -20,6 +20,7 @@ from urllib.request import urlopen
 import zlib
 
 from playwright.sync_api import sync_playwright, expect
+from browser_waits import wait_for_terminal_text
 
 ROOT=Path(__file__).resolve().parents[1]
 
@@ -170,14 +171,14 @@ def main():
             assert report['initialBounds']['fullyInsideWorkArea'],report['initialBounds']
             page.locator('#demo-button').click()
             page.locator('#run-button').click()
-            expect(page.locator('#terminal')).to_contain_text('OLED READY',timeout=30000)
-            expect(page.locator('#terminal')).to_contain_text('FLASH JEDEC C84013',timeout=30000)
+            wait_for_terminal_text(page,'OLED READY',timeout_ms=30000)
+            wait_for_terminal_text(page,'FLASH JEDEC C84013',timeout_ms=30000)
             page.wait_for_function("() => document.querySelector('#oled-live').classList.contains('on')")
             with urlopen(f'http://127.0.0.1:{backend_port}/api/state',timeout=3) as response:state=json.load(response)
             assert state['status']!='faulted',state['diagnostics']
             assert sum(state['oled']['pixels'])>300
             report['firmware']={'oledPixelsOn':sum(state['oled']['pixels']),'adc':state['adc'],'flash':state['flash'],
-                                'jedecReply':next(log['text'] for log in state['serial'] if 'FLASH JEDEC C84013' in log['text'])}
+                                'jedecReply':''.join(log['text'] for log in state['serial'] if log['direction']=='tx' and log['channel']=='ch340')}
             report['browser']=page.evaluate('({width:innerWidth,height:innerHeight,devicePixelRatio,scrollWidth:document.documentElement.scrollWidth})')
             assert report['browser']['scrollWidth']<=report['browser']['width']+1,report['browser']
             report['finalBounds']=measure(user,hwnd)

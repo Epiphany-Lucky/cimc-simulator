@@ -1,5 +1,6 @@
 """Synchronous state polling for browser smoke tests, without Promise truthiness."""
 import time
+from playwright.sync_api import TimeoutError as BrowserTimeoutError
 
 
 def wait_for_terminal_text(page, expected, *, timeout_ms=30000):
@@ -22,8 +23,16 @@ def wait_for_api_state(page, url, predicate, *, description='API state condition
     deadline = time.monotonic() + timeout_ms / 1000
     snapshot = None
     while (remaining := deadline - time.monotonic()) > 0.005:
-        response = page.request.get(url.rstrip('/') + '/api/state',
-                                    timeout=min(10000, max(1, int(remaining * 1000))))
+        try:
+            response = page.request.get(url.rstrip('/') + '/api/state',
+                                        timeout=min(10000, max(1, int(remaining * 1000))))
+        except BrowserTimeoutError:
+            # A final request limited by the remaining overall budget reports
+            # the same condition timeout as the polling loop. A separate
+            # 10-second request timeout still surfaces while budget remains.
+            if remaining > 10:
+                raise
+            break
         if not response.ok:
             raise AssertionError(f'State request failed: HTTP {response.status}')
         snapshot = response.json()
