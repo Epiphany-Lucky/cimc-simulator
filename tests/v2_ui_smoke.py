@@ -118,6 +118,7 @@ with sync_playwright() as playwright:
     wait(lambda snapshot: snapshot['adc']['channelConnections']['11'] is True,
          'external PC1 example restored')
     page.locator('[data-panel="serial"]').click()
+    page.locator('[data-channel="rs485"]').click()
     page.locator('#run-button').click()
     initialized = wait(lambda snapshot: snapshot['currentVectorAddress'] == '0x08011000'
                        and snapshot['analog']['dac']['enabled']
@@ -177,6 +178,7 @@ with sync_playwright() as playwright:
              and snapshot['analog']['dac']['value'] == expected_dac,
              'restored V2 firmware reads saved DAC value from actual Flash', 240000)
         page.locator('[data-panel="serial"]').click()
+        page.locator('[data-channel="rs485"]').click()
         assert send(0x0104, use_choice=True) == b'\x02\x00\x01\x00'
         for command, expected in ((0x0201, .825), (0x0202, 2.475), (0x0221, 85)):
             value = struct.unpack('>f', send(command, use_choice=True))[0]

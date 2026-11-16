@@ -469,6 +469,7 @@
     busy = true; updateEnabled();
     const result = await command(board?.id === 'cimc-v2' ? 'v2_demo' : 'demo');
     busy = false; serialCutoff = -1; diagnosticCutoff = 0; updateEnabled();
+    if (result && board?.id === 'cimc-v2') document.querySelector('[data-channel="rs485"]').click();
     if (result) toast(board?.id === 'cimc-v2' ? 'V2 Bootloader、App 与参考跳线已载入。跳线可自行增删，点击运行。' : `示例固件与 ${state?.wires?.length || 0} 条 LED/KEY 跳线已载入，板载连接保持固定。点击运行。`);
   }
 
