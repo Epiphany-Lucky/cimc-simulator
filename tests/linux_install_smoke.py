@@ -102,7 +102,7 @@ def main():
             while time.monotonic()<deadline:
                 with urlopen(url+'/api/state',timeout=3) as r:state=json.load(r)
                 assert state['status']!='faulted',state['diagnostics']
-                if any('OLED READY' in row['text'] for row in state['serial']):break
+                if 'OLED READY' in ''.join(row['text'] for row in state['serial'] if row['direction']=='tx' and row['channel']=='ch340'):break
                 time.sleep(.1)
             else:raise AssertionError('Installed frozen engine did not run Keil firmware')
             assert sum(state['oled']['pixels'])>300

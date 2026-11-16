@@ -145,7 +145,7 @@ class DesktopServerTests(unittest.TestCase):
                 while time.monotonic()<deadline:
                     with urlopen(self.url+'/api/state',timeout=3) as r:state=json.load(r)
                     self.assertEqual(state['status'],'running',state['diagnostics'])
-                    if any('OLED READY' in row['text'] for row in state['serial']):break
+                    if 'OLED READY' in ''.join(row['text'] for row in state['serial'] if row['direction']=='tx' and row['channel']=='ch340'):break
                     time.sleep(.05)
                 else:self.fail('Real firmware never reached OLED READY')
                 self.assertGreater(sum(state['oled']['pixels']),300)

@@ -16,7 +16,7 @@ url=f'http://127.0.0.1:{port}'
 process=subprocess.Popen([str(package/('CIMC-Engine.exe' if sys.platform=='win32' else 'CIMC-Engine')),'--port',str(port)],cwd=package,
                          stdout=subprocess.PIPE,stderr=subprocess.PIPE,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
 def state():
-    with urlopen(url+'/api/state',timeout=3) as r:return json.load(r)
+    with urlopen(url+'/api/state',timeout=10) as r:return json.load(r)
 def command(action,**fields):
     with urlopen(Request(url+'/api/command',data=json.dumps({'action':action,**fields}).encode(),headers={'Content-Type':'application/json'}),timeout=5) as r:return json.load(r)
 
