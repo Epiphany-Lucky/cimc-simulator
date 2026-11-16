@@ -29,10 +29,18 @@ def wait_for(predicate,description):
         assert current['status']!='faulted',current['diagnostics']
         if predicate(current):return current
         time.sleep(.05)
-    raise RuntimeError('Packaged engine timeout: '+description)
+    fail('Packaged engine timeout: '+description,current)
 
-def has_tx(current,text):
-    return any(log['channel']=='ch340' and log['direction']=='tx' and text in log['text'] for log in current['serial'])
+def has_tx(current,text,channel='ch340'):
+    # A wall-time slice or UI poll can flush part of a UART line. Reconstruct
+    # only the real TX bytes for this channel; RX input cannot satisfy a reply.
+    stream=b''.join(bytes.fromhex(log['hex']) for log in current['serial']
+                    if log['channel']==channel and log['direction']=='tx')
+    return text.encode('utf-8') in stream
+
+def fail(description,current):
+    evidence={key:current.get(key) for key in ('status','cpu','serial','diagnostics','serialMode','wires')}
+    raise RuntimeError(description+'; state='+json.dumps(evidence,ensure_ascii=False))
 
 def verify_application(letter,base,led):
     current=wait_for(lambda s:has_tx(s,f'APP {letter} READY') and s['currentVectorAddress']==base
@@ -72,16 +80,17 @@ try:
     for _ in range(200):
         s=state()
         assert s['status']!='faulted',s['diagnostics']
-        if any('OLED READY' in log['text'] for log in s['serial']):break
+        if has_tx(s,'OLED READY'):break
         time.sleep(.1)
-    else:raise RuntimeError('No OLED startup output from packaged engine')
+    else:fail('No OLED startup output from packaged engine',s)
     assert sum(s['oled']['pixels'])>300
     command('serial',channel='ch340',data='TA==')
     for _ in range(100):
         s=state()
-        if any('ACK L' in log['text'] for log in s['serial']):break
+        assert s['status']!='faulted',s['diagnostics']
+        if has_tx(s,'ACK L'):break
         time.sleep(.1)
-    else:raise RuntimeError('Packaged engine did not execute UART reply')
+    else:fail('Packaged engine did not execute UART reply',s)
     command('pause')
     assert s['adc']['sampleCount']>0 and s['adc']['value']==2048,s['adc']
     assert s['flash']['lastCommand'] is not None,s['flash']
@@ -97,9 +106,10 @@ try:
     command('serial',channel='rs232',data='TA==')
     for _ in range(100):
         s=state()
-        if any(r['channel']=='rs232' and r['direction']=='tx' and 'ACK L' in r['text'] for r in s['serial']):break
+        assert s['status']!='faulted',s['diagnostics']
+        if has_tx(s,'ACK L','rs232'):break
         time.sleep(.1)
-    else:raise RuntimeError('Packaged H6 mode switch did not route firmware output')
+    else:fail('Packaged H6 mode switch did not route firmware output',s)
     command('pause')
     for ext in ('hex','bin'):
         before=state()['flash']
