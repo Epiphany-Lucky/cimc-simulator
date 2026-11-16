@@ -96,14 +96,14 @@ public static class Fixture {
             deadline = time.monotonic()+10
             while not witness.exists() and time.monotonic() < deadline:
                 time.sleep(.05)
-            assert witness.read_text() == 'restarted'
-            arguments = Path(str(witness)+'.arguments').read_text().splitlines()
+            assert witness.read_text(encoding='utf-8') == 'restarted'
+            arguments = Path(str(witness)+'.arguments').read_text(encoding='utf-8').splitlines()
             assert '/DIR='+str(updater.destination) in arguments, arguments
             assert '/VERYSILENT' in arguments
             report = {'passed': True, 'waitedForApplicationExit': True, 'installerDigestVerified': True,
                       'customChineseSpacedPathPreserved': True, 'installerExitCodeChecked': True,
                       'restartedApplication': True, 'productionInstallationTouched': False,
-                      'helperLog': (updater.download.parent/'update-helper.log').read_text().strip()}
+                      'helperLog': (updater.download.parent/'update-helper.log').read_text(encoding='utf-8').strip()}
             output.write_text(json.dumps(report, indent=2, ensure_ascii=False)+'\n', encoding='utf-8')
         finally:
             if waiter.poll() is None:

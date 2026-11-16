@@ -18,4 +18,4 @@ Flash 页擦除和编程会改变当前机器的实际 Flash。工程导出在�
 
 第三方 GigaDevice 库的版权许可随 `licenses/V2-GigaDevice-LICENSE.txt` 分发。用户业务固件的来源与作者署名见原工程，原工程继续保留在用户目录。
 
-板载 GD25Q40E 按原图接 SPI0 PB3/PB4/PB5、PA15 片选。v2_spiflash_probe.c/HEX/BIN 使用真实机器码验证 JEDEC、页编程和扇区擦除。PC0 固定接 VR1/ADC_IN10，PC2 经 H7 跳帽可接基准；PC1 外接输入、PT100 与 DAC 观察端的示例跳线可自行增删。
+板载 GD25Q40E 按原图接 SPI0 PB3/PB4/PB5、PA15 片选。v2_spiflash_probe.c/HEX/BIN 使用真实机器码验证 JEDEC、页编程和扇区擦除。PC0 固定接 VR1/ADC_IN10，PC2 经 H7 跳帽可接基准；PC1 外接输入 与 DAC 观察端的示例跳线可自行增删。

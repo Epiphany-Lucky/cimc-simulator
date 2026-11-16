@@ -28,7 +28,8 @@ for group, left, right in (('U2', u2_left, u2_right), ('U3', u3_left, u3_right))
                    'kind': 'gpio' if net.startswith('P') else 'nc' if net == 'NC' else 'power',
                    'verified': True, 'evidence': f'V2 schematic physical page 1, {group} pin {number}'}
             header_pins.append(pin)
-board['pins'] = header_pins + [pin for pin in board['pins'] if pin['group'] not in ('U2', 'U3')]
+board['pins'] = header_pins + [pin for pin in board['pins']
+                              if pin['group'] not in ('U2', 'U3') and not pin['id'].startswith('PT100_')]
 board.update(evidenceStatus='v2-schematic-verified-scope',
              clockTicksPerInstruction=240, referenceImage='assets/board-v2.jpg',
              image='assets/board-v2.svg', viewBox=[0, 0, 1000, 650],
@@ -38,7 +39,7 @@ board['notes'] = [
     '板内固定铜线保存在 fixedNets，固件代码的外接线作为可删除示例保存。',
     'OLED 的 PB8/PB9 和供电、PC0 的板载 VR1、USART 固定引出与 RS485 方向线按原图保持。',
     '原图暴露的 GPIO 排针允许新增跳线，新增线与原有固定网络共同参与电平解析。',
-    'PA5/PA7 等与 DAC/Ethernet 共享的原网络保持，外接 PT100 示例通过实际排针连接。',
+    'PA5/PA7 等与 DAC/Ethernet 共享的原网络按原图保持。',
     '用户于 2026-11-16 提供的 27_0_BootLoader 作为 V2 软件行为和示例接线依据。'
 ]
 board['uart_channels'] = {'rs485': 'USART1', 'rs232': 'USART1', 'ch340': 'USART0', 'ttl': 'USART2'}
@@ -61,10 +62,8 @@ board['memory'] = {'flash': {'base': '0x08000000', 'bytes': 524288},
                    'tcm': {'base': '0x10000000', 'bytes': 65536, 'executable': False}}
 board['adc'] = {'pin': 'PC0', 'channel': 10, 'pins': ['PC0', 'PC1', 'PC2'],
                 'terminals': ['ADC_IN10', 'ADC_IN1', 'ADC_IN12'], 'referenceVoltage': 3.3, 'locked': False}
-board['dac'] = {'pin': 'PA4', 'channel': 0, 'terminal': 'DAC_OUT0', 'locked': False}
-board['pt100'] = {'peripheral': 'SPI0', 'cs': 'PB10', 'sck': 'PA5', 'miso': 'PA6', 'mosi': 'PA7',
-                  'csTerminal': 'PT100_CS', 'sckTerminal': 'PT100_SCK',
-                  'misoTerminal': 'PT100_MISO', 'mosiTerminal': 'PT100_MOSI'}
+board['dac'] = {'pin': 'PA4', 'channel': 0, 'signalNet': 'DAC0_OUT', 'locked': False}
+board.pop('pt100', None)
 board['oled'].update(scl='OLED_SCL', sda='OLED_SDA', sclTerminal='OLED_SCL', sdaTerminal='OLED_SDA',
                      vccTerminal='OLED_3V3', gndTerminal='OLED_GND',
                      powerTerminal='OLED_3V3', groundTerminal='OLED_GND', locked=False)
@@ -111,9 +110,7 @@ board['fixedVisualWires'] = []
 examples = [('H10.1', 'H10.3'), ('H10.2', 'H10.4'),
             ('H12.1', 'H12.3'), ('H12.2', 'H12.4'),
             ('H11.1', 'H11.3'), ('H11.2', 'H11.4'),
-            ('PC1', 'ADC_IN1'), ('PA4', 'DAC_OUT0'),
-            ('PA5', 'PT100_SCK'), ('PA6', 'PT100_MISO'),
-            ('PA7', 'PT100_MOSI'), ('PB10', 'PT100_CS'), ('PE6', 'LED1')]
+            ('PC1', 'ADC_IN1'), ('PE6', 'LED1')]
 board['defaultAddedWires'] = [{'id': f'v2-example-{destination.lower()}',
                                'a': source, 'b': destination,
                                'evidence': 'User V2 driver example, 2026-11-16',
@@ -196,15 +193,14 @@ for index, endpoint in enumerate(('OLED_SDA', 'OLED_SCL', 'OLED_3V3', 'OLED_GND'
 # Functional terminals have no claimed physical connector number.
 new_terminals = {
     '485_DE': ('RS485', 120, 530, '485 DIR'),
-    'PT100_SCK': ('PT100', 450, 185, 'SCK'), 'PT100_MISO': ('PT100', 450, 208, 'MISO'),
-    'PT100_MOSI': ('PT100', 450, 231, 'MOSI'), 'PT100_CS': ('PT100', 450, 254, 'CS'),
     'ADC_IN10': ('ANALOG', 450, 471, 'VR1 / PC0'), 'ADC_IN1': ('ANALOG', 450, 497, 'EXT ADC'),
-    'DAC_OUT0': ('ANALOG', 450, 523, 'DAC OUT0'),
+    'S_ADC': ('SENSOR', 450, 195, 'H6.5 S_ADC'),
+    'S_DAC': ('SENSOR', 450, 221, 'H6.6 S_DAC'),
     'ADC_IN12': ('H7', 840, 535, 'H7.1 ADC12'), '3V3_REF': ('H7', 840, 560, 'H7.2 REF'),
 }
-board['pins'] = [pin for pin in board['pins'] if pin['id'] not in new_terminals and pin['id'] not in ('ADC_IN0', '485_RX', '485_TX') and pin['group'] not in ('H10','H11','H12')]
-for x, y, width, height, label, label_y in ((425, 170, 150, 99, 'PT100 · SPI', 163),
-                                          (425, 451, 150, 90, 'ADC / DAC', 443)):
+board['pins'] = [pin for pin in board['pins'] if pin['id'] not in new_terminals and pin['id'] not in ('ADC_IN0', '485_RX', '485_TX', 'DAC_OUT0') and pin['group'] not in ('H10','H11','H12')]
+for x, y, width, height, label, label_y in ((425, 451, 150, 64, 'ADC', 443),
+                                          (425, 177, 150, 60, 'H6 · SENSOR', 169)):
     rectangle(x, y, width, height)
     text(500, label_y, label, 12, '#d7e6f8')
 for endpoint, (group, x, y, label) in new_terminals.items():
@@ -219,6 +215,9 @@ for endpoint, (group, x, y, label) in new_terminals.items():
     if endpoint == '3V3_REF':
         pin.update(number=2, physicalPinVerified=True, kind='power', powerVoltage=3.3,
                    powerRole='supply', evidence='V2 schematic p3 H7 pin 2 3.3VREF')
+    if endpoint in ('S_ADC', 'S_DAC'):
+        pin.update(number=5 if endpoint == 'S_ADC' else 6, physicalPinVerified=True,
+                   verified=True, evidence=f'V2 schematic p2 H6 pin {5 if endpoint == "S_ADC" else 6}')
     board['pins'].append(pin)
     text(x + 14, y + 4, label, 11, anchor='start')
 for group, rows, center, top in (

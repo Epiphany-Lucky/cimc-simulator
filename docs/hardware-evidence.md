@@ -77,6 +77,5 @@ SPI 字节传输是原子的功能模型。Flash 忙时间按仿真执行指令�
 
 用户于2026-11-16确认新增的27_0_BootLoader代码对应CIMC V2板卡。保留原有官方板照、排针标注和资料来源，按Driver/USART补入USART1 PD5/PD6 AF7及PE8方向控制，按OLED驱动补齐PB8/PB9。App LED驱动使用PE6，示例通过可删除的PE6→LED1跳线连接独立端子。其他LED/KEY继续沿用端子与用户跳线。
 
-App Function.c使用PC0/PC1 ADC、PA4 DAC0、PA5/PA6/PA7 SPI0及PB10片选。PT100转换按该驱动公式和SPI配置字0x404B建立功能模型。该SPI接口对应GD30AD3344资料中的子集，未将I²C型号GD30AD3340写为SPI芯片。完整V2五页原理图已接入并核对，实板验证仍需独立完成。
 
 firmware/v2-manifest.json记录3份用户实际BIN的来源、SHA-256和地址。模拟器执行这些BIN本身，串口帧、内部Flash编程、系统复位和App跳转由机器码产生。V2板卡每条指令推进240个SysTick输入tick，该设置为功能模拟时间约定。

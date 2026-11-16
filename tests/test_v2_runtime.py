@@ -65,18 +65,16 @@ class V2RuntimeTests(unittest.TestCase):
     def test_selection_and_cross_board_project_are_atomic(self):
         self.s.command({'action': 'v2_demo'})
         self.s.adc.set_voltage(0.75, 11)
-        self.s.v2_devices.set_temperature(53.5)
         project = self.s.project()
         self.s.command({'action': 'board_select', 'boardId': 'cimc-v1'})
         self.assertIsNone(self.s.uc)
         self.s.load_project(project)
         self.assertEqual(self.s.board['id'], 'cimc-v2')
         self.assertEqual(self.s.adc.current_voltage, 0.75)
-        self.assertEqual(self.s.v2_devices.temperature, 53.5)
         before = self.s.project()
         cpu = self.s.uc
         invalid = copy.deepcopy(project)
-        invalid['pt100Temperature'] = 151
+        invalid['adc1Voltage'] = 3.31
         with self.assertRaises(ValueError):
             self.s.load_project(invalid)
         self.assertIs(self.s.uc, cpu)

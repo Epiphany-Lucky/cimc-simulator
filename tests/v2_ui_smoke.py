@@ -57,7 +57,7 @@ def response_data(snapshot, command, after_id):
 with sync_playwright() as playwright:
     browser = playwright.chromium.launch(channel='msedge' if sys.platform == 'win32' else None, headless=True)
     page = browser.new_page(viewport={'width': 1024, 'height': 600}, accept_downloads=True)
-    page.add_init_script("localStorage.setItem('cimc.studio.preferences', JSON.stringify({autoUpdates:false}));")
+    page.add_init_script("localStorage.setItem('cimc.studio.preferences', JSON.stringify({labels:false,motion:false,shortcuts:true,autoUpdates:false}));")
     errors = []
     page.on('pageerror', lambda error: errors.append(str(error)))
     page.on('dialog', lambda dialog: dialog.accept())
@@ -100,6 +100,7 @@ with sync_playwright() as playwright:
     expect(page.locator('#board-image')).to_have_attribute('src', 'assets/board-v2.svg')
     page.locator('#demo-button').click()
     wait(lambda snapshot: len(snapshot['firmwares']) == 2, 'actual V2 Bootloader and App loaded')
+    expect(page.locator('[data-channel="rs485"]')).to_have_class('active')
     original_fixed_nets = state()['board']['fixedNets']
     original_wire_count = len(state()['wires'])
     page.locator('[data-panel="wires"]').click()
@@ -118,7 +119,6 @@ with sync_playwright() as playwright:
     wait(lambda snapshot: snapshot['adc']['channelConnections']['11'] is True,
          'external PC1 example restored')
     page.locator('[data-panel="serial"]').click()
-    page.locator('[data-channel="rs485"]').click()
     page.locator('#run-button').click()
     initialized = wait(lambda snapshot: snapshot['currentVectorAddress'] == '0x08011000'
                        and snapshot['analog']['dac']['enabled']
@@ -139,14 +139,8 @@ with sync_playwright() as playwright:
         assert abs(value - expected) < .001, (command, value, expected)
         assert state()['adc']['channelValues'][channel] is not None
 
-    set_range('#pt100-slider', 85)
-    wait(lambda snapshot: snapshot['analog']['pt100']['temperature'] == 85, 'PT100 UI input')
-    temperature = struct.unpack('>f', send(0x0221, use_choice=True))[0]
-    assert abs(temperature - 85) < .05, temperature
-    assert state()['analog']['pt100']['sampleCount'] >= 2
     assert send(0x0301, (3072).to_bytes(2, 'big')) == b'\xff'
     wait(lambda snapshot: snapshot['analog']['dac']['value'] == 3072, 'firmware DAC output')
-    expect(page.locator('#dac-output')).to_contain_text('3072 / 4095')
 
     # Two complete restores retain wiring, model inputs and actual Flash writes.
     expected_dac = 3072
@@ -169,7 +163,6 @@ with sync_playwright() as playwright:
         restored = wait(lambda snapshot: snapshot['board']['id'] == 'cimc-v2'
                         and len(snapshot['firmwares']) >= 1, 'import V2 project from V1')
         assert restored['adc']['inputVoltages'] == {'10': .825, '11': 2.475}
-        assert restored['analog']['pt100']['temperature'] == 85
         assert restored['board']['fixedNets'] == original_fixed_nets
         assert len(restored['wires']) == original_wire_count
         page.locator('#run-button').click()
@@ -180,9 +173,9 @@ with sync_playwright() as playwright:
         page.locator('[data-panel="serial"]').click()
         page.locator('[data-channel="rs485"]').click()
         assert send(0x0104, use_choice=True) == b'\x02\x00\x01\x00'
-        for command, expected in ((0x0201, .825), (0x0202, 2.475), (0x0221, 85)):
+        for command, expected in ((0x0201, .825), (0x0202, 2.475)):
             value = struct.unpack('>f', send(command, use_choice=True))[0]
-            assert abs(value - expected) < (.05 if command == 0x0221 else .001), (cycle, command, value)
+            assert abs(value - expected) < .001, (cycle, command, value)
         expected_dac = 2048 if cycle == 0 else 3072
         assert send(0x0301, expected_dac.to_bytes(2, 'big')) == b'\xff'
         wait(lambda snapshot: snapshot['analog']['dac']['value'] == expected_dac,
@@ -203,10 +196,10 @@ with sync_playwright() as playwright:
     assert not errors, errors
     (ROOT / 'artifacts/v2-ui-verification.json').write_text(json.dumps({
         'passed': True, 'versionResponse': [2, 0, 1, 0], 'pc0': .825, 'pc1': 2.475,
-        'pt100': temperature, 'dac': 3072, 'projectRestored': True, 'restoreCycles': 2,
+        'dac': 3072, 'projectRestored': True, 'restoreCycles': 2,
         'editableH10Jumper': True, 'editablePC1Input': True, 'fixedPC0VR1': True,
         'boardAsset': 'assets/board-v2.svg', 'fixedNetCount': len(original_fixed_nets),
         'screenshots': snapshots, 'javascriptErrors': errors,
     }, ensure_ascii=False, indent=2), encoding='utf-8')
     browser.close()
-print('PASS: real V2 Boot/App, CRC-checked firmware protocol, PC0/PC1/PT100/DAC, project restore, V1/V2 switching and laptop/mobile layout')
+print('PASS: real V2 Boot/App, CRC-checked firmware protocol, PC0/PC1/DAC, project restore, V1/V2 switching and laptop/mobile layout')

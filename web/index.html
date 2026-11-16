@@ -105,12 +105,9 @@
         </article>
 
         <article class="card v2-card" id="v2-devices" hidden aria-label="V2 模拟信号">
-          <div class="mini-heading"><h2>V2 信号</h2><span class="format-badge">ADC / DAC / PT100</span></div>
+          <div class="mini-heading"><h2>外接模拟输入</h2><span class="format-badge">ADC</span></div>
           <label for="adc1-slider">ADC_IN1 输入 <output id="adc1-voltage">1.650 V</output></label>
           <input id="adc1-slider" type="range" min="0" max="3.3" step="0.001" value="1.65" aria-label="PC1 ADC 输入电压">
-          <label for="pt100-slider">PT100 温度 <output id="pt100-temperature">25.0 °C</output></label>
-          <input id="pt100-slider" type="range" min="-50" max="150" step="0.1" value="25" aria-label="PT100 输入温度">
-          <p id="dac-output" role="status">DAC0 · 等待固件输出</p>
           <p class="flash-foot" id="internal-flash-state">内部 Flash · 等待擦写</p>
         </article>
 
@@ -125,7 +122,7 @@
         <div class="channel-note" id="channel-note" hidden></div>
         <div class="v2-protocol" id="v2-protocol" hidden>
           <label>设备 ID <input id="v2-device-id" type="number" min="1" max="65535" value="1" aria-label="V2 协议设备 ID"></label>
-          <select id="v2-command" aria-label="V2 协议命令"><option value="0104">读取版本</option><option value="0201">读取 PC0</option><option value="0202">读取 PC1</option><option value="0221">读取 PT100</option><option value="0302">开启自动采样</option><option value="0303">停止自动采样</option><option value="0501">进入 Bootloader</option><option value="0502">准备接收升级包</option><option value="0503">写入应用并重启</option></select>
+          <select id="v2-command" aria-label="V2 协议命令"><option value="0104">读取版本</option><option value="0201">读取 PC0</option><option value="0202">读取 PC1</option><option value="0302">开启自动采样</option><option value="0303">停止自动采样</option><option value="0501">进入 Bootloader</option><option value="0502">准备接收升级包</option><option value="0503">写入应用并重启</option></select>
           <button id="v2-send-command" class="button secondary" data-firmware>发送命令</button>
           <button id="serial-send-file" class="button secondary" data-firmware>发送 BIN 文件</button>
           <input id="serial-bin-file" type="file" accept=".bin" hidden>

@@ -9,7 +9,6 @@ from adc import AdcDevice, ADC_BASE, SWRCST
 from v2_devices import (V2Devices, SPI0, DAC0, GPIOA, RCU_AHB1EN,
                         RCU_APB1EN, RCU_APB2EN, RCU_APB1RST, RCU_APB2RST)
 
-
 class AnalogBoard:
     def __init__(self, board_id='cimc-v2'):
         self.board = {'id': board_id}
@@ -19,9 +18,7 @@ class AnalogBoard:
                            'PB': {'mode': 1 << 20, 'out': 1 << 10},
                            'PC': {'mode': 15, 'out': 0}}
         self.errors = []
-        self.wires = {('PC0', 'ADC_IN0'), ('PC1', 'ADC_IN1'), ('PA4', 'DAC_OUT0'),
-                      ('PA5', 'PT100_SCK'), ('PA6', 'PT100_MISO'),
-                      ('PA7', 'PT100_MOSI'), ('PB10', 'PT100_CS')}
+        self.wires = {('PC0', 'ADC_IN0'), ('PC1', 'ADC_IN1')}
 
     def diagnose(self, message, *args, **kwargs):
         self.errors.append(message)
@@ -36,26 +33,11 @@ class AnalogBoard:
             if len(reached) == previous:
                 return reached
 
-    def net_level(self, terminal):
-        levels = set()
-        for pin in self.connected(terminal):
-            if pin[:2] in self.gpio_state and pin[2:].isdigit():
-                gpio = self.gpio_state[pin[:2]]
-                number = int(pin[2:])
-                if (gpio['mode'] >> (number * 2)) & 3 == 1:
-                    levels.add((gpio['out'] >> number) & 1)
-        return next(iter(levels)) if len(levels) == 1 else None
-
-
 class V2AnalogTests(unittest.TestCase):
     def setUp(self):
         self.sim = AnalogBoard()
         self.devices = V2Devices(self.sim)
         self.devices.write(SPI0, 0x37D)
-
-    def select(self, active):
-        self.sim.gpio_state['PB']['out'] = 0 if active else 1 << 10
-        self.devices.on_gpio_changed('PB')
 
     def byte(self, value):
         self.devices.write(SPI0 + 12, value)
@@ -64,89 +46,40 @@ class V2AnalogTests(unittest.TestCase):
         self.assertEqual(self.devices.read(SPI0 + 8) & 1, 0)
         return result
 
-    def transaction(self, values):
-        self.select(True)
-        result = [self.byte(value) for value in values]
-        self.select(False)
-        return result
-
-    def test_spi_conversion_pipeline_config_readback_and_real_quantization(self):
-        self.assertEqual(self.transaction([0x40, 0x4B]), [0, 0])
-        self.assertEqual(self.devices.sample_count, 1)
-        for temperature in (-50, 25, 150):
-            with self.subTest(temperature=temperature):
-                self.devices.set_temperature(temperature)
-                high, low, cfg_high, cfg_low = self.transaction([0x40, 0x4B, 0, 0])
-                raw = (high << 8) | low
-                expected_resistance = 100 + .385 * temperature
-                expected = int(expected_resistance * 22200 / 2200 * 32768 / 6144 + .5)
-                self.assertEqual(raw, expected)
-                self.assertEqual((cfg_high << 8) | cfg_low, 0x404B)
-                decoded = ((raw * 6144 / 32768 * 2200 / 22200) - 100) / .385
-                self.assertAlmostEqual(decoded, temperature, delta=.05)
-        self.assertEqual(self.devices.sample_count, 4)
+    def test_unselected_spi_bus_returns_ff_for_all_clock_modes(self):
+        for mode in range(4):
+            self.devices.write(SPI0, 0x344 | mode)
+            self.assertEqual([self.byte(value) for value in (0x40, 0x4B, 0, 0)], [255] * 4)
         self.assertEqual(self.sim.errors, [])
+        self.assertEqual(set(self.devices.state()), {'dac'})
 
-    def test_pt100_input_validation_preserves_previous_value(self):
-        for value in (-51, 151, float('nan'), float('inf'), '20', True, None):
-            with self.subTest(value=value):
-                with self.assertRaises(ValueError):
-                    self.devices.set_temperature(value)
-                self.assertEqual(self.devices.temperature, 25)
-
-    def test_spi_requires_clock_pin_modes_af_and_explicit_unsupported_modes(self):
-        for kind in ('clock', 'gpio_clock', 'pin_mode', 'pin_af', 'chip_select', 'phase', '16bit', 'dma'):
+    def test_spi_clock_and_unsupported_transfer_configuration_are_explicit(self):
+        for kind in ('clock', 'lsb', '16bit', 'dma', 'i2s'):
             with self.subTest(kind=kind):
                 self.setUp()
                 if kind == 'clock':
                     self.sim.regs[RCU_APB2EN] = 0
-                elif kind == 'gpio_clock':
-                    self.sim.regs[RCU_AHB1EN] = 0
-                elif kind == 'pin_mode':
-                    self.sim.gpio_state['PA']['mode'] &= ~(3 << 10)
-                elif kind == 'pin_af':
-                    self.sim.regs[GPIOA + 32] = 0
-                elif kind == 'chip_select':
-                    self.sim.gpio_state['PB']['mode'] = 0
-                elif kind == 'phase':
-                    self.devices.write(SPI0, 0x37C)
+                elif kind == 'lsb':
+                    self.devices.write(SPI0, 0x37D | (1 << 7))
                 elif kind == '16bit':
                     self.devices.write(SPI0, 0x37D | (1 << 11))
-                else:
+                elif kind == 'dma':
                     self.devices.write(SPI0 + 4, 1)
-                self.select(True)
-                self.devices.write(SPI0 + 12, 0x40)
+                else:
+                    self.devices.write(SPI0 + 28, 0xC00)
+                self.devices.write(SPI0 + 12, 0)
                 self.assertTrue(self.sim.errors)
-                self.assertEqual(self.devices.sample_count, 0)
 
-    def test_incomplete_frame_invalid_input_and_nop_config(self):
-        self.transaction([0x40])
-        self.assertIn('16 或 32', self.sim.errors[-1])
-        self.setUp()
-        self.transaction([0x30, 0x4B])
-        self.assertIn('AIN0', self.sim.errors[-1])
-        self.assertEqual(self.devices.config, 0x058B)
-        self.setUp()
-        self.transaction([0, 0])
-        self.assertEqual(self.devices.config, 0x058B)
-        self.assertEqual(self.devices.sample_count, 0)
-
-    def test_spi_overrun_sequence_reset_and_external_adc_lifetime(self):
-        self.select(True)
+    def test_spi_overrun_and_controller_reset(self):
         self.devices.write(SPI0 + 12, 0x40)
         self.devices.write(SPI0 + 12, 0x4B)
         self.assertEqual(self.devices.read(SPI0 + 8) & 64, 64)
         self.devices.read(SPI0 + 12)
         self.devices.read(SPI0 + 8)
         self.assertEqual(self.devices.read(SPI0 + 8) & 64, 0)
-        self.select(False)
-        old_raw = self.devices.raw
         self.devices.notify_rcu_write(RCU_APB2RST, 1 << 12)
         self.assertEqual(self.devices.spi[0], 0)
-        self.assertEqual(self.devices.raw, old_raw)
-        self.devices.reset()
-        self.assertEqual(self.devices.raw, 0)
-        self.assertEqual(self.devices.config, 0x058B)
+        self.assertEqual(self.devices.spi[8], 2)
 
     def test_dac_direct_software_trigger_alignment_and_output_hold(self):
         self.devices.write(DAC0, 1)
@@ -167,6 +100,17 @@ class V2AnalogTests(unittest.TestCase):
         self.devices.write(DAC0, 0)
         self.assertIsNone(self.devices.state()['dac']['voltage'])
         self.assertEqual(self.sim.errors, [])
+
+    def test_dac_pa4_output_tracks_hardware_pin_mode(self):
+        self.devices.write(DAC0, 1)
+        self.devices.write(DAC0 + 8, 2048)
+        self.assertEqual(self.devices.state()['dac']['pin'], 'PA4')
+        self.assertAlmostEqual(self.devices.state()['dac']['voltage'], 2048 * 3.3 / 4095)
+        self.sim.gpio_state['PA']['mode'] &= ~(3 << 8)
+        self.assertIsNone(self.devices.state()['dac']['voltage'])
+        self.assertEqual(self.devices.read(DAC0 + 0x2C), 2048)
+        self.sim.gpio_state['PA']['mode'] |= 3 << 8
+        self.assertAlmostEqual(self.devices.state()['dac']['voltage'], 2048 * 3.3 / 4095)
 
     def test_dac_requires_clock_analog_pin_and_rejects_other_modes(self):
         for kind in ('clock', 'gpio_clock', 'mode', 'dma', 'trigger', 'channel'):
@@ -191,8 +135,6 @@ class V2AnalogTests(unittest.TestCase):
         self.sim.board['id'] = 'cimc-v1'
         self.assertFalse(self.devices.contains(SPI0))
         self.assertFalse(self.devices.contains(DAC0))
-        with self.assertRaises(ValueError):
-            self.devices.set_temperature(30)
 
     def test_v2_adc_pc0_pc1_independent_inputs_and_trigger_configuration(self):
         adc = AdcDevice(self.sim)
@@ -246,17 +188,6 @@ class V2AnalogTests(unittest.TestCase):
         self.assertEqual(adc.sample_count, before)
         self.assertFalse(adc.state()['channelConnections']['10'])
 
-    def test_dac_observation_requires_its_editable_output_wire(self):
-        self.devices.write(DAC0, 1)
-        self.devices.write(DAC0 + 8, 4095)
-        self.assertEqual(self.devices.state()['dac']['voltage'], 3.3)
-        self.sim.wires.remove(('PA4', 'DAC_OUT0'))
-        self.assertIsNone(self.devices.state()['dac']['voltage'])
-        self.assertFalse(self.devices.state()['dac']['connected'])
-        self.devices.write(DAC0 + 8, 2048)
-        self.assertEqual(self.devices.read(DAC0 + 0x2C), 2048)
-        self.sim.wires.add(('PA4', 'DAC_OUT0'))
-        self.assertAlmostEqual(self.devices.state()['dac']['voltage'], 2048 * 3.3 / 4095)
 
     def test_schematic_vr1_net_is_fixed_and_pc2_reference_requires_h7_jumper(self):
         self.sim.wires.remove(('PC0', 'ADC_IN0'))
@@ -278,43 +209,6 @@ class V2AnalogTests(unittest.TestCase):
         self.sim.wires.remove(('ADC_IN12', '3V3_REF'))
         adc.write(ADC_BASE + 8, 1 | SWRCST)
         self.assertFalse(adc.read(ADC_BASE) & 2)
-
-    def test_pt100_each_removed_spi_wire_blocks_sampling_and_reconnects(self):
-        for wire in (('PA5', 'PT100_SCK'), ('PA6', 'PT100_MISO'),
-                     ('PA7', 'PT100_MOSI'), ('PB10', 'PT100_CS')):
-            with self.subTest(wire=wire):
-                self.setUp()
-                self.sim.wires.remove(wire)
-                self.assertEqual(self.transaction([0x40, 0x4B]), [255, 255])
-                self.assertEqual(self.devices.sample_count, 0)
-                self.assertFalse(self.devices.state()['pt100']['connected'])
-                self.assertIn('跳线', self.sim.errors[-1])
-                self.sim.wires.add(wire)
-                self.assertEqual(self.transaction([0x40, 0x4B]), [0, 0])
-                self.assertEqual(self.devices.sample_count, 1)
-                self.assertTrue(self.devices.state()['pt100']['connected'])
-
-    def test_pt100_unplug_mid_frame_discards_partial_command(self):
-        self.select(True)
-        self.assertEqual(self.byte(0x40), 0)
-        self.sim.wires.remove(('PA7', 'PT100_MOSI'))
-        self.assertEqual(self.byte(0x4B), 255)
-        self.select(False)
-        self.assertEqual(self.devices.sample_count, 0)
-        self.assertEqual(self.devices.config, 0x058B)
-        self.sim.wires.add(('PA7', 'PT100_MOSI'))
-        self.assertEqual(self.transaction([0x40, 0x4B]), [0, 0])
-        self.assertEqual(self.devices.sample_count, 1)
-
-    def test_pt100_short_to_another_output_blocks_external_sampling(self):
-        self.sim.wires.add(('PT100_SCK', 'PB2'))
-        self.sim.gpio_state['PB']['mode'] |= 1 << 4
-        self.assertEqual(self.transaction([0x40, 0x4B]), [255, 255])
-        self.assertEqual(self.devices.sample_count, 0)
-        self.sim.wires.remove(('PT100_SCK', 'PB2'))
-        self.assertEqual(self.transaction([0x40, 0x4B]), [0, 0])
-        self.assertEqual(self.devices.sample_count, 1)
-
 
 if __name__ == '__main__':
     unittest.main()

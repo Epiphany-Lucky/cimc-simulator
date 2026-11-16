@@ -92,7 +92,6 @@
     $('adc-slider').disabled = !adcReady;
     $('board-select').disabled = !connected || busy;
     $('adc1-slider').disabled = !adcReady;
-    $('pt100-slider').disabled = !adcReady;
     $('adc-knob').setAttribute('aria-disabled',String(!adcReady));
     $('adc-knob').tabIndex = adcReady ? 0 : -1;
     document.querySelectorAll('[data-channel]').forEach(b => { b.disabled = !channelMapping(b.dataset.channel); b.title = b.disabled ? `${b.dataset.channel.toUpperCase()} 固定映射待 V1 原理图核验` : ''; });
@@ -219,12 +218,13 @@
     const pc1 = next.adc?.channelValues?.['11'];
     $('adc1-voltage').value = `${Number(voltage).toFixed(3)} V${pc1 === null || pc1 === undefined ? '' : ` · ${pc1} / ${2 ** (next.adc?.channelBits?.['11'] || 12) - 1}`}`;
     const devices = next.analog || {};
-    const temperature = devices.pt100?.temperature ?? 25;
-    if (document.activeElement !== $('pt100-slider')) $('pt100-slider').value = temperature;
-    $('pt100-temperature').value = `${Number(temperature).toFixed(1)} °C`;
-    $('dac-output').textContent = devices.dac?.enabled
-      ? devices.dac.connected === false || devices.dac.voltage === null ? `DAC0 · ${devices.dac.value} / 4095 · 输出端待接线` : `DAC0 · ${devices.dac.value} / 4095 · ${Number(devices.dac.voltage).toFixed(3)} V`
-      : 'DAC0 · 等待固件输出';
+    const dac = devices.dac, outputPin = document.querySelector('[data-pin="PA4"]');
+    if (outputPin && dac) {
+      const label = board.pins.find(pin => pin.id === 'PA4')?.label || 'PA4';
+      outputPin.title = dac.enabled && dac.voltage !== null
+        ? `${label} · DAC0 ${dac.value} / 4095 · ${Number(dac.voltage).toFixed(3)} V`
+        : `${label} · DAC0 待固件启用`;
+    }
     const flash = next.internalFlash;
     if (flash) $('internal-flash-state').textContent = `内部 Flash · 写入 ${flash.programCount ?? flash.writes ?? 0} · 擦除 ${flash.eraseCount ?? flash.erases ?? 0}`;
   }
@@ -242,7 +242,6 @@
     } else event.target.value = board.id;
   });
   $('adc1-slider').addEventListener('change', event => void command('adc_voltage', { channel: 11, voltage: Number(event.target.value) }));
-  $('pt100-slider').addEventListener('change', event => void command('pt100_temperature', { temperature: Number(event.target.value) }));
 
   async function choosePin(pin) {
     if (!connected || pin.connectable === false || pin.locked) return;

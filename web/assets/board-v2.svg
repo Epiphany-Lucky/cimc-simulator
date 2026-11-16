@@ -208,26 +208,20 @@
 <text x="105" y="459" text-anchor="end" font-family="Segoe UI,Arial,sans-serif" font-size="11" fill="#9eb3cf">3V3</text>
 <rect x="115" y="475" width="10" height="10" rx="2" fill="#cba462"/>
 <text x="105" y="484" text-anchor="end" font-family="Segoe UI,Arial,sans-serif" font-size="11" fill="#9eb3cf">GND</text>
-<rect x="425" y="170" width="150" height="99" rx="8" fill="#080f1b" stroke="#38506d"/>
-<text x="500" y="163" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="12" fill="#d7e6f8">PT100 · SPI</text>
-<rect x="425" y="451" width="150" height="90" rx="8" fill="#080f1b" stroke="#38506d"/>
-<text x="500" y="443" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="12" fill="#d7e6f8">ADC / DAC</text>
+<rect x="425" y="451" width="150" height="64" rx="8" fill="#080f1b" stroke="#38506d"/>
+<text x="500" y="443" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="12" fill="#d7e6f8">ADC</text>
+<rect x="425" y="177" width="150" height="60" rx="8" fill="#080f1b" stroke="#38506d"/>
+<text x="500" y="169" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="12" fill="#d7e6f8">H6 · SENSOR</text>
 <rect x="115" y="525" width="10" height="10" rx="2" fill="#cba462"/>
 <text x="134" y="534" text-anchor="start" font-family="Segoe UI,Arial,sans-serif" font-size="11" fill="#9eb3cf">485 DIR</text>
-<rect x="445" y="180" width="10" height="10" rx="2" fill="#cba462"/>
-<text x="464" y="189" text-anchor="start" font-family="Segoe UI,Arial,sans-serif" font-size="11" fill="#9eb3cf">SCK</text>
-<rect x="445" y="203" width="10" height="10" rx="2" fill="#cba462"/>
-<text x="464" y="212" text-anchor="start" font-family="Segoe UI,Arial,sans-serif" font-size="11" fill="#9eb3cf">MISO</text>
-<rect x="445" y="226" width="10" height="10" rx="2" fill="#cba462"/>
-<text x="464" y="235" text-anchor="start" font-family="Segoe UI,Arial,sans-serif" font-size="11" fill="#9eb3cf">MOSI</text>
-<rect x="445" y="249" width="10" height="10" rx="2" fill="#cba462"/>
-<text x="464" y="258" text-anchor="start" font-family="Segoe UI,Arial,sans-serif" font-size="11" fill="#9eb3cf">CS</text>
 <rect x="445" y="466" width="10" height="10" rx="2" fill="#cba462"/>
 <text x="464" y="475" text-anchor="start" font-family="Segoe UI,Arial,sans-serif" font-size="11" fill="#9eb3cf">VR1 / PC0</text>
 <rect x="445" y="492" width="10" height="10" rx="2" fill="#cba462"/>
 <text x="464" y="501" text-anchor="start" font-family="Segoe UI,Arial,sans-serif" font-size="11" fill="#9eb3cf">EXT ADC</text>
-<rect x="445" y="518" width="10" height="10" rx="2" fill="#cba462"/>
-<text x="464" y="527" text-anchor="start" font-family="Segoe UI,Arial,sans-serif" font-size="11" fill="#9eb3cf">DAC OUT0</text>
+<rect x="445" y="190" width="10" height="10" rx="2" fill="#cba462"/>
+<text x="464" y="199" text-anchor="start" font-family="Segoe UI,Arial,sans-serif" font-size="11" fill="#9eb3cf">H6.5 S_ADC</text>
+<rect x="445" y="216" width="10" height="10" rx="2" fill="#cba462"/>
+<text x="464" y="225" text-anchor="start" font-family="Segoe UI,Arial,sans-serif" font-size="11" fill="#9eb3cf">H6.6 S_DAC</text>
 <rect x="835" y="530" width="10" height="10" rx="2" fill="#cba462"/>
 <text x="854" y="539" text-anchor="start" font-family="Segoe UI,Arial,sans-serif" font-size="11" fill="#9eb3cf">H7.1 ADC12</text>
 <rect x="835" y="555" width="10" height="10" rx="2" fill="#cba462"/>

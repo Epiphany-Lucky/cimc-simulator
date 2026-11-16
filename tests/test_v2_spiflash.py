@@ -10,7 +10,6 @@ from simulator import Simulator
 from v2_devices import SPI0, GPIOA, RCU_AHB1EN, RCU_APB2EN, RCU_APB2RST
 from spiflash import SPI1, GPIOB
 
-
 class V2FlashTests(unittest.TestCase):
     def setUp(self):
         self.sim = Simulator(ROOT, 'cimc-v2')
@@ -67,6 +66,16 @@ class V2FlashTests(unittest.TestCase):
         self.configure()
         self.assertEqual(self.transaction([0x9F, 0, 0, 0])[1:], [0xC8, 0x40, 0x13])
 
+    def test_unselected_mode_one_bus_returns_ff_without_external_device(self):
+        self.sim._write(GPIOA, (1 << 30) | (2 << 10) | (2 << 12) | (2 << 14))
+        self.sim._write(GPIOA + 32, 0x55500000)
+        self.sim._write(SPI0, 0x37D)
+        self.assertEqual([self.byte(value) for value in (0x40, 0x4B, 0, 0)], [255] * 4)
+        self.assertIsNone(self.sim.flash.last_command)
+        self.assertNotEqual(self.sim.status, 'faulted', self.sim.diagnostics)
+        self.sim._write(SPI0, 0x344)
+        self.assertEqual(self.transaction([0x9F, 0, 0, 0])[1:], [0xC8, 0x40, 0x13])
+
     def test_shared_spi0_overrun_reset_and_flash_chip_select(self):
         self.select(True)
         self.sim._write(SPI0 + 12, 0x9F)
@@ -100,23 +109,6 @@ class V2FlashTests(unittest.TestCase):
                 self.assertEqual(values, (0x53504930, 0xC84013, 0x434D4943, 1, 255))
                 self.assertEqual(self.sim.flash.memory[:10], b'CIMC FLASH')
 
-    def test_flash_and_external_pt100_switch_on_the_same_controller(self):
-        self.sim.command({'action': 'v2_wiring'})
-        self.sim._write(GPIOA, (1 << 30) | (2 << 10) | (2 << 12) | (2 << 14))
-        self.sim._write(GPIOA + 32, 0x55500000)
-        self.sim._write(GPIOB + 24, 1 << 10)
-        self.sim._write(GPIOB, (2 << 6) | (2 << 8) | (2 << 10) | (1 << 20))
-        self.sim._write(SPI0, 0x37D)
-        self.sim._write(GPIOB + 24, 1 << 26)
-        self.assertEqual([self.byte(value) for value in (0x40, 0x4B)], [0, 0])
-        self.sim._write(GPIOB + 24, 1 << 10)
-        self.assertEqual(self.sim.v2_devices.sample_count, 1)
-        self.assertIsNone(self.sim.flash.last_command)
-        self.sim._write(SPI0, 0x344)
-        self.assertEqual(self.transaction([0x9F, 0, 0, 0])[1:], [0xC8, 0x40, 0x13])
-        self.assertEqual(self.sim.v2_devices.sample_count, 1)
-        self.assertNotEqual(self.sim.status, 'faulted', self.sim.diagnostics)
-
     def test_v2_mcu_reset_retains_flash_contents_and_reconfigures_spi0(self):
         self.transaction([6])
         self.transaction([2, 0, 0, 9, 0x5A])
@@ -125,18 +117,6 @@ class V2FlashTests(unittest.TestCase):
         self.sim.reset()
         self.configure()
         self.assertEqual(self.transaction([3, 0, 0, 9, 255])[-1], 0x5A)
-
-    def test_both_chip_selects_low_reports_a_shared_bus_error(self):
-        self.sim.command({'action': 'v2_wiring'})
-        self.sim._write(GPIOA, (1 << 30) | (2 << 10) | (2 << 12) | (2 << 14))
-        self.sim._write(GPIOA + 32, 0x55500000)
-        self.sim._write(GPIOB, (2 << 6) | (2 << 8) | (2 << 10) | (1 << 20))
-        self.sim._write(GPIOB + 24, 1 << 26)
-        self.select(True)
-        self.sim._write(SPI0 + 12, 0x9F)
-        self.assertEqual(self.sim.status, 'faulted')
-        self.assertTrue(any('SPI0' in entry['message'] for entry in self.sim.diagnostics))
-
 
 if __name__ == '__main__':
     unittest.main()

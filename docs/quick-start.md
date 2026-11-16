@@ -51,4 +51,4 @@ UART/ADC/SPI 中断、DMA、ADC 扫描/连续/外部触发、硬件 I²C、定�
 
 ## V2 板卡与用户工程
 
-在开发板标题选择 V2.0，再载入 V2 Bootloader + App。运行后由固件自动启动 App，RS485 收到心跳即可选择协议命令读取版本、电压和温度。PC0 使用主旋钮，PC1 和 PT100 在右侧 V2 信号卡调节。DAC0 显示固件实际写入结果。升级步骤见 docs/releases/v0.5.0.md。
+在开发板标题选择 V2.0，再载入 V2 Bootloader + App。运行后由固件自动启动 App，RS485 收到心跳即可选择协议命令读取版本、电压。PC0 使用主旋钮，PC1  在右侧 V2 信号卡调节。DAC0 显示固件实际写入结果。升级步骤见 docs/releases/v0.5.0.md。

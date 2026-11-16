@@ -472,7 +472,6 @@ class Simulator:
                 oled=self.board.get('oled',{})
                 if self.board['id']=='cimc-v2' or port in (oled.get('scl','')[:2],oled.get('sda','')[:2]):self._i2c_edges()
                 self.flash.on_gpio_changed(port)
-                self.v2_devices.on_gpio_changed(port)
                 return
         for uart,b in UART.items():
             if b<=a<b+0x20:
@@ -756,7 +755,7 @@ class Simulator:
         self._connection_cache.clear()
         if self.board['id']=='cimc-v2':
             self._i2c_edges()
-            self.v2_devices.on_gpio_changed('PB')
+            self.flash.on_gpio_changed('PA')
 
     def command(self,data):
         action=data.get('action','')
@@ -792,7 +791,6 @@ class Simulator:
             with self.lock:
                 if action=='adc_voltage':self.adc.set_voltage(data.get('voltage'),data.get('channel',10))
                 elif action=='v2_wiring':self.apply_reference_wiring()
-                elif action=='pt100_temperature':self.v2_devices.set_temperature(data.get('temperature'))
                 elif action=='serial_mode':self.set_serial_mode(data.get('mode'))
                 elif action=='run':
                     if not self.uc:raise ValueError('请先载入固件')
@@ -895,10 +893,8 @@ class Simulator:
         voltage=project.get('adcVoltage',self.adc.voltage)
         if isinstance(voltage,bool) or not isinstance(voltage,(int,float)) or not math.isfinite(voltage) or not 0<=voltage<=3.3:raise ValueError('工程 ADC 电压无效')
         adc1=project.get('adc1Voltage',1.65)
-        temperature=project.get('pt100Temperature',25.0)
         if board['id']=='cimc-v2':
             if isinstance(adc1,bool) or not isinstance(adc1,(int,float)) or not math.isfinite(adc1) or not 0<=adc1<=3.3:raise ValueError('工程 PC1 电压无效')
-            if isinstance(temperature,bool) or not isinstance(temperature,(int,float)) or not math.isfinite(temperature) or not -50<=temperature<=150:raise ValueError('工程 PT100 温度无效')
         if project['version']==1:
             patterns={k:{frozenset(pair) for pair in v} for k,v in board['serialJumperPatterns'].items()}
             seen=set();remaining=[]
@@ -953,7 +949,6 @@ class Simulator:
         self.adc.set_voltage(voltage)
         if board['id']=='cimc-v2':
             self.adc.set_voltage(adc1,11)
-            self.v2_devices.set_temperature(temperature)
         self.wires=staged
         self._on_wiring_changed()
 
@@ -964,7 +959,7 @@ class Simulator:
                     'firmwareSet':self.program.exported() if self.program else None,
                     **({'internalFlashData':base64.b64encode(self.internal_flash).decode('ascii')} if self.flash_dirty else {}),
                     'serialMode':self.serial_mode,'adcVoltage':self.adc.voltage,
-                    **({'adc1Voltage':self.adc.current_voltage,'pt100Temperature':self.v2_devices.temperature} if self.board['id']=='cimc-v2' else {})}
+                    **({'adc1Voltage':self.adc.current_voltage} if self.board['id']=='cimc-v2' else {})}
 
     def state(self):
         with self.lock:
@@ -974,4 +969,4 @@ class Simulator:
             pc=self.uc.reg_read(UC_ARM_REG_PC) if self.uc else 0
             sp=self.uc.reg_read(UC_ARM_REG_SP) if self.uc else 0
             oled_visible=self.oled.on and self._oled_powered()
-            return {'status':self.status,'firmware':self.firmware,'firmwares':[im.metadata() for im in self.program.images] if self.program else [],'bootAddress':f'0x{self.program.boot_address:08X}' if self.program else None,'currentVectorAddress':f"0x{self.regs.get(0xE000ED08,0):08X}" if self.uc else None,'cpu':{'pc':f'0x{pc:08X}','sp':f'0x{sp:08X}','instructions':self.instructions,'model':'Cortex-M4 / Unicorn 2.1.4'},'board':self.board,'leds':leds,'keys':list(self.keys),'oled':{'width':self.oled.width,'height':self.oled.height,'pixels':self.oled.pixels() if oled_visible else [0]*(self.oled.width*self.oled.height),'on':oled_visible},'wires':list(self.wires),'managedWires':self.managed_wires(),'serialMode':self.serial_mode,'adc':self.adc.state(),'flash':self.flash.state(),'internalFlash':self.fmc.state(),'analog':self.v2_devices.state(),'serial':list(self.logs),'diagnostics':list(self.diagnostics),'engine':{'version':VERSION,'mode':'functional','cycleAccurate':False,'clockTicksPerInstruction':self.board.get('clockTicksPerInstruction',1),'supported':('GPIO, USART RX/IDLE IRQ, GPIO I2C OLED, SysTick, internal Flash, ADC PC0/PC1/PC2, DAC PA4, SPI0 PT100/GD25Q40E' if self.board['id']=='cimc-v2' else 'GPIO, polling USART, GPIO I2C OLED, basic SysTick, software ADC, SPI1 GD25Q40E')}}
+            return {'status':self.status,'firmware':self.firmware,'firmwares':[im.metadata() for im in self.program.images] if self.program else [],'bootAddress':f'0x{self.program.boot_address:08X}' if self.program else None,'currentVectorAddress':f"0x{self.regs.get(0xE000ED08,0):08X}" if self.uc else None,'cpu':{'pc':f'0x{pc:08X}','sp':f'0x{sp:08X}','instructions':self.instructions,'model':'Cortex-M4 / Unicorn 2.1.4'},'board':self.board,'leds':leds,'keys':list(self.keys),'oled':{'width':self.oled.width,'height':self.oled.height,'pixels':self.oled.pixels() if oled_visible else [0]*(self.oled.width*self.oled.height),'on':oled_visible},'wires':list(self.wires),'managedWires':self.managed_wires(),'serialMode':self.serial_mode,'adc':self.adc.state(),'flash':self.flash.state(),'internalFlash':self.fmc.state(),'analog':self.v2_devices.state(),'serial':list(self.logs),'diagnostics':list(self.diagnostics),'engine':{'version':VERSION,'mode':'functional','cycleAccurate':False,'clockTicksPerInstruction':self.board.get('clockTicksPerInstruction',1),'supported':('GPIO, USART RX/IDLE IRQ, GPIO I2C OLED, SysTick, internal Flash, ADC PC0/PC1/PC2, DAC PA4, SPI0 GD25Q40E' if self.board['id']=='cimc-v2' else 'GPIO, polling USART, GPIO I2C OLED, basic SysTick, software ADC, SPI1 GD25Q40E')}}

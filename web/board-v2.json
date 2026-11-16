@@ -21,7 +21,7 @@
     "板内固定铜线保存在 fixedNets，固件代码的外接线作为可删除示例保存。",
     "OLED 的 PB8/PB9 和供电、PC0 的板载 VR1、USART 固定引出与 RS485 方向线按原图保持。",
     "原图暴露的 GPIO 排针允许新增跳线，新增线与原有固定网络共同参与电平解析。",
-    "PA5/PA7 等与 DAC/Ethernet 共享的原网络保持，外接 PT100 示例通过实际排针连接。",
+    "PA5/PA7 等与 DAC/Ethernet 共享的原网络按原图保持。",
     "用户于 2026-11-16 提供的 27_0_BootLoader 作为 V2 软件行为和示例接线依据。"
   ],
   "pins": [
@@ -2451,58 +2451,6 @@
       "connectable": true
     },
     {
-      "id": "PT100_SCK",
-      "net": "PT100_SCK",
-      "label": "PT100_SCK",
-      "group": "PT100",
-      "kind": "signal",
-      "verified": false,
-      "physicalPinVerified": false,
-      "evidence": "Functional endpoint from user V2 driver; physical connector number pending schematic",
-      "x": 450,
-      "y": 185,
-      "connectable": true
-    },
-    {
-      "id": "PT100_MISO",
-      "net": "PT100_MISO",
-      "label": "PT100_MISO",
-      "group": "PT100",
-      "kind": "signal",
-      "verified": false,
-      "physicalPinVerified": false,
-      "evidence": "Functional endpoint from user V2 driver; physical connector number pending schematic",
-      "x": 450,
-      "y": 208,
-      "connectable": true
-    },
-    {
-      "id": "PT100_MOSI",
-      "net": "PT100_MOSI",
-      "label": "PT100_MOSI",
-      "group": "PT100",
-      "kind": "signal",
-      "verified": false,
-      "physicalPinVerified": false,
-      "evidence": "Functional endpoint from user V2 driver; physical connector number pending schematic",
-      "x": 450,
-      "y": 231,
-      "connectable": true
-    },
-    {
-      "id": "PT100_CS",
-      "net": "PT100_CS",
-      "label": "PT100_CS",
-      "group": "PT100",
-      "kind": "signal",
-      "verified": false,
-      "physicalPinVerified": false,
-      "evidence": "Functional endpoint from user V2 driver; physical connector number pending schematic",
-      "x": 450,
-      "y": 254,
-      "connectable": true
-    },
-    {
       "id": "ADC_IN10",
       "net": "ADC_IN10",
       "label": "ADC_IN10",
@@ -2529,17 +2477,32 @@
       "connectable": true
     },
     {
-      "id": "DAC_OUT0",
-      "net": "DAC_OUT0",
-      "label": "DAC_OUT0",
-      "group": "ANALOG",
+      "id": "S_ADC",
+      "net": "S_ADC",
+      "label": "S_ADC",
+      "group": "SENSOR",
       "kind": "signal",
-      "verified": false,
-      "physicalPinVerified": false,
-      "evidence": "Functional endpoint from user V2 driver; physical connector number pending schematic",
+      "verified": true,
+      "physicalPinVerified": true,
+      "evidence": "V2 schematic p2 H6 pin 5",
       "x": 450,
-      "y": 523,
-      "connectable": true
+      "y": 195,
+      "connectable": true,
+      "number": 5
+    },
+    {
+      "id": "S_DAC",
+      "net": "S_DAC",
+      "label": "S_DAC",
+      "group": "SENSOR",
+      "kind": "signal",
+      "verified": true,
+      "physicalPinVerified": true,
+      "evidence": "V2 schematic p2 H6 pin 6",
+      "x": 450,
+      "y": 221,
+      "connectable": true,
+      "number": 6
     },
     {
       "id": "ADC_IN12",
@@ -4254,46 +4217,6 @@
       "editable": true
     },
     {
-      "id": "v2-example-dac_out0",
-      "a": "PA4",
-      "b": "DAC_OUT0",
-      "evidence": "User V2 driver example, 2026-11-16",
-      "verified": false,
-      "editable": true
-    },
-    {
-      "id": "v2-example-pt100_sck",
-      "a": "PA5",
-      "b": "PT100_SCK",
-      "evidence": "User V2 driver example, 2026-11-16",
-      "verified": false,
-      "editable": true
-    },
-    {
-      "id": "v2-example-pt100_miso",
-      "a": "PA6",
-      "b": "PT100_MISO",
-      "evidence": "User V2 driver example, 2026-11-16",
-      "verified": false,
-      "editable": true
-    },
-    {
-      "id": "v2-example-pt100_mosi",
-      "a": "PA7",
-      "b": "PT100_MOSI",
-      "evidence": "User V2 driver example, 2026-11-16",
-      "verified": false,
-      "editable": true
-    },
-    {
-      "id": "v2-example-pt100_cs",
-      "a": "PB10",
-      "b": "PT100_CS",
-      "evidence": "User V2 driver example, 2026-11-16",
-      "verified": false,
-      "editable": true
-    },
-    {
       "id": "v2-example-led1",
       "a": "PE6",
       "b": "LED1",
@@ -4465,19 +4388,8 @@
   "dac": {
     "pin": "PA4",
     "channel": 0,
-    "terminal": "DAC_OUT0",
+    "signalNet": "DAC0_OUT",
     "locked": false
-  },
-  "pt100": {
-    "peripheral": "SPI0",
-    "cs": "PB10",
-    "sck": "PA5",
-    "miso": "PA6",
-    "mosi": "PA7",
-    "csTerminal": "PT100_CS",
-    "sckTerminal": "PT100_SCK",
-    "misoTerminal": "PT100_MISO",
-    "mosiTerminal": "PT100_MOSI"
   },
   "referenceImage": "assets/board-v2.jpg",
   "fixedVisualWires": [
