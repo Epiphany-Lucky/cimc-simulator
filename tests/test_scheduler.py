@@ -23,6 +23,7 @@ class SchedulerTests(unittest.TestCase):
     def setUp(self):
         self.s = Simulator(ROOT)
         self.s.close()  # Join the worker; manual run_chunk remains supported.
+        self.s.board['clockTicksPerInstruction'] = 1  # Fixture LOAD=999 uses one HCLK per instruction.
         self.raw = (ROOT / 'firmware/systick.hex').read_bytes()
         self.load()
 
@@ -272,6 +273,42 @@ class SchedulerTests(unittest.TestCase):
                                 cwd=ROOT, capture_output=True, text=True, timeout=10)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertTrue(json.loads(result.stdout)['resumed'])
+
+
+class DefaultTimingProfileTests(unittest.TestCase):
+    def test_both_board_defaults_advance_systick_and_timer_from_one_clock(self):
+        raw = (ROOT / 'firmware/systick_interactive.hex').read_bytes()
+        for board in ('cimc-v1', 'cimc-v2'):
+            with self.subTest(board=board):
+                simulator = Simulator(ROOT)
+                simulator.close()
+                try:
+                    simulator.select_board(board)
+                    self.assertEqual(simulator.board['clockTicksPerInstruction'], 240)
+                    baseline = None
+                    for chunks in ([10037], [1000] * 10 + [37]):
+                        simulator.load(raw, 'systick_interactive.hex')
+                        simulator._write(0x40023840, 1 << 4)  # TIMER5, APB1 divider1.
+                        simulator._write(0x4000102C, 0xFFFF)
+                        simulator._write(0x40001014, 1)
+                        simulator._write(0x40001000, 1)
+                        for count in chunks:
+                            self.assertEqual(simulator.run_chunk(count), count)
+                        ticks = struct.unpack('<I', simulator.uc.mem_read(SRAM, 4))[0]
+                        self.assertGreaterEqual(ticks, 8)
+                        self.assertLessEqual(ticks, 11)
+                        self.assertEqual(simulator.timing_ticks, 10037 * 240)
+                        counter = simulator._read(0x40001024)
+                        self.assertEqual(counter, simulator.timing_ticks % 65536)
+                        snapshot = (ticks, tuple(simulator.uc.reg_read(register) for register in CORE_REGS),
+                                    dict(simulator.systick), counter)
+                        if baseline is None:
+                            baseline = snapshot
+                        else:
+                            self.assertEqual(snapshot, baseline)
+                        self.assertNotEqual(simulator.status, 'faulted', simulator.diagnostics)
+                finally:
+                    simulator.close()
 
 
 if __name__ == '__main__':

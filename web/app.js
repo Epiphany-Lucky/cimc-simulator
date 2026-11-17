@@ -13,6 +13,8 @@
   let firmwareDraft = [], firmwareDraftBoot = null, firmwareDraftSequence = 0, firmwareSetBusy = false, firmwareSetReturnFocus = null;
   let schematicTitles = ['MCU 与排针','板载外设','电源','串口通信'];
   const heldKeys = new Set();
+  const pendingKeyStates = new Map();
+  let keyCommandQueue = Promise.resolve();
   const themeColors = ['blue', 'teal', 'green', 'purple', 'rose', 'amber'];
   const defaultPreferences = { labels: false, motion: false, shortcuts: true, autoUpdates: true, themeColor: 'blue' };
   const storedPreferences = readStorage('cimc.studio.preferences', {});
@@ -144,7 +146,7 @@
     $('cpu-pc').textContent = address(next.cpu?.pc);
     $('cpu-instructions').textContent = Number(next.cpu?.instructions || 0).toLocaleString('en-US');
     renderLeds(next.leds || []);
-    (next.keys || []).forEach((pressed, i) => { const key = $('keys').children[i]; if (key) key.classList.toggle('pressed', !!(typeof pressed === 'object' ? pressed.pressed : pressed)); });
+    (next.keys || []).forEach((pressed, i) => { const key = $('keys').children[i]; if (key) key.classList.toggle('pressed', pendingKeyStates.get(i)?.pressed ?? !!(typeof pressed === 'object' ? pressed.pressed : pressed)); });
     renderOled(next.oled);
     renderAdc(next.adc);
     renderFlash(next.flash);
@@ -362,8 +364,19 @@
     if (pressed && (!connected || !hasFirmware())) return;
     if (pressed === heldKeys.has(index)) return;
     if (pressed) heldKeys.add(index); else heldKeys.delete(index);
-    const result = await command('key', { index, pressed }, pressed);
-    if (!result && pressed) heldKeys.delete(index);
+    const pending = { pressed };
+    pendingKeyStates.set(index, pending);
+    $('keys').children[index]?.classList.toggle('pressed', pressed);
+    const sending = keyCommandQueue.then(() => command('key', { index, pressed }, pressed));
+    keyCommandQueue = sending;
+    const result = await sending;
+    if (pendingKeyStates.get(index) === pending) {
+      pendingKeyStates.delete(index);
+      if (!result && pressed) {
+        heldKeys.delete(index);
+        $('keys').children[index]?.classList.remove('pressed');
+      }
+    }
   }
 
   function releaseKeys() { for (const index of [...heldKeys]) void pressKey(index, false); }

@@ -5,6 +5,7 @@ from html import escape
 
 ROOT=Path(__file__).resolve().parents[1]
 board={'schemaVersion':1,'id':'cimc-v1','name':'CIMC GD32F470VET6 V1.0','verified':False,
+ 'clockTicksPerInstruction':240,
  'evidenceStatus':'schematic-verified-scope','viewBox':[0,0,1000,650],'image':'assets/board-v1.svg',
  'coordinates':'Schematic connection diagram; not a photograph or PCB placement. Header numbers follow the V1.0 PDF.',
  'notes':['V1.0 原理图四页已取得；本版显示原理图接线视图，不用 V2 照片代替 V1。',

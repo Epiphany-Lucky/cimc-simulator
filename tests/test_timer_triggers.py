@@ -52,9 +52,10 @@ class TimerTriggerTests(unittest.TestCase):
     def test_adc_compare_event_uses_correct_timer_and_channel(self):
         self.setup_adc('cimc-v1',1)  # TIMER0 CH1.
         s=self.sim
-        s._write(0x4001002C,99)
-        s._write(0x40010034,2)
-        s._write(0x40010038,5)
+        ticks=s.board['clockTicksPerInstruction']
+        s._write(0x4001002C,100*ticks-1)
+        s._write(0x40010034,2*ticks)
+        s._write(0x40010038,5*ticks)
         s._write(0x40010014,1)
         s._write(0x40010000,1)
         s.run_chunk(2)

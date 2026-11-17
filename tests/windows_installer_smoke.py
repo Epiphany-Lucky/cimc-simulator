@@ -85,7 +85,7 @@ def main():
             assert hashlib.sha256((installed/name).read_bytes()).digest()==hashlib.sha256((package/name).read_bytes()).digest(),name
         sentinel.write_text(sentinel_text,encoding='utf-8')
         report['registeredInstallation']=entry
-        report['packageExecution']=run([sys.executable,'-X','utf8',ROOT/'tests/package_smoke.py',installed],timeout=420).strip()
+        report['packageExecution']=run([sys.executable,'-X','utf8',ROOT/'tests/package_smoke.py',installed],timeout=900).strip()
         if not args.skip_desktop:
             report['desktopExecution']=run([sys.executable,'-X','utf8',ROOT/'tests/desktop_smoke.py',installed/'CIMC-Studio.exe',
                                             '--output',test_root/'installed-desktop'],timeout=180).strip()

@@ -24,6 +24,9 @@ GD32F470xx数据手册Rev2.2第3.10节将定时器分为14个TIMER、24位SysTic
 | 主题颜色保存与重启 | 用户配置5项、服务10项及六色浏览器交互通过 | tests/test_preferences.py、tests/test_server.py、artifacts/theme-ui-smoke.json |
 | Windows全部源码检查 | 待验 | 待记录 |
 | 浏览器定时器面板与适配 | 两板、14行状态、导出和窄屏通过，JavaScript错误为空 | artifacts/v06-timer-ui-smoke.json |
+| 暂停态输入顺序和立即反馈 | 30毫秒按下/松开、350毫秒按下请求延迟、鼠标拖出释放和键盘失焦释放通过 | artifacts/key-ui-smoke.json、artifacts/v06-key-event-race-before.json、artifacts/v06-key-event-race-after.json |
+| DEMO2按键扫描及LED响应时钟定位 | 同一HEX由1.947秒/152万条指令改善为21毫秒/1万条指令 | artifacts/v06-key-clock-diagnosis.json |
+| DEMO2真实DOM按压与LED响应 | 23项通过，含鼠标/键盘50、100、200毫秒目标各3次 | artifacts/v06-key-ui-independent.json |
 | Windows冻结包及原生安装 | 待验 | 待记录 |
 | Ubuntu/Debian分发验收 | 待验 | 待记录 |
 | 同一Linux发行包WSL补验 | 待验 | 待记录 |
@@ -51,11 +54,35 @@ GD32F470xx数据手册Rev2.2第3.10节将定时器分为14个TIMER、24位SysTic
 
 设置中的“主题颜色”提供蓝色、青色、绿色、紫色、玫红、琥珀六种强调色。选择保存在用户配置，并与当前浏览器偏好同步。六色交互、重新打开、窄屏和颜色可访问性检查通过，最低对比度为4.697。实际记录见 `artifacts/theme-ui-smoke.json`。
 
+浏览器验收逐一切换六色并刷新，关闭并重新打开持久浏览器配置，再从独立上下文及另一localhost来源读取同一配置，均恢复预期颜色。键盘方向键选择、快速连续切换、旧版非法缓存回退及延迟初始状态返回检查通过。六种主按钮的文字对比度为4.697～5.906，激活导航为5.900～7.330。硬件连线的实际颜色保持一致，主题操作发送的仿真命令数为0，JavaScript错误列表为空。
+
+1024×600及390×844的设置弹窗保持在视口内，页面无横向溢出。截图位于 `artifacts/theme-ui-1024.png` 和 `artifacts/theme-ui-390.png`。用户配置文件位于Windows的 `%LOCALAPPDATA%\CIMCStudio\preferences.json` 或Linux的 `$XDG_CONFIG_HOME/cimc-studio/preferences.json`，Linux未设置XDG目录时使用 `~/.config/cimc-studio/preferences.json`。同源JSON接口校验颜色固定集合，写入通过原子替换完成。验收服务使用独立配置目录。
+
+## 按键响应
+
+用户报告的固件为 `D:\desktop\CIMC_DEMO\DEMO2\CIMC_DEMO\MDK-ARM\build\CIMC_DEMO\CIMC_DEMO.hex`，本次时钟定位的SHA-256为 `e5990ebfef5fc8a8b81e45bfdeea35db623391d19d95892ff11ea5cd6781a030`，已与磁盘文件核对。V1原每条指令1个HCLK tick时，一次实际按键扫描及LED响应执行152万条指令、耗时1.946576秒。改为240后，实际响应执行1万条指令、耗时0.021035秒。DEMO2通过10毫秒调度扫描和KEY_Down边沿处理按键。CPU仍执行真实固件，按键通过实际GPIO网络输入。该测试主机的两次HAL tick分别由11→20和19→33，证据为 `artifacts/v06-key-clock-diagnosis.json`。
+
+浏览器原先在按下请求延迟350毫秒时可重现松开后后端仍按下，报告为 `artifacts/v06-key-event-race-before.json`。按顺序提交后，相同延迟下后端最终释放，见 `artifacts/v06-key-event-race-after.json`。`tests/key_ui_smoke.py` 在暂停态进一步验证30毫秒按下/松开的输入顺序、立即反馈、鼠标捕获后在外释放及键盘失焦释放，全部通过且无JavaScript错误。记录为 `artifacts/key-ui-smoke.json`。
+
+独立浏览器随后从文件界面导入同一DEMO2的12线工程，以真实原生鼠标和键盘事件分别执行50、100、200毫秒目标按压，每组各3次，18次均由固件翻转LED2。浏览器使用 `performance.now()` 定时释放，并记录实际DOM按下/松开，50毫秒目标实际为52.2～55.1毫秒，100毫秒为102.2～106.9毫秒，200毫秒为203.3～205.8毫秒。KEY2～KEY5另各执行100毫秒目标按压，分别翻转LED3～LED6。该固件为KEY1～KEY5配置LED动作，KEY6项检查释放及LED状态保持，合计23项通过。
+
+每项HTTP按下/松开顺序正确，最终全部按键释放，无JavaScript错误，即时样式反馈最长8.1毫秒。18项主测试首次观察到GPIO结果的前台延迟为43.9～321.6毫秒，另有KEY2项为440.8毫秒，包含130毫秒轮询、HTTP和宿主调度时间。证据为 `artifacts/v06-key-ui-independent.json` 和截图。测试私有服务及配置均已清理。
+
 ## 原始DEMO与性能回归
 
-原始用户DEMO按实际机器码在两板验证启动、复位、工程恢复和分块一致性，通过，用时36.602秒。每25万条指令读取一次真实HAL计数，V1为1、2、4、5，V2为362、719、1076、1434，变化对应本版修正后的SysTick初始相位。LED输出仍符合原程序。证据为 `artifacts/v06-original-demo-regression.json`。
+原始用户DEMO按实际机器码在两板验证启动、复位、工程恢复和分块一致性，通过，用时16.116秒。V1/V2默认均为每条实际指令240个HCLK tick，每25万条指令读取一次真实HAL计数，两板均为362、719、1076、1434。LED输出仍符合原程序。证据为 `artifacts/v06-original-demo-regression.json`。
 
-热路径相关70项检查通过，用时8.099秒。无活动定时器的交错吞吐对比为0.83696，约有16%的模型开销，见 `artifacts/v06-inactive-timer-profile.json`。极端V2 PWM测试中，CAR为1的1000条CPU指令约用时5.322秒，来自必须处理的外设事件数量。高频路径将宿主时间检查间隔缩小到8条指令，观察到单次短片约40毫秒。此记录属于功能模型吞吐和响应性，实际主机性能会影响耗时。
+该回归使用此前保存的自包含工程，原始DEMO1的HEX SHA-256为 `6c4c6c6cb0cf775f128868702c071a97fcaf6cef17b1fc0d485a6c542f1d8ff2`，与当前磁盘HEX一致。V1/V2各执行100万条指令，六路LED均为亮、灭、亮、灭、亮、亮。最终比较包含CPU、SRAM、CCM、外设寄存器、SysTick、定时器及看门狗，三个指令分块方案的结果一致。
+
+首轮热路径相关70项检查通过，用时8.099秒。无活动定时器的交错吞吐对比使用真实V2 Boot/App，为0.83696，约有16%的模型开销，见 `artifacts/v06-inactive-timer-profile.json`。极端V2 PWM测试中，CAR为1的1000条CPU指令约用时5.322秒，来自必须处理的外设事件数量。高频路径将宿主时间检查间隔缩小到8条指令，观察到单次短片约40毫秒。此记录属于功能模型吞吐和响应性，实际主机性能会影响耗时。
+
+## 冻结包启动预算
+
+源码 `03c814205c3d03110f699f7a501a1e8a5e1c3584` 的首轮本机原生安装验收在V2 Boot/App启动阶段达到240秒墙钟上限，执行52,518,016条指令，无诊断且仍在OLED软件I2C的 `iic_delay`。失败记录保存在 `artifacts/installer-smoke-827fc96c7c00/result.json`。
+
+随后单独运行同一冻结内核的正常V2入口，首次观察到完整RS485启动帧时已执行60,871,552条指令、耗时160.957秒，向量表为 `0x08011000`，无诊断。记录见 `artifacts/v06-pre-keyfix-frozen-v2-startup.json`。该探针首次结束时遇到PyInstaller子进程句柄退出问题，已核实专属PID并清理，报告保留处理记录。完整CI的Linux和Windows冻结固件执行均已通过原240秒预算。
+
+据实际指令需求，包验收将V2启动墙钟预算扩展到600秒，同时设置8000万条实际指令上限。Windows安装验收外层包执行预算为900秒。Linux工作流直接运行脚本，其外层未设置更短超时，启动预算由同一脚本控制。后续最终源码及原生安装结果另填入上表。
 
 ## 功能时钟范围
 

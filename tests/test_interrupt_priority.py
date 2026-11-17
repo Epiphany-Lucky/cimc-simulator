@@ -65,6 +65,7 @@ class InterruptPriorityTests(unittest.TestCase):
 
     def test_systick_external_clock_is_hclk_divided_by_eight(self):
         s=self.sim
+        s.board['clockTicksPerInstruction']=1  # The 180-instruction budget spans 180 HCLK ticks.
         s.load((ROOT/'firmware/systick.hex').read_bytes(),'systick.hex')
         for _ in range(100):
             s.run_chunk(1)

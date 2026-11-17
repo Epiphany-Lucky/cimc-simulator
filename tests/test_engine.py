@@ -16,6 +16,7 @@ class EngineTests(unittest.TestCase):
     def setUp(self):
         self.s=Simulator(ROOT)
         self.s.closed=True
+        self.s.board['clockTicksPerInstruction']=1  # Original instruction-budget fixtures use a 1:1 HCLK scale.
 
     def tearDown(self):self.s.closed=True
 

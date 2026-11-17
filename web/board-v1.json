@@ -1,6 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "cimc-v1",
+  "clockTicksPerInstruction": 240,
   "name": "CIMC GD32F470VET6 V1.0",
   "verified": false,
   "evidenceStatus": "schematic-verified-scope",

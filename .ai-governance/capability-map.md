@@ -39,3 +39,4 @@
 | 中断优先级与等待 | 扩展 | engine/simulator.py, tests/test_interrupt_priority.py, tests/test_sleep.py, tests/test_scheduler.py | NVIC分组/屏蔽/抢占及WFI/SLEEPONEXIT，独立虚拟外设时钟与真实CPU指令计数，修正SysTick重装载与1到0事件 |
 | 定时器观察界面 | 扩展 | web/index.html, web/app.js, web/styles.css | 底部定时器页读取14实例、通道及SysTick/看门狗状态，实际Keil固件入口复用导入和运行命令 |
 | 主题颜色用户偏好 | 扩展 | engine/preferences.py, engine/server.py, web/app.js | 六种强调色通过用户配置保存，浏览器偏好及动态端口启动使用同一颜色设置 |
+| 按键短按响应 | 修复并扩展 | web/board-v1.json, scripts/generate-board-v1.py, web/app.js, tests/key_ui_smoke.py | 两板统一功能时钟推进量，真实DEMO2按10ms扫描周期执行；按下/松开串行发送，保留本地即时反馈与鼠标捕获/键盘失焦释放 |

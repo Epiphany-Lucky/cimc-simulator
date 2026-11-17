@@ -26,6 +26,7 @@ class SleepTests(unittest.TestCase):
     def setUp(self):
         self.sim = Simulator(ROOT)
         self.sim.close()
+        self.sim.board['clockTicksPerInstruction'] = 1  # Exercise exact HCLK sleep boundaries.
         self.load()
 
     def tearDown(self):

@@ -215,11 +215,11 @@ try:
     # actual frozen worker. Interleave paired trials to reduce host-load drift;
     # this is a broad regression threshold, not a real-time MCU speed promise.
     noirq=struct.pack('<IIHH',0x20010000,0x08000009,0xBF00,0xE7FD)
-    tick=(package/'firmware/systick.hex').read_bytes()
+    tick=(package/'firmware/systick_interactive.hex').read_bytes()
     rates={'systick':[],'noirq':[]}
     for order in (('systick','noirq'),('noirq','systick'),('systick','noirq')):
         for name in order:
-            rates[name].append(scheduler_sample('systick.hex' if name=='systick' else 'noirq.bin',
+            rates[name].append(scheduler_sample('systick_interactive.hex' if name=='systick' else 'noirq.bin',
                                                 tick if name=='systick' else noirq))
     ratio=statistics.median(rates['systick'])/statistics.median(rates['noirq'])
     print('Frozen scheduler paired samples: '+json.dumps({'instructionsPerSecond':rates,'systickToNoIrq':ratio}),flush=True)
@@ -239,11 +239,16 @@ try:
     assert len(loaded['firmwares'])==2
     assert any({w['from'],w['to']}=={'PE6','LED1'} for w in loaded['wires'])
     command('run')
-    deadline=time.monotonic()+240
+    # The real OLED software-I2C startup takes about 61 million instructions.
+    # Bound firmware progress independently from slower or contended hosts.
+    deadline=time.monotonic()+600
+    instruction_deadline=loaded['cpu']['instructions']+80000000
     while time.monotonic()<deadline:
         current=state()
         assert current['status']!='faulted',current['diagnostics']
         if has_tx(current,'A5B60001058888000263A1B6A5','rs485'):break
+        if current['cpu']['instructions']>=instruction_deadline:
+            fail('V2 real Bootloader/App startup exceeded 80 million instructions',current)
         time.sleep(.2)
     else:fail('V2 real Bootloader/App startup timeout',current)
     assert current['currentVectorAddress']=='0x08011000'
