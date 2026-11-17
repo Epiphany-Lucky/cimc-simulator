@@ -24,7 +24,7 @@ GD32F470xx数据手册Rev2.2第3.10节将定时器分为14个TIMER、24位SysTic
 | 主题颜色保存与重启 | 用户配置5项、服务10项及六色浏览器交互通过 | tests/test_preferences.py、tests/test_server.py、artifacts/theme-ui-smoke.json |
 | Windows全部源码检查 | 待验 | 待记录 |
 | 浏览器定时器面板与适配 | 两板、14行状态、导出和窄屏通过，JavaScript错误为空 | artifacts/v06-timer-ui-smoke.json |
-| 暂停态输入顺序和立即反馈 | 30毫秒按下/松开、350毫秒按下请求延迟、鼠标拖出释放和键盘失焦释放通过 | artifacts/key-ui-smoke.json、artifacts/v06-key-event-race-before.json、artifacts/v06-key-event-race-after.json |
+| 暂停态输入顺序和立即反馈 | 30毫秒按下/松开、350毫秒按下请求延迟、鼠标拖出、失焦及弹窗内快捷键释放通过 | artifacts/key-ui-smoke.json、artifacts/v06-key-event-race-before.json、artifacts/v06-key-event-race-after.json |
 | DEMO2按键扫描及LED响应时钟定位 | 同一HEX由1.947秒/152万条指令改善为21毫秒/1万条指令 | artifacts/v06-key-clock-diagnosis.json |
 | DEMO2真实DOM按压与LED响应 | 23项通过，含鼠标/键盘50、100、200毫秒目标各3次 | artifacts/v06-key-ui-independent.json |
 | Windows冻结包及原生安装 | 待验 | 待记录 |
@@ -64,6 +64,8 @@ GD32F470xx数据手册Rev2.2第3.10节将定时器分为14个TIMER、24位SysTic
 
 浏览器原先在按下请求延迟350毫秒时可重现松开后后端仍按下，报告为 `artifacts/v06-key-event-race-before.json`。按顺序提交后，相同延迟下后端最终释放，见 `artifacts/v06-key-event-race-after.json`。`tests/key_ui_smoke.py` 在暂停态进一步验证30毫秒按下/松开的输入顺序、立即反馈、鼠标捕获后在外释放及键盘失焦释放，全部通过且无JavaScript错误。记录为 `artifacts/key-ui-smoke.json`。
 
+随后确认按住数字快捷键时打开设置或帮助弹窗，会因全局keyup的弹窗判断跳过释放。修正后，数字1按下、打开设置、松开的原生键盘回归通过，`numericShortcutModalRelease` 为true。该检查已加入 `tests/key_ui_smoke.py`，随包执行。
+
 独立浏览器随后从文件界面导入同一DEMO2的12线工程，以真实原生鼠标和键盘事件分别执行50、100、200毫秒目标按压，每组各3次，18次均由固件翻转LED2。浏览器使用 `performance.now()` 定时释放，并记录实际DOM按下/松开，50毫秒目标实际为52.2～55.1毫秒，100毫秒为102.2～106.9毫秒，200毫秒为203.3～205.8毫秒。KEY2～KEY5另各执行100毫秒目标按压，分别翻转LED3～LED6。该固件为KEY1～KEY5配置LED动作，KEY6项检查释放及LED状态保持，合计23项通过。
 
 每项HTTP按下/松开顺序正确，最终全部按键释放，无JavaScript错误，即时样式反馈最长8.1毫秒。18项主测试首次观察到GPIO结果的前台延迟为43.9～321.6毫秒，另有KEY2项为440.8毫秒，包含130毫秒轮询、HTTP和宿主调度时间。证据为 `artifacts/v06-key-ui-independent.json` 和截图。测试私有服务及配置均已清理。
@@ -83,6 +85,12 @@ GD32F470xx数据手册Rev2.2第3.10节将定时器分为14个TIMER、24位SysTic
 随后单独运行同一冻结内核的正常V2入口，首次观察到完整RS485启动帧时已执行60,871,552条指令、耗时160.957秒，向量表为 `0x08011000`，无诊断。记录见 `artifacts/v06-pre-keyfix-frozen-v2-startup.json`。该探针首次结束时遇到PyInstaller子进程句柄退出问题，已核实专属PID并清理，报告保留处理记录。完整CI的Linux和Windows冻结固件执行均已通过原240秒预算。
 
 据实际指令需求，包验收将V2启动墙钟预算扩展到600秒，同时设置8000万条实际指令上限。Windows安装验收外层包执行预算为900秒。Linux工作流直接运行脚本，其外层未设置更短超时，启动预算由同一脚本控制。后续最终源码及原生安装结果另填入上表。
+
+## 宿主待机中断及重验
+
+第二轮本机原生安装验收 `installer-smoke-3d06d4de0df4` 已通过定时器、看门狗和相对吞吐检查，V2启动时在途 `/api/state` 请求超出10秒时限。同一时段冻结界面验收已有6项通过，随后V2原理图检查达到180秒子进程时限。原失败记录分别保存在 `artifacts/installer-smoke-3d06d4de0df4/result.json` 和 `artifacts/v06-standby-interrupted-frozen-ui-suite.json`。
+
+Windows System日志确认10:18:31.5988607因Lid进入现代待机，10:27:29.5651274因Lid退出，期间还记录电量预算触发的待机转换。该时间段与工具60秒等待实际耗时约561秒相符。事件506/507及原始原因已归档 `artifacts/v06-host-standby-events.json`。本轮留存失败记录，软件及HTTP时限保持原值，最终验收在宿主恢复后原样重新执行。
 
 ## 功能时钟范围
 

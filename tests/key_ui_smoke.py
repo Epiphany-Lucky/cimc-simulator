@@ -69,6 +69,16 @@ with sync_playwright() as playwright:
     page.locator('#settings-button').focus()
     page.keyboard.up('Space')
     wait_for_api_state(page, URL, lambda state: not any(state['keys']))
+    # A numeric shortcut can be held while another control opens a modal.
+    # Its real keyup must release the hardware input while that modal is open.
+    page.locator('#run-button').focus()
+    page.keyboard.down('1')
+    wait_for_api_state(page, URL, lambda state: state['keys'][0])
+    page.locator('#settings-button').click()
+    expect(page.locator('#settings-dialog')).to_be_visible()
+    page.keyboard.up('1')
+    wait_for_api_state(page, URL, lambda state: not any(state['keys']))
+    page.locator('#settings-dialog [data-close]').first.click()
     assert not errors, errors
     context.close()
     browser.close()
@@ -77,5 +87,6 @@ with sync_playwright() as playwright:
     'passed': True, 'delayedDownMs': 350, 'shortTapMs': 30,
     'immediateFeedback': immediate, 'orderedDownUp': True,
     'mouseCaptureRelease': True, 'keyboardBlurRelease': True,
+    'numericShortcutModalRelease': True,
     'javascriptErrors': errors}, indent=2), encoding='utf-8')
-print('PASS: ordered short key events, immediate feedback, mouse capture and keyboard focus release')
+print('PASS: ordered short key events, immediate feedback, mouse capture, keyboard focus and modal shortcut release')

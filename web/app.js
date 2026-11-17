@@ -1026,7 +1026,9 @@
   document.addEventListener('visibilitychange', periodicUpdate);
   function editing(){return ['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)||document.activeElement?.getAttribute('role')==='slider'||document.querySelector('dialog[open]');}
   window.addEventListener('keydown',e=>{if(document.querySelector('dialog[open]')){if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='o')e.preventDefault();return;}if(e.key==='Escape'){clearPinSelection();$('board-card').classList.remove('expanded');}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='o'){e.preventDefault();$('firmware-file').click();return;}if(editing())return;if(e.code==='Space'&&document.activeElement?.tagName!=='BUTTON'){e.preventDefault();if(!e.repeat&&!$('run-button').disabled)$('run-button').click();}if(preferences.shortcuts&&/^[1-6]$/.test(e.key)&&!e.repeat){e.preventDefault();void pressKey(Number(e.key)-1,true);}});
-  window.addEventListener('keyup',e=>{if(document.querySelector('dialog[open]'))return;if(/^[1-6]$/.test(e.key))void pressKey(Number(e.key)-1,false);});
+  window.addEventListener('keyup', e => {
+    if (/^[1-6]$/.test(e.key)) void pressKey(Number(e.key)-1, false);
+  });
   window.addEventListener('blur',releaseKeys);
   document.addEventListener('visibilitychange',()=>{if(document.hidden)releaseKeys();});
 
