@@ -18,7 +18,7 @@ with tempfile.TemporaryDirectory(prefix='cimc-browser-') as directory:
     runtime=Path(directory);runtime.chmod(0o700)
     with socket.socket() as sock:sock.bind(('127.0.0.1',0));port=sock.getsockname()[1]
     url=f'http://127.0.0.1:{port}'
-    environment={**os.environ,'XDG_RUNTIME_DIR':str(runtime)}
+    environment={**os.environ,'XDG_RUNTIME_DIR':str(runtime),'CIMC_CONFIG_DIRECTORY':str(runtime/'preferences')}
     log=(ROOT/'artifacts/linux-browser-engine.log');log.parent.mkdir(exist_ok=True)
     with log.open('w',encoding='utf-8') as output:
         process=subprocess.Popen([str(package/'CIMC-Engine'),'--desktop','--no-open-browser',
@@ -33,7 +33,7 @@ with tempfile.TemporaryDirectory(prefix='cimc-browser-') as directory:
                     break
                 except OSError:time.sleep(.25)
             else:raise RuntimeError('Linux desktop session startup timeout')
-            for script in ('ui_smoke.py','laptop_smoke.py','schematic_smoke.py','multifirmware_ui_smoke.py','update_ui_smoke.py','self_update_ui_smoke.py','v2_schematic_smoke.py','v2_ui_smoke.py'):
+            for script in ('ui_smoke.py','laptop_smoke.py','schematic_smoke.py','multifirmware_ui_smoke.py','update_ui_smoke.py','self_update_ui_smoke.py','v2_schematic_smoke.py','v2_ui_smoke.py','timer_ui_smoke.py','theme_ui_smoke.py'):
                 subprocess.run([sys.executable,str(ROOT/'tests'/script),url],cwd=ROOT,check=True)
             with sync_playwright() as playwright:
                 browser=playwright.chromium.launch(headless=True)

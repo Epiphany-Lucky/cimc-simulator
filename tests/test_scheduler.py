@@ -79,7 +79,7 @@ class SchedulerTests(unittest.TestCase):
         for chunks in ([128], [7] * 18 + [2], [1] * 128):
             self.load()
             self.initialize_timer()
-            self.s._write(LOAD, 0)
+            self.s._write(LOAD, 1)
             self.s._write(VALUE, 0)
             self.s._write(ICSR, 1 << 26)
             before = self.s.instructions
@@ -241,7 +241,7 @@ class SchedulerTests(unittest.TestCase):
                 time.sleep(0.005)
             assert live.instructions >= 500
             with live.lock:
-                live._write(0xE000E014, 0)  # Dense, continuously re-pending SysTick.
+                live._write(0xE000E014, 1)  # Dense, continuously re-pending SysTick.
                 live._write(0xE000E018, 0)
                 dense_start = live.instructions
                 dense_ticks = int.from_bytes(live.uc.mem_read(0x20000000, 4), 'little')

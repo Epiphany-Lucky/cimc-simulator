@@ -34,3 +34,8 @@
 | V2 ADC/DAC | 扩展 | engine/adc.py, engine/v2_devices.py | PC0/VR1、PC2/H7基准、PC1外接参考输入、DAC0 PA4原生引脚、SPI0 GD25Q40E，实际寄存器与工程保存 |
 | 应用内更新安装 | 扩展 | engine/self_update.py, engine/updates.py, engine/server.py, desktop/App.cs | 固定发行源、异步下载进度、大小/SHA256、同源会话校验、系统安装与重启 |
 | 外设位带访问 | 扩展 | engine/simulator.py, firmware/bitband_probe.c, tests/test_bitband.py, tests/package_smoke.py | V1/V2共享字对齐32位外设别名读写，复用真实寄存器与设备副作用；实际HAL用户HEX通过启动/SysTick/LED验收，未知目标和非法访问明确诊断 |
+| 全部 TIMER 与引脚事件 | 扩展 | engine/timers.py, engine/simulator.py, firmware/timer_probe.c, tests/test_timers.py | TIMER0～TIMER13按各自位宽/通道建模，复用真实MMIO、AF、接线和NVIC；预分频/影子更新/计数/PWM/捕获/触发由固件驱动 |
+| 两种看门狗与复位原因 | 新增 | engine/watchdogs.py, firmware/watchdog_probe.c, tests/test_watchdogs.py, tests/test_watchdog_runtime.py | 既有内核缺少FWDGT/WWDGT，新增独立IRC32K及APB时间基准、锁定/窗口/提前中断/系统复位，复用RCU和真实ARM重新启动 |
+| 中断优先级与等待 | 扩展 | engine/simulator.py, tests/test_interrupt_priority.py, tests/test_sleep.py, tests/test_scheduler.py | NVIC分组/屏蔽/抢占及WFI/SLEEPONEXIT，独立虚拟外设时钟与真实CPU指令计数，修正SysTick重装载与1到0事件 |
+| 定时器观察界面 | 扩展 | web/index.html, web/app.js, web/styles.css | 底部定时器页读取14实例、通道及SysTick/看门狗状态，实际Keil固件入口复用导入和运行命令 |
+| 主题颜色用户偏好 | 扩展 | engine/preferences.py, engine/server.py, web/app.js | 六种强调色通过用户配置保存，浏览器偏好及动态端口启动使用同一颜色设置 |

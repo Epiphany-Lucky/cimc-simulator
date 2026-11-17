@@ -22,6 +22,8 @@ from app_version import VERSION
 from firmware_images import parse_firmware, parse_image, assemble, prepare_set
 from fmc import InternalFlash
 from v2_devices import V2Devices
+from timers import TimerBank
+from watchdogs import Watchdogs
 
 FLASH = 0x08000000
 FLASH_SIZE = 0x80000
@@ -128,6 +130,7 @@ class Simulator:
         self.diagnostics=[]
         self.sequence=0
         self.closed=False
+        self.reset_flags=(1<<26)|(1<<27)
         self.board=self._load_board(board_id)
         self.keys=[False]*len(self.board.get('keyMappings',[]))
         self.adc=AdcDevice(self)
@@ -181,8 +184,26 @@ class Simulator:
 
     def _reset_devices(self):
         if hasattr(self, 'instructions'):self.flash.state()
-        self.regs={}
+        self.regs={0x40023874:self.reset_flags}
         self.instructions=0
+        self.timing_ticks=0
+        self._peripheral_ticks=0
+        self._timing_deadline=math.inf
+        self._timing_scheduled=False
+        self._timing_check_mask=63
+        self._syncing_timing=False
+        self._inside_code_hook=False
+        self.core_halted=False
+        self.cpu_sleeping=False
+        self._sleep_hints={}
+        for pattern,hint in ((b'\x30\xbf','wfi'),(b'\x20\xbf','wfe'),
+                             (b'\xaf\xf3\x03\x80','wfi'),(b'\xaf\xf3\x02\x80','wfe')):
+            offset=self.internal_flash.find(pattern)
+            while offset>=0:
+                if not offset&1:
+                    self._sleep_hints[FLASH+offset]=(hint,len(pattern))
+                    self._sleep_hints[offset]=(hint,len(pattern))
+                offset=self.internal_flash.find(pattern,offset+1)
         self.start_time=time.monotonic()
         self.gpio_state={p:{'mode':0,'otype':0,'pull':0,'out':0,'af0':0,'af1':0} for p in GPIO}
         self.rx={p:deque() for p in UART}
@@ -194,6 +215,7 @@ class Simulator:
         self.i2c={'active':False,'count':0,'value':0,'phase':'address','selected':False,'ack':False,'ack_clock':False,'control':0,'scl':1,'sda':1}
         self.systick={'ctrl':0,'reload':0,'value':0,'flag':False,'pending':False}
         self.in_exception=False
+        self.exception_stack=[]
         self.exception_return=False
         self.nvic_enable=0
         self.nvic_pending=0
@@ -208,6 +230,11 @@ class Simulator:
         self.flash.reset()
         self.fmc.reset()
         self.v2_devices.reset()
+        if hasattr(self,'timers'):self.timers.reset()
+        else:self.timers=TimerBank(self)
+        if hasattr(self,'watchdogs'):self.watchdogs.reset()
+        else:self.watchdogs=Watchdogs(self)
+        self._refresh_timing_deadline()
 
     def diagnose(self,message,level='error',**details):
         self.sequence+=1
@@ -282,6 +309,7 @@ class Simulator:
         uc.mmio_map(0x40000000,0x30000,self._mmio_read,0x40000000,self._mmio_write,0x40000000)
         uc.mmio_map(0x42000000,0x2000000,self._bitband_read,None,self._bitband_write,None)
         uc.mmio_map(0xE000E000,0x2000,self._mmio_read,0xE000E000,self._mmio_write,0xE000E000)
+        uc.mmio_map(0xE0042000,0x1000,self._mmio_read,0xE0042000,self._mmio_write,0xE0042000)
         uc.hook_add(UC_HOOK_MEM_INVALID,self._invalid)
         uc.hook_add(UC_HOOK_MEM_READ|UC_HOOK_MEM_WRITE,self._bitband_access,begin=0x42000000,end=0x43FFFFFF)
         uc.hook_add(UC_HOOK_CODE,self._code_hook)
@@ -309,15 +337,21 @@ class Simulator:
         if program:self.regs[0xE000ED08]=program.boot_address
         self.status='ready' if program else 'idle'
 
-    def reset(self):
+    def reset(self,*,preserve_ram=False):
         with self.lock:
             if self.program is None:return False
+            if not self.pending_reset:self.reset_flags|=1<<26
             try:program=self._current_program()
             except ValueError as error:
                 self.pending_reset=False
                 self.diagnose('系统复位失败：'+str(error))
                 return False
+            ram=bytes(self.uc.mem_read(SRAM,SRAM_SIZE)) if preserve_ram and self.uc else None
+            ccm=bytes(self.uc.mem_read(CCM,CCM_SIZE)) if preserve_ram and self.uc else None
             cpu=self._make_cpu(program)
+            if ram is not None:
+                cpu.mem_write(SRAM,ram)
+                cpu.mem_write(CCM,ccm)
             self.program=program
             self.image=program.flash
             self.flash_dirty=False
@@ -335,6 +369,63 @@ class Simulator:
             return self.program
         snapshot=parse_image(bytes(self.internal_flash),'internal-flash.bin',FLASH)
         return assemble((snapshot,),self.program.boot_address)
+
+    def hclk_frequency(self):
+        configuration=self.regs.get(0x40023808,0)
+        source=configuration&3
+        frequency=16000000
+        if source==1:frequency=25000000
+        elif source==2:
+            pll=self.regs.get(0x40023804,0x24003010)
+            divider=pll&63
+            multiplier=(pll>>6)&511
+            output_divider=2*(((pll>>16)&3)+1)
+            if divider and multiplier:
+                input_frequency=25000000 if pll&(1<<22) else 16000000
+                frequency=input_frequency*multiplier//(divider*output_divider)
+        ahb_shifts=(0,0,0,0,0,0,0,0,1,2,3,4,6,7,8,9)
+        return max(1,frequency>>ahb_shifts[(configuration>>4)&15])
+
+    def apb_clock_ratio(self,apb2=False):
+        shift=13 if apb2 else 10
+        selection=(self.regs.get(0x40023808,0)>>shift)&7
+        return 1,1<<max(0,selection-3)
+
+    def timer_clock_ratio(self,apb2=False):
+        _,divider=self.apb_clock_ratio(apb2)
+        multiplier=4 if self.regs.get(0x4002388C,0)&(1<<24) else 2
+        return 1,max(1,divider//multiplier)
+
+    def _refresh_timing_deadline(self):
+        self.timer_irqs=self.timers.pending_irqs()
+        self.watchdog_irqs=self.watchdogs.pending_irqs()
+        intervals=(self.timers.next_event_ticks(),self.watchdogs.next_event_ticks())
+        available=[value for value in intervals if value is not None]
+        self._timing_scheduled=bool(available)
+        self._timing_deadline=self.timing_ticks+max(1,min(available)) if available else math.inf
+        self._timing_check_mask=7 if available and min(available)<=self.board.get('clockTicksPerInstruction',1) else 63
+
+    def _sync_timing(self):
+        if self._syncing_timing:return
+        elapsed=self.timing_ticks-self._peripheral_ticks
+        if elapsed<=0:return
+        self._syncing_timing=True
+        try:
+            self._peripheral_ticks=self.timing_ticks
+            self.timers.advance(elapsed)
+            self.watchdogs.advance(elapsed)
+            self._refresh_timing_deadline()
+        finally:self._syncing_timing=False
+
+    def request_system_reset(self,reason='software'):
+        bits={'software':28,'fwdgt':29,'wwdgt':30}
+        self.reset_flags|=1<<bits[reason]
+        self.pending_reset=True
+        if self.uc and not self._inside_code_hook:self.uc.emu_stop()
+
+    def timer_trigger(self,timer,event,level=True):
+        self.adc.timer_trigger(timer,event,level)
+        self.v2_devices.timer_trigger(timer,event,level)
 
     def _invalid(self,uc,access,address,size,value,user):
         if access==UC_MEM_WRITE_PROT and self.board['id']=='cimc-v2' and (0<=address<FLASH_SIZE or FLASH<=address<FLASH+FLASH_SIZE):
@@ -389,6 +480,13 @@ class Simulator:
         return 0
 
     def _read(self,a):
+        self._sync_timing()
+        if self.timers.contains(a):
+            value=self.timers.read(a)
+            self._refresh_timing_deadline()
+            return value
+        if self.watchdogs.contains(a):return self.watchdogs.read(a)
+        if 0xE0042004<=a<=0xE004200C:return self.regs.get(a,0)
         if self.adc.contains(a):return self.adc.read(a)
         if self.flash.contains(a):return self.flash.read(a)
         if self.fmc.contains(a):return self.fmc.read(a)
@@ -397,6 +495,9 @@ class Simulator:
             return (self.nvic_enable>>(((a&0x7F)//4)*32))&0xFFFFFFFF
         if 0xE000E200<=a<0xE000E220 or 0xE000E280<=a<0xE000E2A0:
             return (self._pending_irqs()>>(((a&0x7F)//4)*32))&0xFFFFFFFF
+        if 0xE000E300<=a<0xE000E320:
+            active=sum(1<<(number-16) for number in self.exception_stack+[self.active_exception] if number>=16)
+            return (active>>(((a-0xE000E300)//4)*32))&0xFFFFFFFF
         if 0xE000E400<=a<0xE000E500 or 0xE000ED18<=a<=0xE000ED20:return self.regs.get(a,0)
         for port,b in GPIO.items():
             if b<=a<b+0x400:
@@ -452,14 +553,28 @@ class Simulator:
         if a==0xE000E018:return self.systick['value']
         if a==0xE000E01C:return 10000
         if a==0xE000ED00:return 0x410FC241
+        if a==0xE000ED0C:return 0xFA050000|self.regs.get(a,0)
         if a==0xE000ED04:
-            # ARM DUI 0553A, ICSR: PENDSTCLR is write-only, PENDSTSET
-            # reads the pending state; VECTPENDING/ACTIVE are read-only.
-            return (1<<11)|self.active_exception|(((1<<26)|(15<<12)) if self.systick['pending'] else 0)
+            pending=self._pending_exception()
+            return ((1<<11) if len(self.exception_stack)<=1 else 0)|self.active_exception|(pending<<12)|((1<<26) if self.systick['pending'] else 0)
         if a in (0xE000ED04,0xE000ED08,0xE000ED0C,0xE000ED10,0xE000ED14,0xE000ED18,0xE000ED1C,0xE000ED20,0xE000ED24,0xE000ED28,0xE000ED2C,0xE000ED88):return self.regs.get(a,0)
         return self._unsupported(a,'读取')
 
     def _write(self,a,v,size=4,byte_offset=0):
+        self._sync_timing()
+        try:self._write_register(a,v,size,byte_offset)
+        finally:
+            if 0x40020000<=a<0x40022400:self.timers.sample_inputs()
+            self._refresh_timing_deadline()
+
+    def _write_register(self,a,v,size=4,byte_offset=0):
+        if self.timers.contains(a):return self.timers.write(a,v,size,byte_offset)
+        if self.watchdogs.contains(a):return self.watchdogs.write(a,v,size,byte_offset)
+        if a==0xE000ED0C:
+            if v>>16==0x5FA:
+                self.regs[a]=v&0x700
+                if v&4:self.request_system_reset('software')
+            return
         mask=((1<<(size*8))-1)<<(byte_offset*8)
         if 0xE000E100<=a<0xE000E120:
             self.nvic_enable|=(v&mask)<<(((a-0xE000E100)//4)*32);return
@@ -488,7 +603,13 @@ class Simulator:
         if self.flash.contains(a):return self.flash.write(a,v,size,byte_offset)
         if self.fmc.contains(a):return self.fmc.write(a,v,size,byte_offset)
         if self.v2_devices.contains(a):return self.v2_devices.write(a,v,size,byte_offset)
-        if 0xE000E400<=a<0xE000E500:return
+        if 0xE000E400<=a<0xE000E500:
+            self.regs[a]=v&0xF0F0F0F0
+            return
+        if 0xE000ED18<=a<=0xE000ED20:
+            self.regs[a]=v&0xF0F0F0F0
+            return
+        if 0xE0042004<=a<=0xE004200C:return
         for port,b in GPIO.items():
             if b<=a<b+0x400:
                 g=self.gpio_state[port];o=a-b
@@ -519,6 +640,11 @@ class Simulator:
                 self._refresh_uart_irq(uart)
                 return
         if 0x40023800<=a<=0x40023898:
+            if a==0x40023874:
+                if v&(1<<24):self.reset_flags=0
+                self.regs[a]=(v&0xFFFFFF)|self.reset_flags
+            self.timers.notify_rcu_write(a,self.regs[a])
+            self.watchdogs.notify_rcu_write(a,self.regs[a])
             self.adc.notify_rcu_write(a,v)
             self.v2_devices.notify_rcu_write(a,v)
             if a==0x40023820 and v&(1<<14):self.flash.reset(controller_only=True)
@@ -526,11 +652,8 @@ class Simulator:
         if a in (0x40023C00,0x40007000,0x40007004):return
         if a==0xE000E010:self.systick['ctrl']=v&7;return
         if a==0xE000E014:self.systick['reload']=v&0xFFFFFF;return
-        if a==0xE000E018:self.systick['value']=0;self.systick['flag']=False;return
-        if a==0xE000ED0C:
-            if v>>16==0x5FA and v&4:
-                self.pending_reset=True
-                self.uc.emu_stop()
+        if a==0xE000E018:
+            self.systick['value']=0;self.systick['flag']=False;self.systick['clockPhase']=0
             return
         if a in (0xE000ED04,0xE000ED08,0xE000ED0C,0xE000ED10,0xE000ED14,0xE000ED18,0xE000ED1C,0xE000ED20,0xE000ED24,0xE000ED28,0xE000ED2C,0xE000ED88):return
         return self._unsupported(a,'写入')
@@ -542,28 +665,117 @@ class Simulator:
         return not m.get('dePin') or self.net_level(m['dePin'])==m.get('deActive',1)
 
     def _code_hook(self,uc,address,size,user):
+        if self.pending_reset or self.cpu_sleeping:
+            uc.emu_stop();return
         if self._flash_write_pages:
             for page in self._flash_write_pages:uc.mem_protect(page,4096,UC_PROT_READ|UC_PROT_EXEC)
             self._flash_write_pages.clear()
         # Bound uninterrupted native code too, without creating a native timeout
         # watchdog on each ISR restart (its shutdown adds a per-interrupt delay).
-        if self._slice_deadline is not None and self.instructions&63==0:
+        if self._slice_deadline is not None and self.instructions&self._timing_check_mask==0:
             if time.monotonic()>=self._slice_deadline:
                 self._slice_timed_out=True
                 uc.emu_stop();return
-        st=self.systick
         # This callback precedes execution. Deliver an already-pending exception
         # without counting or ticking the thread instruction we are about to stop.
-        if self._eligible_exception():
+        # Most instructions have no pending exception. Keep that path free of
+        # native register reads and priority selection calls.
+        pending=self.systick['pending'] or (self.nvic_enable and
+            (self.nvic_pending|self.uart_irqs|self.timer_irqs|self.watchdog_irqs)&self.nvic_enable)
+        if pending and self._eligible_exception():
             uc.emu_stop();return
+        hint=None
+        if self.flash_dirty or address>=FLASH+FLASH_SIZE:
+            hint=self._sleep_hint(uc,address,size)
+        elif self._sleep_hints:
+            cached=self._sleep_hints.get(address)
+            if cached and cached[1]==size:hint=cached[0]
+        if hint=='wfe':
+            self.diagnose('WFE 事件等待尚未实现')
+            return
+        if hint=='wfi' and self.regs.get(0xE000ED10,0)&4:
+            self.diagnose('WFI 深度休眠的时钟和电源域尚未实现')
+            return
         self.instructions+=1
+        ticks=self.board.get('clockTicksPerInstruction',1)
+        self.timing_ticks+=ticks
+        if self._timing_scheduled and self.timing_ticks>=self._timing_deadline:
+            self._inside_code_hook=True
+            try:self._sync_timing()
+            finally:self._inside_code_hook=False
+        st=self.systick
         if st['ctrl']&1:
-            ticks=self.board.get('clockTicksPerInstruction',1)
-            if st['value']<ticks:
-                st['value']=st['reload']-((ticks-st['value']-1)%(st['reload']+1));st['flag']=True
-                if st['ctrl']&2:st['pending']=True
-            else:st['value']-=ticks
+            # The linear HCLK path cannot set flags. Reload, zero transitions and
+            # the divided clock retain the shared event implementation below.
+            if st['ctrl']&4 and ticks<st['value']:
+                st['value']-=ticks
+            else:self._advance_systick(ticks)
+        if hint=='wfi':self.cpu_sleeping=not bool(self._eligible_exception(ignore_primask=True))
         # A newly pending exception is delivered at the next instruction boundary.
+
+    def _sleep_hint(self,uc,address,size):
+        if not self.flash_dirty and address<FLASH+FLASH_SIZE:
+            cached=self._sleep_hints.get(address)
+            return cached[0] if cached and cached[1]==size else None
+        offset=address-FLASH if address>=FLASH else address
+        raw=(self.internal_flash[offset:offset+size] if 0<=offset<len(self.internal_flash)
+             else uc.mem_read(address,size))
+        if raw in (b'\x30\xbf',b'\xaf\xf3\x03\x80'):return 'wfi'
+        if raw in (b'\x20\xbf',b'\xaf\xf3\x02\x80'):return 'wfe'
+        return None
+
+    def _advance_systick(self,ticks):
+        st=self.systick
+        if not st['ctrl']&1:return
+        if not st['ctrl']&4:
+            ticks,st['clockPhase']=divmod(st.get('clockPhase',0)+ticks,8)
+        if not ticks:return
+        wrapped=False
+        if st['value']:
+            if ticks<st['value']:
+                st['value']-=ticks
+                return
+            ticks-=st['value']
+            st['value']=0
+            wrapped=True
+        if st['reload'] and ticks:
+            periods,phase=divmod(ticks,st['reload']+1)
+            wrapped|=bool(periods)
+            st['value']=st['reload']+1-phase if phase else 0
+        if wrapped:
+            st['flag']=True
+            if st['ctrl']&2:st['pending']=True
+
+    def _advance_sleep_clock(self):
+        self._sync_timing()
+        deadlines=[]
+        if math.isfinite(self._timing_deadline):
+            deadlines.append(max(1,self._timing_deadline-self.timing_ticks))
+        st=self.systick
+        if st['ctrl']&1 and (st['value'] or st['reload']):
+            divider=1 if st['ctrl']&4 else 8
+            phase=st.get('clockPhase',0) if divider==8 else 0
+            remaining=st['value'] if st['value'] else st['reload']+1
+            deadlines.append(max(1,remaining*divider-phase))
+        if not deadlines:return False
+        ticks=min(deadlines)
+        self.timing_ticks+=ticks
+        self._advance_systick(ticks)
+        self._sync_timing()
+        return True
+
+    def _complete_pending_reset(self):
+        was_running=self.status=='running'
+        executed=self.instructions
+        try:reset_ok=self.reset(preserve_ram=True)
+        except ValueError as error:
+            self.pending_reset=False
+            self.diagnose('系统复位失败：'+str(error))
+            return False
+        if not reset_ok:return False
+        self.instructions=executed
+        if was_running:self.status='running'
+        return True
 
     def _interrupt(self,uc,intno,user):
         if intno==8 and self.in_exception:self.exception_return=True;uc.emu_stop()
@@ -573,7 +785,7 @@ class Simulator:
         self._enter_exception(15)
 
     def _pending_irqs(self):
-        return self.nvic_pending|self.uart_irqs
+        return self.nvic_pending|self.uart_irqs|self.timer_irqs|self.watchdog_irqs
 
     def _refresh_uart_irq(self, uart):
         bit=1<<UART_IRQ[uart]
@@ -582,13 +794,35 @@ class Simulator:
         if active:self.uart_irqs|=bit
         else:self.uart_irqs&=~bit
 
-    def _eligible_exception(self):
-        if self.in_exception or not (self.systick['pending'] or self._pending_irqs()&self.nvic_enable):return 0
-        if not self.uc or self.uc.reg_read(UC_ARM_REG_PRIMASK):return 0
-        if self.systick['pending']:return 15
-        if not self.nvic_enable:return 0
+    def _exception_priority(self,number):
+        if number==15:return (self.regs.get(0xE000ED20,0)>>24)&0xF0
+        index=number-16
+        return (self.regs.get(0xE000E400+(index//4)*4,0)>>((index%4)*8))&0xF0
+
+    def _pending_exception(self):
+        candidates=[15] if self.systick['pending'] else []
         pending=self._pending_irqs()&self.nvic_enable
-        return (pending&-pending).bit_length()+15 if pending else 0
+        while pending:
+            bit=pending&-pending
+            candidates.append(bit.bit_length()+15)
+            pending^=bit
+        return min(candidates,key=lambda number:(self._exception_priority(number),number)) if candidates else 0
+
+    def _eligible_exception(self,*,ignore_primask=False):
+        if not (self.systick['pending'] or (self.nvic_enable and
+            (self.nvic_pending|self.uart_irqs|self.timer_irqs|self.watchdog_irqs)&self.nvic_enable)):return 0
+        if not self.uc or (not ignore_primask and self.uc.reg_read(UC_ARM_REG_PRIMASK)) or self.uc.reg_read(UC_ARM_REG_FAULTMASK):return 0
+        candidate=self._pending_exception()
+        if not candidate:return 0
+        priority=self._exception_priority(candidate)
+        threshold=self.uc.reg_read(UC_ARM_REG_BASEPRI)&0xF0
+        grouping=(self.regs.get(0xE000ED0C,0)>>8)&7
+        subpriority_bits=max(0,grouping-3)
+        if threshold and (priority>>(4+subpriority_bits))>=(threshold>>(4+subpriority_bits)):return 0
+        if self.in_exception:
+            current=self._exception_priority(self.active_exception)
+            if (priority>>(4+subpriority_bits))>=(current>>(4+subpriority_bits)):return 0
+        return candidate
 
     def _enter_exception(self, number):
         u=self.uc
@@ -601,9 +835,10 @@ class Simulator:
         frame=[u.reg_read(r) for r in CORE_REGS]
         u.mem_write(sp,struct.pack('<8I',*frame))
         u.reg_write(UC_ARM_REG_SP,sp)
-        u.reg_write(UC_ARM_REG_LR,0xFFFFFFF9)
+        u.reg_write(UC_ARM_REG_LR,0xFFFFFFF1 if self.in_exception else 0xFFFFFFF9)
         u.reg_write(UC_ARM_REG_XPSR,(frame[-1]&0xF0000000)|0x01000000|number)
         u.reg_write(UC_ARM_REG_PC,handler)
+        self.exception_stack.append(self.active_exception)
         self.in_exception=True;self.active_exception=number
         if number==15:self.systick['pending']=False
         else:self.nvic_pending&=~(1<<(number-16))
@@ -613,7 +848,11 @@ class Simulator:
         values=struct.unpack('<8I',u.mem_read(sp,32))
         for r,v in zip(CORE_REGS,values):u.reg_write(r,v)
         u.reg_write(UC_ARM_REG_SP,sp+32)
-        self.in_exception=False;self.exception_return=False;self.active_exception=0
+        self.active_exception=self.exception_stack.pop() if self.exception_stack else 0
+        self.in_exception=bool(self.active_exception);self.exception_return=False
+        u.reg_write(UC_ARM_REG_FAULTMASK,0)
+        if not self.in_exception and self.regs.get(0xE000ED10,0)&2:
+            self.cpu_sleeping=True
 
     def run_chunk(self,count=10000,*,max_duration=None):
         """Consume an instruction budget across exception boundaries.
@@ -636,6 +875,14 @@ class Simulator:
             while self.instructions-started<count and self.status!='faulted':
                 if self.exception_return:self._return_exception()
                 if deadline is not None and time.monotonic()>=deadline:break
+                if self.cpu_sleeping:
+                    if not self._eligible_exception(ignore_primask=True):
+                        if not self._advance_sleep_clock():break
+                        if self.pending_reset:
+                            if not self._complete_pending_reset():break
+                            continue
+                        if not self._eligible_exception(ignore_primask=True):break
+                    self.cpu_sleeping=False
                 exception=self._eligible_exception()
                 if exception:self._enter_exception(exception)
                 if self.status=='faulted':break
@@ -643,23 +890,14 @@ class Simulator:
                 before=self.instructions
                 self.uc.emu_start(self.uc.reg_read(UC_ARM_REG_PC)|1,0,count=remaining)
                 if self.pending_reset:
-                    was_running=self.status=='running'
-                    executed=self.instructions
-                    try:reset_ok=self.reset()
-                    except ValueError as error:
-                        self.pending_reset=False
-                        self.diagnose('系统复位失败：'+str(error))
-                        break
-                    if not reset_ok:break
-                    self.instructions=executed
-                    if was_running:self.status='running'
+                    if not self._complete_pending_reset():break
                     continue
                 returning=self.exception_return
                 if returning:self._return_exception()
                 if self.status=='faulted':break
                 if deadline is not None and (self._slice_timed_out or time.monotonic()>=deadline):break
                 eligible=self._eligible_exception()
-                if self.instructions==before and not returning and not eligible:
+                if self.instructions==before and not returning and not eligible and not self.cpu_sleeping:
                     self.diagnose('固件执行没有取得进展，也没有可处理的异常边界',pc=f'0x{self.uc.reg_read(UC_ARM_REG_PC):08X}')
                     break
         except UcError as e:
@@ -703,7 +941,7 @@ class Simulator:
                 for item in reached:self._connection_cache[item]=reached
                 return reached
 
-    def net_level(self,net,include_device=True):
+    def net_level(self,net,include_device=True,include_timers=True):
         nets=self.connected(self._pin_net(net));strong=[];weak=[]
         for n in nets:
             if n in ('GND','DGND','0V'):strong.append(0)
@@ -713,6 +951,9 @@ class Simulator:
                 if pin>15:continue
                 mode=(g['mode']>>(pin*2))&3;out=(g['out']>>pin)&1
                 if mode==1 and not ((g['otype']>>pin)&1 and out):strong.append(out)
+                if mode==2 and include_timers:
+                    output=self.timers.pin_output(n)
+                    if output is not None and not ((g['otype']>>pin)&1 and output):strong.append(output)
                 pull=(g['pull']>>(pin*2))&3
                 if pull in (1,2):weak.append(1 if pull==1 else 0)
         for i,k in enumerate(self.board.get('keyMappings',[])):
@@ -786,6 +1027,8 @@ class Simulator:
         if self.board['id']=='cimc-v2':
             self._i2c_edges()
             self.flash.on_gpio_changed('PA')
+        self.timers.sample_inputs()
+        self._refresh_timing_deadline()
 
     def command(self,data):
         action=data.get('action','')
@@ -809,6 +1052,18 @@ class Simulator:
                 self.wires=[];self.serial_mode='rs485';self._connection_cache.clear()
                 self._install_program(program,cpu)
                 self.apply_reference_wiring()
+        elif action=='timer_demo':
+            p=self.root/'firmware'/'timer_probe.hex'
+            self.load(p.read_bytes(),'GD32F470 · TIMER0–13.hex')
+            with self.lock:
+                self.wires=[]
+                self._connection_cache.clear()
+                pairs=[(f'PD{8+i}',f'LED{i+1}') for i in range(6)]
+                if self.board['id']=='cimc-v2':
+                    pairs.extend((wire['a'],wire['b']) for wire in self.board['defaultAddedWires']
+                                 if wire['a'].startswith('H12.') and wire['b'].startswith('H12.'))
+                for a,b in pairs:self.wires.append(self.validate_wire({'from':a,'to':b},self.wires))
+                self._on_wiring_changed()
         elif action=='demo':
             p=self.root/'firmware'/'demo.hex';self.load(p.read_bytes(),'CIMC Lab · Keil demo.hex')
             self.serial_mode='rs485'
@@ -819,6 +1074,7 @@ class Simulator:
             self.diagnose(f"已载入真实 Keil 示例固件与 {len(self.wires)} 条可删除示例跳线；原板固定网络未改变",'info')
         else:
             with self.lock:
+                self._sync_timing()
                 if action=='adc_voltage':self.adc.set_voltage(data.get('voltage'),data.get('channel',10))
                 elif action=='v2_wiring':self.apply_reference_wiring()
                 elif action=='serial_mode':self.set_serial_mode(data.get('mode'))
@@ -836,6 +1092,8 @@ class Simulator:
                     i=int(data['index'])
                     if not 0<=i<len(self.keys):raise ValueError('无效的按键编号')
                     self.keys[i]=bool(data['pressed'])
+                    self.timers.sample_inputs()
+                    self._refresh_timing_deadline()
                 elif action=='serial':
                     channel=data.get('channel','ch340');mapping=self.board.get('serialMappings',{}).get(channel)
                     if mapping is None:raise ValueError('未核验的串口映射')
@@ -993,10 +1251,11 @@ class Simulator:
 
     def state(self):
         with self.lock:
+            self._sync_timing()
             for wire in self.wires:self.net_level(wire['from'])
             self._flush_uart()
             leds=[self.net_level(m.get('net',m.get('pin')))==m.get('active',1) for m in self.board.get('ledMappings',[])]
             pc=self.uc.reg_read(UC_ARM_REG_PC) if self.uc else 0
             sp=self.uc.reg_read(UC_ARM_REG_SP) if self.uc else 0
             oled_visible=self.oled.on and self._oled_powered()
-            return {'status':self.status,'firmware':self.firmware,'firmwares':[im.metadata() for im in self.program.images] if self.program else [],'bootAddress':f'0x{self.program.boot_address:08X}' if self.program else None,'currentVectorAddress':f"0x{self.regs.get(0xE000ED08,0):08X}" if self.uc else None,'cpu':{'pc':f'0x{pc:08X}','sp':f'0x{sp:08X}','instructions':self.instructions,'model':'Cortex-M4 / Unicorn 2.1.4'},'board':self.board,'leds':leds,'keys':list(self.keys),'oled':{'width':self.oled.width,'height':self.oled.height,'pixels':self.oled.pixels() if oled_visible else [0]*(self.oled.width*self.oled.height),'on':oled_visible},'wires':list(self.wires),'managedWires':self.managed_wires(),'serialMode':self.serial_mode,'adc':self.adc.state(),'flash':self.flash.state(),'internalFlash':self.fmc.state(),'analog':self.v2_devices.state(),'serial':list(self.logs),'diagnostics':list(self.diagnostics),'engine':{'version':VERSION,'mode':'functional','cycleAccurate':False,'clockTicksPerInstruction':self.board.get('clockTicksPerInstruction',1),'supported':('GPIO, USART RX/IDLE IRQ, GPIO I2C OLED, SysTick, internal Flash, ADC PC0/PC1/PC2, DAC PA4, SPI0 GD25Q40E' if self.board['id']=='cimc-v2' else 'GPIO, polling USART, GPIO I2C OLED, basic SysTick, software ADC, SPI1 GD25Q40E')}}
+            return {'status':self.status,'firmware':self.firmware,'firmwares':[im.metadata() for im in self.program.images] if self.program else [],'bootAddress':f'0x{self.program.boot_address:08X}' if self.program else None,'currentVectorAddress':f"0x{self.regs.get(0xE000ED08,0):08X}" if self.uc else None,'cpu':{'pc':f'0x{pc:08X}','sp':f'0x{sp:08X}','instructions':self.instructions,'model':'Cortex-M4 / Unicorn 2.1.4'},'board':self.board,'leds':leds,'keys':list(self.keys),'oled':{'width':self.oled.width,'height':self.oled.height,'pixels':self.oled.pixels() if oled_visible else [0]*(self.oled.width*self.oled.height),'on':oled_visible},'wires':list(self.wires),'managedWires':self.managed_wires(),'serialMode':self.serial_mode,'adc':self.adc.state(),'flash':self.flash.state(),'internalFlash':self.fmc.state(),'analog':self.v2_devices.state(),'timers':self.timers.state(),'watchdogs':self.watchdogs.state(),'systick':{**self.systick,'inputClockHz':self.hclk_frequency()//(1 if self.systick['ctrl']&4 else 8)},'clock':{'hclkHz':self.hclk_frequency(),'apb1Hz':self.hclk_frequency()//self.apb_clock_ratio()[1],'apb2Hz':self.hclk_frequency()//self.apb_clock_ratio(True)[1],'ticks':self.timing_ticks,'crystalHz':25000000},'serial':list(self.logs),'diagnostics':list(self.diagnostics),'engine':{'version':VERSION,'mode':'functional','cycleAccurate':False,'clockTicksPerInstruction':self.board.get('clockTicksPerInstruction',1),'supported':('TIMER0–13, FWDGT/WWDGT, GPIO, USART RX/IDLE IRQ, GPIO I2C OLED, SysTick, internal Flash, ADC PC0/PC1/PC2, DAC PA4, SPI0 GD25Q40E' if self.board['id']=='cimc-v2' else 'TIMER0–13, FWDGT/WWDGT, GPIO, polling USART, GPIO I2C OLED, basic SysTick, software ADC, SPI1 GD25Q40E')}}

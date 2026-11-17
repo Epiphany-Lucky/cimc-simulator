@@ -1,2 +1,2 @@
 """Shared version for the emulator service and update checks."""
-VERSION = '0.5.1'
+VERSION = '0.6.0'

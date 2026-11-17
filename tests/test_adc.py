@@ -94,7 +94,7 @@ class AdcRegisterTests(unittest.TestCase):
         self.assertFalse(self.adc.read(ADC_BASE)&ROVF)
 
     def test_unsupported_modes_fail_explicitly(self):
-        for off,value in [(4,1<<5),(4,1<<8),(8,1|(1<<8)),(8,3),(8,1|(1<<28)),(0x304,6),(0x80,1),(0x38,1)]:
+        for off,value in [(4,1<<5),(4,1<<8),(8,1|(1<<8)),(8,3),(0x304,6),(0x80,1),(0x38,1)]:
             with self.subTest(off=off,value=value):
                 self.setUp();self.adc.write(ADC_BASE+off,value)
                 self.assertTrue(self.sim.errors)

@@ -140,10 +140,42 @@ try:
                  and snapshot['leds']==[False,True,True,False,False,True],
                  'real peripheral bit-band RCC/GPIOD instructions')
         command('pause')
+    for extension in ('hex','bin'):
+        probe=package/'firmware'/f'timer_probe.{extension}'
+        command('load',filename=probe.name,data=base64.b64encode(probe.read_bytes()).decode())
+        command('run')
+        observed=wait_for(lambda snapshot:has_tx(snapshot,'ALL14 TIMER IRQ OK')
+                          and snapshot['leds']==[True,False,True,False,True,True],
+                          'all fourteen real timer interrupt handlers and counter widths')
+        assert len(observed['timers'])==14,observed['timers']
+        assert all(timer['clockEnabled'] and timer['updates']>=2 for timer in observed['timers']),observed['timers']
+        assert observed['timers'][1]['counter']==0x89ABCDEF,observed['timers'][1]
+        assert observed['timers'][4]['counter']==0xFEDCBA98,observed['timers'][4]
+        command('pause')
+    print('PASS: packaged Keil HEX/BIN TIMER0..13 actual IRQs + 16/32-bit counters + LED/UART state',flush=True)
     for wire_id in bitband_wires:command('wire_remove',id=wire_id)
     for wire in led_wires:
         command('wire_add',**{'from':wire['from'],'to':wire['to'],'color':wire['color']})
     print('PASS: packaged Keil HEX/BIN peripheral bit-band RCC/PLL + GPIOD LED state',flush=True)
+    # Actual watchdog firmware uses IRQ0, system reset and post-reset RCU flags.
+    # Insert after the V1 PD10..PD15 LED wires have been restored.
+    for selection, response, led_index, extension in (
+            ('F', 'FWDGT RESET', 0, 'hex'),
+            ('W', 'WWDGT RESET', 1, 'bin'),
+            ('E', 'W EWI', 2, 'hex')):
+        probe=package/'firmware'/f'watchdog_probe.{extension}'
+        command('load',filename=probe.name,data=base64.b64encode(probe.read_bytes()).decode())
+        command('run')
+        wait_for(lambda snapshot:has_tx(snapshot,'WDGT SELECT F W E'),'watchdog firmware command prompt')
+        command('serial',channel='ch340',data=base64.b64encode(selection.encode()).decode())
+        wait_for(lambda snapshot:has_tx(snapshot,response)
+                 and snapshot['leds']==[index==led_index for index in range(6)],
+                 'real watchdog IRQ/reset and post-reset LED output')
+        if selection in ('F','W'):
+            command('serial',channel='ch340',data=base64.b64encode(b'C').decode())
+            wait_for(lambda snapshot:has_tx(snapshot,'FLAGS CLEAR'),'watchdog reset flags cleared by firmware')
+        command('pause')
+    print('PASS: packaged Keil FWDGT/WWDGT system reset flags + WWDGT real IRQ0 handler/refresh',flush=True)
     # These are three independently linked Keil programs. No RAM inspection or
     # special debug endpoint is used: only the same HTTP contract as the GUI.
     for ext in ('hex','bin'):

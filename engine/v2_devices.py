@@ -153,14 +153,14 @@ class V2Devices:
         if offset in (0x2C, 0x30):
             return
         if offset == 0:
-            if merged & ~0x3F or (merged & 4 and (merged >> 3) & 7 != 7):
-                return self._error('DAC0 子集仅实现 OUT0 直写与软件触发，无波形、DMA或中断')
+            if merged & ~0x3F:
+                return self._error('DAC0 OUT0 波形、DMA和中断尚未实现')
             self.dac[0] = merged
             self._update_dac()
         elif offset == 4:
             if merged & ~1:
                 return self._error('DAC0 OUT1 软件触发尚未实现')
-            if merged & 1:
+            if merged & 1 and (self.dac[0]>>3)&7==7:
                 self._update_dac(triggered=True)
         elif offset in (8, 12, 16):
             self.dac[offset] = merged
@@ -173,6 +173,14 @@ class V2Devices:
             self._update_dac()
         elif merged:
             return self._error('DAC0 OUT1、双通道与DMA状态尚未实现')
+
+    def timer_trigger(self,timer,event,level=True):
+        if not self.active() or not level or event!='trgo':return
+        control=self.dac[0]
+        sources=(5,7,6,4,1,3)
+        selection=(control>>3)&7
+        if control&4 and selection<len(sources) and sources[selection]==timer:
+            self._update_dac(triggered=True)
 
     def state(self):
         enabled = self.active() and self._clocked('dac') and bool(self.dac[0] & 1)

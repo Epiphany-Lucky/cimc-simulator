@@ -1,0 +1,28 @@
+Component: Arm Compiler for Embedded 6.22 Tool: armlink [5ee90200]
+
+==============================================================================
+
+Memory Map of the image
+
+  Image Entry point : 0x0800018d
+
+  Load Region LR_IROM1 (Base: 0x08000000, Size: 0x00000cc4, Max: 0x00080000, ABSOLUTE)
+
+    Execution Region ER_IROM1 (Base: 0x08000000, Size: 0x00000cc4, Max: 0x00080000, ABSOLUTE)
+
+    Base Addr    Size         Type   Attr      Idx    E Section Name        Object
+
+    0x08000000   0x0000018c   Data   RO            7    .isr_vector         timer_probe.o
+    0x0800018c   0x00000860   Code   RO            4  * .text.Reset_Handler  timer_probe.o
+    0x080009ec   0x000001c6   Code   RO            2    .text.Timer_Handler  timer_probe.o
+    0x08000bb2   0x00000068   Data   RO            8    .rodata.str1.1      timer_probe.o
+    0x08000c1a   0x00000002   PAD
+    0x08000c1c   0x00000038   Data   RO            6    .rodata.timer_base  timer_probe.o
+    0x08000c54   0x00000038   Data   RO            9    .rodata.timer_enable_bit  timer_probe.o
+    0x08000c8c   0x00000038   Data   RO           10    .rodata.timer_irq   timer_probe.o
+
+
+    Execution Region RW_IRAM1 (Base: 0x20000000, Size: 0x00000000, Max: 0x00030000, ABSOLUTE)
+
+    **** No section assigned to this execution region ****
+

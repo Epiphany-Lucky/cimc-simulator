@@ -3,9 +3,9 @@
 Sources: GD32F4xx User Manual Rev3.4, pp293-302; V1 schematic pp1-2.
 Conversions and calibration complete immediately (functional, not cycle timed).
 V2 uses the schematic's VR1/ADC_IN10 -> PC0 and H7/ADC_IN12 -> PC2.
-PC1/channel 11 is an editable external input from the supplied driver. Its
-external-trigger configuration is retained, with conversion driven by SWRCST.
-Continuous/scan, watchdog, DMA, interrupts and external events remain unsupported.
+PC1/channel 11 is an editable external input from the supplied driver. Software
+starts and timer-selected trigger edges drive conversions. Continuous, scan,
+analog-watchdog, DMA and ADC interrupt modes require separate modeling.
 """
 import math
 
@@ -159,12 +159,10 @@ class AdcDevice:
                 return self._fault('扫描、间断、模拟看门狗或 ADC 中断尚未实现')
             r[off] = value
         elif off == 8:
-            # The supplied V2 driver enables an external-trigger edge while
-            # explicitly starting every conversion through SWRCST. Retain that
-            # configuration field, without generating external trigger events.
-            trigger_edges = (3 << 28) if self.is_v2() else 0
+            # Firmware can select a timer edge or explicitly start with SWRCST.
+            trigger_edges = 3 << 28
             if value & ~(ADCON | 0xC | (1 << 10) | (1 << 11) | (15 << 24) | trigger_edges | SWRCST):
-                return self._fault('仅支持软件触发单次转换；连续、DMA、外部触发尚未实现')
+                return self._fault('ADC 支持软件或定时器触发的单次转换，请检查连续转换、DMA及其他触发配置')
             r[off] = value & ~(0xC | SWRCST)  # Immediate functional calibration / start.
             if value & SWRCST:
                 self._convert(index)
@@ -210,3 +208,16 @@ class AdcDevice:
         self.last_channel = channel
         self.channel_values[channel] = raw
         self.channel_bits[channel] = bits
+
+    def timer_trigger(self,timer,event,level=True):
+        sources=((0,'ch0'),(0,'ch1'),(0,'ch2'),(1,'ch1'),(1,'ch2'),(1,'ch3'),
+                 (1,'trgo'),(2,'ch0'),(2,'trgo'),(3,'ch3'),(4,'ch0'),(4,'ch1'),
+                 (4,'ch2'),(7,'ch0'),(7,'trgo'))
+        for index,registers in enumerate(self.registers):
+            control=registers.get(8,0)
+            edges=(control>>28)&3
+            selection=(control>>24)&15
+            edge=1 if level else 2
+            if (control&ADCON and self._clocked(index) and edges&edge and
+                    selection<len(sources) and sources[selection]==(timer,event)):
+                self._convert(index)

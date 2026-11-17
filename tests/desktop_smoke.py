@@ -142,6 +142,7 @@ def main():
     env=os.environ.copy()
     env['WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS']=f'--remote-debugging-port={debug_port}'
     env['WEBVIEW2_USER_DATA_FOLDER']=str(profile)
+    env['CIMC_CONFIG_DIRECTORY']=str(profile/'preferences')
     report={'exe':str(args.exe.resolve()),'debugPort':debug_port,'profile':str(profile),'passed':False}
     process=subprocess.Popen([str(args.exe)],cwd=args.exe.parent,env=env)
     report['pid']=process.pid

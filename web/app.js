@@ -13,10 +13,17 @@
   let firmwareDraft = [], firmwareDraftBoot = null, firmwareDraftSequence = 0, firmwareSetBusy = false, firmwareSetReturnFocus = null;
   let schematicTitles = ['MCU 与排针','板载外设','电源','串口通信'];
   const heldKeys = new Set();
-  const preferences = readStorage('cimc.studio.preferences', { labels: false, motion: false, shortcuts: true });
-  preferences.autoUpdates ??= true;
+  const themeColors = ['blue', 'teal', 'green', 'purple', 'rose', 'amber'];
+  const defaultPreferences = { labels: false, motion: false, shortcuts: true, autoUpdates: true, themeColor: 'blue' };
+  const storedPreferences = readStorage('cimc.studio.preferences', {});
+  const preferences = { ...defaultPreferences, ...(storedPreferences && typeof storedPreferences === 'object' && !Array.isArray(storedPreferences) ? storedPreferences : {}) };
+  for (const key of ['labels', 'motion', 'shortcuts', 'autoUpdates']) {
+    if (typeof preferences[key] !== 'boolean') preferences[key] = defaultPreferences[key];
+  }
+  if (!themeColors.includes(preferences.themeColor)) preferences.themeColor = 'blue';
   let checkingUpdate = false, lastUpdateAttempt = 0, notifiedVersion = '';
   let updateMetadata = null, updateToken = '', updatePollTimer = null;
+  let themeInitialized = false, themeUserChanged = false, themeSaveQueue = Promise.resolve();
 
   function readStorage(key, fallback) { try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch { return fallback; } }
   function node(tag, cls, text) { const n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined) n.textContent = text; return n; }
@@ -103,6 +110,13 @@
   function renderState(next) {
     if (sessionExited) return;
     state = next;
+    if (!themeInitialized && next.preferences) {
+      themeInitialized = true;
+      if (!themeUserChanged) {
+        preferences.themeColor = themeColors.includes(next.preferences.themeColor) ? next.preferences.themeColor : 'blue';
+        applyPreferences();
+      }
+    }
     const labels = { running: '正在运行', paused: '已暂停', loaded: '固件就绪', ready: '准备就绪', idle: '准备就绪', stopped: '已停止', error: '运行已中止', halted: '运行已中止', faulted: '运行已中止' };
     const status = next.status || 'idle';
     $('connection-status').className = `status-pill ${status === 'running' ? 'running' : ['error','halted','faulted'].includes(status) ? 'error' : 'ready'}`;
@@ -139,6 +153,7 @@
     renderWires(next.wires || []);
     renderSerial();
     renderDiagnostics();
+    if (activePanel === 'timers') renderTimers();
     updateEnabled();
     updateChannelNote();
   }
@@ -464,10 +479,74 @@
     });
   }
 
+  function renderTimers() {
+    const timers = state?.timers || [];
+    const frequency = hz => Number.isFinite(hz) ? `${Number(hz).toLocaleString('en-US', { maximumFractionDigits: hz > 0 && hz < 1 ? 6 : 2 })} Hz` : '—';
+    const clock = state?.clock;
+    $('timer-clock-summary').textContent = clock ? `HCLK ${frequency(clock.hclkHz)} · APB1 ${frequency(clock.apb1Hz)} · APB2 ${frequency(clock.apb2Hz)}` : '等待内核状态';
+    const selection = $('timer-detail-select');
+    if (selection.options.length !== timers.length) {
+      selection.replaceChildren(...timers.map(timer => {
+        const option = node('option', '', timer.name);
+        option.value = String(timer.index);
+        return option;
+      }));
+    }
+    $('timer-table-body').replaceChildren(...timers.map(timer => {
+      const row = node('tr');
+      const types = { advanced: '高级', general: '通用', basic: '基本' };
+      const cells = [timer.name, `${types[timer.type] || timer.type} · ${timer.bits}位`,
+        !timer.clockEnabled ? '时钟关闭' : timer.enabled ? '计数中' : '停止',
+        timer.counter, timer.activePrescaler, timer.activeReload, timer.updates,
+        `0x${Number(timer.flags).toString(16).toUpperCase()}`];
+      cells.forEach((value, index) => row.append(node(index ? 'td' : 'th', '', String(value))));
+      row.firstChild.scope = 'row';
+      return row;
+    }));
+    const selected = timers.find(timer => timer.index === Number(selection.value));
+    $('timer-frequency').textContent = selected ? `配置频率 ${frequency(selected.cycleHz)}` : '';
+    $('timer-channel-list').replaceChildren(...(selected?.channels || []).map(channel => {
+      const card = node('div', 'timer-channel');
+      const modes = ['保持', '匹配置高', '匹配置低', '匹配翻转', '强制低', '强制高', 'PWM0', 'PWM1'];
+      const mode = channel.mode === 'input' ? '输入捕获' : modes[channel.outputMode] || '输出比较';
+      const signal = value => value === null || value === undefined ? '关闭' : value ? '高' : '低';
+      card.append(node('strong', '', `CH${channel.channel} · ${mode}`));
+      card.append(node('span', '', channel.mode === 'input'
+        ? `捕获值 ${channel.capture} · 捕获次数 ${channel.captures}`
+        : `比较值 ${channel.compare} · 输出${signal(channel.output)} · 边沿 ${channel.transitions}`));
+      if (channel.complementary !== null && channel.complementary !== undefined) card.append(node('span', '', `互补输出${signal(channel.complementary)}`));
+      if (typeof channel.duty === 'number') card.append(node('span', '', `设定占空比 ${(channel.duty * 100).toFixed(2)}%`));
+      return card;
+    }));
+    if (selected && !selected.channels.length) $('timer-channel-list').append(node('p', 'timer-basic-note', '基本定时器提供计数、更新和内部触发。'));
+    const system = $('timer-system-list');
+    system.replaceChildren();
+    const tick = state?.systick;
+    if (tick) {
+      const card = node('div', 'timer-system');
+      card.append(node('strong', '', 'SysTick · 24位'), node('span', '', `${tick.ctrl & 1 ? '计数中' : '停止'} · CNT ${tick.value} · RELOAD ${tick.reload}`),
+        node('span', '', `时钟 ${frequency(tick.inputClockHz)} · 中断${tick.ctrl & 2 ? '开启' : '关闭'} · 待处理${tick.pending ? '是' : '否'}`));
+      system.append(card);
+    }
+    const watchdogs = state?.watchdogs;
+    if (watchdogs) {
+      for (const [name, watchdog] of [['FWDGT', watchdogs.fwdgt], ['WWDGT', watchdogs.wwdgt]]) {
+        if (!watchdog) continue;
+        const card = node('div', 'timer-system');
+        card.append(node('strong', '', name), node('span', '', `${watchdog.enabled ? '运行中' : '停止'} · CNT ${watchdog.counter} · 分频 ${watchdog.prescaler}`),
+          node('span', '', name === 'FWDGT' ? `重装载 ${watchdog.reload} · 喂狗次数 ${watchdog.reloadCount}`
+            : `窗口 ${watchdog.window} · 提前唤醒${watchdog.earlyWakeupFlag ? '已触发' : '未触发'}`));
+        system.append(card);
+      }
+    }
+  }
+
   function activatePanel(name) {
     activePanel = name;
     document.querySelectorAll('[data-panel]').forEach(b => { const active = b.dataset.panel === name; b.classList.toggle('active',active); b.setAttribute('aria-selected',String(active)); });
     document.querySelectorAll('.panel').forEach(panel => { const active = panel.id === `panel-${name}`; panel.hidden = !active; panel.classList.toggle('active',active); });
+    $('clear-button').hidden = name === 'timers';
+    if (name === 'timers') renderTimers();
   }
 
   async function loadDemo() {
@@ -789,12 +868,46 @@
   });
 
   $('save-project').addEventListener('click',async () => { try { const result=await api('/api/project');saveFile(`cimc-project-${stamp()}.json`,JSON.stringify(result.project||result,null,2));toast('固件、启动设置与接线工程已保存。'); } catch(error) { toast(error.message,true); } });
+  $('timer-detail-select').addEventListener('change', renderTimers);
+  $('timer-demo-button').addEventListener('click', async () => {
+    busy = true; updateEnabled();
+    const result = await command('timer_demo');
+    busy = false; updateEnabled();
+    if (result) {
+      serialCutoff = -1; diagnosticCutoff = 0;
+      document.querySelector('[data-channel="ch340"]').click();
+      renderTimers();
+      toast('定时器验证固件与 LED、CH340 参考接线已载入，点击运行。');
+    }
+  });
   $('import-project').addEventListener('click',() => $('project-file').click());
   $('project-file').addEventListener('change',async e => { const file=e.target.files[0];if(!file)return;try { const project=JSON.parse(await file.text());if(await command('project_load',{project})){serialCutoff=-1;diagnosticCutoff=0;toast(project.version >= 3 ? '固件与接线工程已恢复。' : '旧版接线工程已恢复。');} }catch(error){toast(`无法打开工程文件：${error.message}`,true);}finally{e.target.value='';} });
-  $('export-button').addEventListener('click',async () => { if(activePanel==='wires'){$('save-project').click();return;} if(activePanel==='diagnostics'){saveFile(`cimc-diagnostics-${stamp()}.json`,JSON.stringify(state?.diagnostics||[],null,2));return;} const lines=(state?.serial||[]).map(e=>`[${logTime(e.time)}] [${e.channel}] [${e.direction}] ${e.text??e.hex??''}`);saveFile(`cimc-serial-${stamp()}.txt`,lines.join('\n'),'text/plain;charset=utf-8');toast('串口日志已导出。'); });
+  $('export-button').addEventListener('click',async () => { if(activePanel==='timers'){saveFile(`cimc-timers-${stamp()}.json`,JSON.stringify({clock:state?.clock,timers:state?.timers,systick:state?.systick,watchdogs:state?.watchdogs},null,2));return;} if(activePanel==='wires'){$('save-project').click();return;} if(activePanel==='diagnostics'){saveFile(`cimc-diagnostics-${stamp()}.json`,JSON.stringify(state?.diagnostics||[],null,2));return;} const lines=(state?.serial||[]).map(e=>`[${logTime(e.time)}] [${e.channel}] [${e.direction}] ${e.text??e.hex??''}`);saveFile(`cimc-serial-${stamp()}.txt`,lines.join('\n'),'text/plain;charset=utf-8');toast('串口日志已导出。'); });
   $('clear-button').addEventListener('click',() => { if(activePanel==='wires'){toast('请使用每条跳线旁的删除按钮，避免误删接线。');return;} if(activePanel==='diagnostics'){diagnosticCutoff=(state?.diagnostics||[]).length;renderDiagnostics(true);return;} serialCutoff=Math.max(-1,...(state?.serial||[]).map((e,i)=>Number(e.id)||i));renderSerial(true);toast('已清空当前日志显示。'); });
 
-  function applyPreferences(){document.body.classList.toggle('show-pin-labels',preferences.labels);document.body.classList.toggle('reduce-motion',preferences.motion);$('setting-labels').checked=preferences.labels;$('setting-motion').checked=preferences.motion;$('setting-shortcuts').checked=preferences.shortcuts;$('setting-updates').checked=preferences.autoUpdates;try{localStorage.setItem('cimc.studio.preferences',JSON.stringify(preferences));}catch{}}
+  function applyPreferences() {
+    document.body.classList.toggle('show-pin-labels', preferences.labels);
+    document.body.classList.toggle('reduce-motion', preferences.motion);
+    document.documentElement.dataset.themeColor = preferences.themeColor;
+    $('setting-labels').checked = preferences.labels;
+    $('setting-motion').checked = preferences.motion;
+    $('setting-shortcuts').checked = preferences.shortcuts;
+    $('setting-updates').checked = preferences.autoUpdates;
+    for (const input of document.querySelectorAll('input[name="theme-color"]')) input.checked = input.value === preferences.themeColor;
+    try { localStorage.setItem('cimc.studio.preferences', JSON.stringify(preferences)); } catch {}
+  }
+  for (const input of document.querySelectorAll('input[name="theme-color"]')) {
+    input.addEventListener('change', event => {
+      if (!event.target.checked) return;
+      const color = event.target.value;
+      themeUserChanged = true;
+      preferences.themeColor = color;
+      applyPreferences();
+      themeSaveQueue = themeSaveQueue.then(() => api('/api/preferences', { themeColor: color })).catch(error => {
+        if (preferences.themeColor === color) toast(`主题颜色已保存在此浏览器，同步失败：${error.message}`, true);
+      });
+    });
+  }
   for(const [id,key] of [['setting-labels','labels'],['setting-motion','motion'],['setting-shortcuts','shortcuts'],['setting-updates','autoUpdates']])$(id).addEventListener('change',e=>{preferences[key]=e.target.checked;applyPreferences();if(key==='autoUpdates'&&e.target.checked)void checkUpdates(false);});
 
   function updateLink(url) {

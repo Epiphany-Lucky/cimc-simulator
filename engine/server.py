@@ -16,6 +16,7 @@ from desktop_session import APP_ID, DesktopSession, open_browser
 from updates import UpdateChecker
 from app_version import VERSION
 from self_update import SelfUpdater, UPDATE_EXIT_MARKER
+from preferences import Preferences
 
 
 def main():
@@ -51,11 +52,13 @@ def serve(args,session):
     simulator=Simulator(args.root)
     updates=UpdateChecker(VERSION)
     updater=SelfUpdater(updates,args.root)
+    preferences=Preferences()
     stop_event=threading.Event()
     launch_errors=[]
 
     def decorate(state):
         state['engine'].update(desktopSession=bool(session),instanceId=session.instance_id if session else None)
+        state['preferences']=preferences.read()
         return state
 
     class Handler(BaseHTTPRequestHandler):
@@ -93,6 +96,7 @@ def serve(args,session):
                 result['updater']=dict(updater.info)
                 return self._send(200,result)
             if path=='/api/updates/status':return self._send(200,updater.state())
+            if path=='/api/preferences':return self._send(200,preferences.read())
             if path=='/api/health':return self._send(200,{'ok':True,'app':APP_ID,'version':VERSION,'desktopSession':bool(session),'instanceId':session.instance_id if session else None})
             if path=='/api/demo':
                 p=args.root/'firmware'/'demo.hex'
@@ -107,7 +111,9 @@ def serve(args,session):
             if not self._allowed():return self._send(403,{'error':'Only local same-origin requests are allowed'})
             path=urlparse(self.path).path
             update_action=path in ('/api/updates/download','/api/updates/install','/api/updates/open')
-            if path not in ('/api/command','/api/session/quit') and not update_action:return self._send(404,{'error':'Not found'})
+            if path not in ('/api/command','/api/session/quit','/api/preferences') and not update_action:return self._send(404,{'error':'Not found'})
+            if path=='/api/preferences' and (not self.headers.get('Origin') or self.headers.get_content_type()!='application/json'):
+                return self._send(403,{'error':'Preferences require a same-origin JSON request'})
             if update_action and (not self.headers.get('Origin') or self.headers.get_content_type()!='application/json'):
                 return self._send(403,{'error':'Update actions require a same-origin JSON request'})
             if path=='/api/session/quit':
@@ -119,6 +125,7 @@ def serve(args,session):
                 if not 0<length<=16*1024*1024:return self._send(413,{'error':'Request too large or empty'})
                 data=json.loads(self.rfile.read(length))
                 if not isinstance(data,dict):raise ValueError('Request must be a JSON object')
+                if path=='/api/preferences':return self._send(200,preferences.update(data))
                 if update_action:
                     if not updater.authorized(data.get('token')):return self._send(403,{'error':'Invalid update session'})
                     if path=='/api/updates/download':return self._send(200,updater.start(data.get('version')))

@@ -113,7 +113,7 @@ class V2AnalogTests(unittest.TestCase):
         self.assertAlmostEqual(self.devices.state()['dac']['voltage'], 2048 * 3.3 / 4095)
 
     def test_dac_requires_clock_analog_pin_and_rejects_other_modes(self):
-        for kind in ('clock', 'gpio_clock', 'mode', 'dma', 'trigger', 'channel'):
+        for kind in ('clock', 'gpio_clock', 'mode', 'dma', 'waveform', 'channel'):
             with self.subTest(kind=kind):
                 self.setUp()
                 if kind == 'clock':
@@ -122,7 +122,7 @@ class V2AnalogTests(unittest.TestCase):
                     self.sim.regs[RCU_AHB1EN] = 0
                 elif kind == 'mode':
                     self.sim.gpio_state['PA']['mode'] = 0
-                self.devices.write(DAC0, {'dma': 4097, 'trigger': 5, 'channel': 1 << 16}.get(kind, 1))
+                self.devices.write(DAC0, {'dma': 4097, 'waveform': 1 << 6, 'channel': 1 << 16}.get(kind, 1))
                 self.assertTrue(self.sim.errors)
         self.setUp()
         self.devices.write(DAC0, 1)

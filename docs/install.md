@@ -1,10 +1,10 @@
 # 安装、升级与卸载
 
-本文对应版本0.5.1。安装包与在线发布验收状态见 [本版记录](validation-v0.5.1.md)，实际可下载版本以 [公开 Releases](https://github.com/Epiphany-Lucky/cimc-simulator/releases) 为准。仿真范围沿用 V1.0 功能模型，并增加多固件共同烧录与启动选择；安装程序不需要真实开发板、COM口、Keil或Python开发环境。
+本文对应版本0.6.0。安装包与在线发布验收状态见 [本版记录](validation-v0.6.md)，实际可下载版本以 [公开 Releases](https://github.com/Epiphany-Lucky/cimc-simulator/releases) 为准。本版提供 V1/V2 功能模型、多固件共同烧录与启动选择，以及14个 TIMER、SysTick和两种看门狗；安装程序不需要真实开发板、COM口、Keil或Python开发环境。
 
 ## Windows x64
 
-下载 `CIMC-Studio-0.5.1-Setup-x64.exe`，双击后按向导安装。默认安装到当前用户的 `%LOCALAPPDATA%\Programs\CIMC Studio`，无需管理员权限。可修改安装位置和选择桌面快捷方式。
+下载 `CIMC-Studio-0.6.0-Setup-x64.exe`，双击后按向导安装。默认安装到当前用户的 `%LOCALAPPDATA%\Programs\CIMC Studio`，无需管理员权限。可修改安装位置和选择桌面快捷方式。
 
 开始菜单提供 CIMC Studio 和 Web 入口。桌面入口使用WPF/WebView2，关闭窗口自动停止自己启动的内核；Web入口打开同一浏览器工作台，保持服务窗口运行。若没有WebView2 Runtime，桌面入口会使用系统浏览器。
 
@@ -19,7 +19,7 @@ Windows ZIP和HTML ZIP仍是免安装选择，必须完整解压后运行，不�
 在安装包所在目录执行：
 
 ```bash
-sudo apt install ./cimc-studio_0.5.1_amd64.deb
+sudo apt install ./cimc-studio_0.6.0_amd64.deb
 ```
 
 安装后从应用菜单点击“CIMC Studio”，或在终端执行 `cimc-studio`。程序启动本地内核，并在系统默认图形浏览器中显示工作台。安装包携带Python、Unicorn及全部页面/原理图资源；系统需提供浏览器和xdg-utils。依赖缺失时由apt按系统仓库安装。
@@ -38,7 +38,7 @@ sudo apt remove cimc-studio
 
 ## Linux 便携包
 
-完整解压 `CIMC-Studio-0.5.1-linux-x64.tar.gz`，保留内部符号链接和执行权限，然后运行目录中的 `./cimc-studio`。同样使用本机默认浏览器和同一套桌面会话规则。不要用会丢失符号链接的Windows ZIP工具重打包Linux目录。
+完整解压 `CIMC-Studio-0.6.0-linux-x64.tar.gz`，保留内部符号链接和执行权限，然后运行目录中的 `./cimc-studio`。同样使用本机默认浏览器和同一套桌面会话规则。不要用会丢失符号链接的Windows ZIP工具重打包Linux目录。
 
 ## 多固件和工程迁移
 
@@ -50,25 +50,25 @@ sudo apt remove cimc-studio
 
 v3 工程包含固件原始字节、地址、启动向量，以及接线、串口模式、ADC 电压。导入后从选定入口复位运行，不恢复暂停点、CPU 寄存器、RAM 或外置 SPI Flash 内容。v1/v2 工程仍可导入，但只恢复旧格式包含的设置，保留当前已装入固件；v3 中明确没有固件的工程会清空当前固件集合。保存的工程含固件内容，按本地文件自行保管。
 
-这里的“烧录”指向仿真内部 Flash 装入镜像；当前没有 FMC 在线自写 Flash、完整 IAP/OTA 或系统 ROM Bootloader 模型，安装新版不会自动赋予其他未验证外设能力。
+这里的“烧录”指向仿真内部 Flash 装入镜像。V2 用户固件可通过既有 FMC 模型执行在线擦写与应用升级，具体协议和已验证路径见对应公告。系统 ROM Bootloader 和其他芯片功能按模型覆盖范围逐项验收。
 
 ## 检查更新与新版本提醒
 
 在侧栏“设置”点击“检查更新”。窄屏可从右上角“C”打开“软件更新与设置”。默认在启动时检查，保持工作台打开期间每6小时再检查；开启提醒时，新版会显示应用内提示及设置入口圆点。可关闭“新版本提醒”，仍可手动检查。关闭应用后不会运行独立推送服务。
 
-更新源固定为本项目公开的GitHub Releases，包含可下载的预览版；不会读取或发送固件、接线工程、串口数据。断网或GitHub限流只影响更新查询，不影响本地仿真。点击对应系统的下载链接后，保存工程并退出应用，再运行安装包升级；程序不静默覆盖当前安装。
+更新源固定为本项目公开的GitHub Releases，包含可下载的预览版。设置中可直接下载，查看进度并校验大小及SHA-256。保存工程后点击“安装并重启”，Windows沿用实际安装位置，退出应用后安装并重新启动。Linux系统安装请求系统授权，Linux便携包提供已校验文件夹入口。GitHub限流等查询错误会在更新设置中显示，可稍后重试。
 
 ## GitHub Packages
 
-仓库关联两个 OCI 安装文件包，对应版本使用 `ghcr.io/epiphany-lucky/cimc-studio-windows:0.5.1` 与 `ghcr.io/epiphany-lucky/cimc-studio-linux:0.5.1`及`latest`；实际摘要和结果见本版验收记录。它们保存与 Releases 相同的安装文件及 SHA256 清单，供版本化拉取；普通安装请直接下载公开 Releases 中的 EXE/DEB。这些 OCI 包是文件容器，不是可运行的仿真服务镜像。
+仓库关联两个 OCI 安装文件包，对应版本使用 `ghcr.io/epiphany-lucky/cimc-studio-windows:0.6.0` 与 `ghcr.io/epiphany-lucky/cimc-studio-linux:0.6.0`及`latest`；实际摘要和结果见本版验收记录。它们保存与 Releases 相同的安装文件及 SHA256 清单，供版本化拉取；普通安装请直接下载公开 Releases 中的 EXE/DEB。这些 OCI 包是文件容器，不是可运行的仿真服务镜像。
 
 例如使用Docker提取Linux安装文件（不会启动容器）：
 
 两个 GHCR 包当前仍为私有；公开仓库不会自动改变包的可见性，直接下载公开 Releases 不受影响。以下示例需要目标版本已上传且账户有读取权限，并已完成 `docker login ghcr.io`。只有包所有者将对应包设置为 Public 后，才能匿名拉取。
 
 ```bash
-docker pull ghcr.io/epiphany-lucky/cimc-studio-linux:0.5.1
-id=$(docker create ghcr.io/epiphany-lucky/cimc-studio-linux:0.5.1 /__extract_only__)
+docker pull ghcr.io/epiphany-lucky/cimc-studio-linux:0.6.0
+id=$(docker create ghcr.io/epiphany-lucky/cimc-studio-linux:0.6.0 /__extract_only__)
 mkdir -p cimc-installers
 docker cp "$id:/packages/." ./cimc-installers/
 docker rm "$id"
