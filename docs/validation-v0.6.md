@@ -10,6 +10,8 @@ GD32F470xx数据手册Rev2.2第3.10节将定时器分为14个TIMER、24位SysTic
 
 ## 验收状态
 
+最终产品源码固定为 `ca91cd9c7e80d5c245a5affe52aa2e99db593251`，选定完整发行构建为CI `44003765945`。后续结果按同一源码与对应发行产物填写。[产品源码](https://github.com/Epiphany-Lucky/cimc-simulator/commit/ca91cd9c7e80d5c245a5affe52aa2e99db593251)，[完整CI](https://github.com/Epiphany-Lucky/cimc-simulator/actions/runs/44003765945)
+
 | 验收项 | 实际结果 | 证据 |
 |---|---|---|
 | TIMER0～TIMER13寄存器与边界 | 35项通过，2.861秒 | artifacts/v06-timer-validation-final.log |
@@ -18,23 +20,25 @@ GD32F470xx数据手册Rev2.2第3.10节将定时器分为14个TIMER、24位SysTic
 | PWM、互补、捕获、编码器、触发 | 定时器边界及3项ADC/DAC联动通过，后者0.109秒 | tests/test_timers.py、tests/test_timer_triggers.py |
 | 优先级、共享向量、SysTick回归 | 6项NVIC与时钟检查通过，0.129秒 | artifacts/v06-interrupt-priority-final.log |
 | FWDGT/WWDGT寄存器与时钟 | 9项通过，0.010秒 | tests/test_watchdogs.py |
-| FWDGT/WWDGT真实IRQ与系统复位 | 3项通过，V1/V2均执行，含真实WFI等待，最新联合12项检查0.475秒 | tests/test_watchdog_runtime.py、firmware/watchdog_probe.* |
+| FWDGT/WWDGT真实IRQ与系统复位 | 3项通过，V1/V2均执行，含真实WFI等待，首轮联合12项检查0.475秒 | tests/test_watchdog_runtime.py、firmware/watchdog_probe.* |
 | WFI、SLEEPONEXIT及SysTick精确边界 | 14项通过，0.301秒 | artifacts/v06-sleep-final.log |
 | 原调度器与分块回归 | 12项通过，0.828秒 | artifacts/v06-scheduler-wfi-regression.log |
 | 主题颜色保存与重启 | 用户配置5项、服务10项及六色浏览器交互通过 | tests/test_preferences.py、tests/test_server.py、artifacts/theme-ui-smoke.json |
-| Windows全部源码检查 | 待验 | 待记录 |
+| Windows全部源码检查 | 本机245项执行，235项通过、10项平台跳过，211.258秒；同源码CI为126.426秒，桌面构建通过 | artifacts/v06-final-windows-build.log、artifacts/v06-ci-windows-source.log |
+| Ubuntu全部源码检查 | 245项全部通过，233.380秒 | artifacts/v06-ci-ubuntu-source.log |
 | 浏览器定时器面板与适配 | 两板、14行状态、导出和窄屏通过，JavaScript错误为空 | artifacts/v06-timer-ui-smoke.json |
 | 暂停态输入顺序和立即反馈 | 30毫秒按下/松开、350毫秒按下请求延迟、鼠标拖出、失焦及弹窗内快捷键释放通过 | artifacts/key-ui-smoke.json、artifacts/v06-key-event-race-before.json、artifacts/v06-key-event-race-after.json |
 | DEMO2按键扫描及LED响应时钟定位 | 同一HEX由1.947秒/152万条指令改善为21毫秒/1万条指令 | artifacts/v06-key-clock-diagnosis.json |
 | DEMO2真实DOM按压与LED响应 | 23项通过，含鼠标/键盘50、100、200毫秒目标各3次 | artifacts/v06-key-ui-independent.json |
-| Windows冻结包及原生安装 | 待验 | 待记录 |
-| Ubuntu/Debian分发验收 | 待验 | 待记录 |
-| 同一Linux发行包WSL补验 | 待验 | 待记录 |
-| 正式安装与软件内更新 | 待验 | 待记录 |
-| GitHub源码、标签与五种分发 | 待验 | 待记录 |
-| 旧版更新识别和公开下载 | 待验 | 待记录 |
-| 两平台Packages推送与回拉 | 待验 | 待记录 |
-| 旧版分发清理 | 待验 | 待记录 |
+| 最终冻结包全部界面与DEMO2 | 11项界面脚本及23项原DEMO2可信DOM输入全部通过，152文件核对提交、工作树和包 | artifacts/v06-frozen-ui-suite.json、artifacts/v06-frozen-ui/demo2-native-key-ui.json |
+| Windows冻结包及原生安装 | 最终原生安装、WPF/WebView2、真实固件、重装、卸载及用户文件保留全部通过 | artifacts/installer-smoke-2cdda14a9b2f/result.json、artifacts/v06-final-installer-smoke.log |
+| Ubuntu/Debian分发验收 | Ubuntu22.04 DEB、完整Chromium工作台、生命周期及卸载，Debian12安装、实际固件及卸载均通过 | CI 44003765945 package-linux、artifacts/v06-linux-ci-verification.json |
+| 同一Linux发行包WSL补验 | 同一选定tar在WSL Ubuntu26.04通过全部包内固件、生命周期和原始DEMO三轮检查，111.241秒 | artifacts/v06-same-linux-wsl.json、artifacts/v06-frozen-linux-user-demo.json |
+| 正式安装与软件内更新 | 实际0.5.1下载/SHA/安装器成功，新冻结内核自动重启失败；干净进程恢复0.6.0及当前DEMO2，后续由0.6.1修复 | artifacts/v06-production-upgrade.json、artifacts/v06-production-registry-audit.json |
+| GitHub源码、标签与五种分发 | 固定ca91源码、注释标签及公开发行448041269完成，五软件及三验证/摘要附件共8项，公开五文件HEAD和摘要通过 | CI 44003765945、草稿44007328118、artifacts/v06-public-download-heads.json |
+| 旧版更新识别和公开下载 | 匿名源码版本比较、四入口HEAD及五文件摘要通过，实际0.5.1下载0.6.0完成 | artifacts/v06-public-update-check.json、artifacts/v06-public-download-heads.json、artifacts/v06-production-upgrade.json |
+| 两平台Packages推送与回拉 | Windows/Linux的0.6.0及latest均推送，按0.6.0回拉并核对全部文件摘要通过 | Packages工作流44007852329 |
+| 旧版分发清理 | 远端6个旧分发/摘要附件及2个旧Packages版本删除并复验通过，本地清理延期至0.6.1完整验收 | docs/releases/cleanup-v0.6.0.json、artifacts/v06-cleanup-archive.json |
 
 ## 看门狗实际固件
 
@@ -70,6 +74,10 @@ GD32F470xx数据手册Rev2.2第3.10节将定时器分为14个TIMER、24位SysTic
 
 每项HTTP按下/松开顺序正确，最终全部按键释放，无JavaScript错误，即时样式反馈最长8.1毫秒。18项主测试首次观察到GPIO结果的前台延迟为43.9～321.6毫秒，另有KEY2项为440.8毫秒，包含130毫秒轮询、HTTP和宿主调度时间。证据为 `artifacts/v06-key-ui-independent.json` 和截图。测试私有服务及配置均已清理。
 
+最终 `ca91cd9` 冻结包再次通过全部11项界面脚本，并通过同一冻结内核上的23项原DEMO2可信DOM输入检查。50毫秒目标实际为52.4～57.4毫秒，100毫秒为102.7～108.8毫秒，200毫秒为203.4～206.9毫秒，18次主测试均由固件翻转LED2。最终即时样式反馈最长8.3毫秒，GPIO前台首次观察为40.2～167.8毫秒，仍包含HTTP和130毫秒轮询。输入顺序、全部按键最终释放及JavaScript错误检查通过。
+
+该冻结包152个运行及源码文件与提交Git blob、工作树和包内原始SHA-256逐一核对，验收前后包未变更。内核SHA-256为 `d564836b00ab367b86d0fdcf01f30cd6af69b1345e10bd97f474a63c4de2d1a7`。完整V2界面验收用时345.196秒，包含实际Boot/App、协议、ADC/DAC、工程恢复。主记录为 `artifacts/v06-frozen-ui-suite.json`，DEMO2记录为 `artifacts/v06-frozen-ui/demo2-native-key-ui.json`，私有服务及配置均清理完成。
+
 ## 原始DEMO与性能回归
 
 原始用户DEMO按实际机器码在两板验证启动、复位、工程恢复和分块一致性，通过，用时16.116秒。V1/V2默认均为每条实际指令240个HCLK tick，每25万条指令读取一次真实HAL计数，两板均为362、719、1076、1434。LED输出仍符合原程序。证据为 `artifacts/v06-original-demo-regression.json`。
@@ -91,6 +99,58 @@ GD32F470xx数据手册Rev2.2第3.10节将定时器分为14个TIMER、24位SysTic
 第二轮本机原生安装验收 `installer-smoke-3d06d4de0df4` 已通过定时器、看门狗和相对吞吐检查，V2启动时在途 `/api/state` 请求超出10秒时限。同一时段冻结界面验收已有6项通过，随后V2原理图检查达到180秒子进程时限。原失败记录分别保存在 `artifacts/installer-smoke-3d06d4de0df4/result.json` 和 `artifacts/v06-standby-interrupted-frozen-ui-suite.json`。
 
 Windows System日志确认10:18:31.5988607因Lid进入现代待机，10:27:29.5651274因Lid退出，期间还记录电量预算触发的待机转换。该时间段与工具60秒等待实际耗时约561秒相符。事件506/507及原始原因已归档 `artifacts/v06-host-standby-events.json`。本轮留存失败记录，软件及HTTP时限保持原值，最终验收在宿主恢复后原样重新执行。
+
+宿主恢复后的最终原生验收 `installer-smoke-2cdda14a9b2f` 全部通过，`passed` 和 `desktopTest` 均为true，HKCU登记版本为0.6.0。实际安装后的内核完成14个定时器、两看门狗、三镜像Boot/App、V2真实Boot/CRC及ADC/DAC/SPI检查，相对SysTick吞吐比为0.917514。WPF/WebView2实际窗口、OLED和原理图检查通过，窗口处于显示器工作区内。覆盖重装、卸载及用户自存文件保留均通过，证据为该目录的 `result.json` 和 `artifacts/v06-final-installer-smoke.log`。
+
+## 选定发行文件
+
+注释标签 `v0.6.0` 的标签对象为 `2d71128e07a9b027da2d7eb85e12695f360b510e`，解引用到产品源码 `ca91cd9c7e80d5c245a5affe52aa2e99db593251`。草稿装配工作流 `44007328118` 成功，严格从选定完整CI复制五个软件附件并生成摘要清单和CI来源说明。
+
+公开发行ID为 `448041269`，当前 `draft=false`、`prerelease=true`，沿用开发预览发布设计，共8附件。五软件、摘要清单及CI来源说明的ID、大小和SHA-256在公开及元数据复核期间逐项保持一致，本机验收说明单独更新。管理API实际快照为 `artifacts/v06-release-api.json`。[公开发行](https://github.com/Epiphany-Lucky/cimc-simulator/releases/tag/v0.6.0)
+
+匿名直接访问五个公开分发文件的HEAD均返回200，公开 `SHA256SUMS-0.6.0.txt` 的五条记录与选定CI下载receipt完全一致，记录为 `artifacts/v06-public-download-heads.json`。更新客户端的匿名元数据发现及正式升级另列验收。
+
+完整CI `44003765945` 的两个源码检查和两个打包验收job均成功。Windows CI隔离安装ID为 `9a8ac47abafc`，实际固件、重装和卸载通过；本机原生桌面验收另使用上文的最终记录。Ubuntu22.04完成DEB安装、实际固件、Chromium全部工作台、生命周期及卸载，Debian12容器完成安装、实际固件、生命周期及卸载。两平台验收artifact下载均已核对API摘要和CRC。
+
+Windows原始CI artifact为 `14294326360`，232193831字节，外层ZIP SHA-256为 `5b7422702f8a482bc0f4b2e40f9e98f4edc6f3de4b6e021446c20de96ad01d2e`。全部附件名称集、版本和CRC均已核对，下载分片在完整验证后逐文件清除。
+
+Linux原始CI artifact为 `14295110639`，100137202字节，外层ZIP SHA-256为 `21c6fa3aae845cc76039cb9dc6e7ab2df0a5b33a5b6e4de621afb1965b795453`。全部附件名称集、版本和CRC均已核对，下载分片在完整验证后逐文件清除。
+
+| 分发文件 | SHA-256 |
+|---|---|
+| CIMC-Studio-0.6.0-Setup-x64.exe | 48cb8cf1f4cfbac91e345dfe6f92669982d1a33201f50ed2cc1b5957241be664 |
+| CIMC-Studio-0.6.0-win-x64.zip | 266f97846e282c5b7366e2a68f1483cf55b26ddd1151fb35e0b7b0b92fe18f2e |
+| CIMC-Studio-0.6.0-html-local.zip | 3bdbe866108135f90f1d074379ec0b855beddb315b4c57684990201d204b6465 |
+| cimc-studio_0.6.0_amd64.deb | 74ae2e568dbd153071ce3ee195585ad44899e770d105156c5be3f342e61d0b29 |
+| CIMC-Studio-0.6.0-linux-x64.tar.gz | 69598933e8be83b713f64fef70ab47a9ca0e12e85b9f34fa0fe0ce2f9e1eb51e |
+
+## 同一Linux发行包WSL补验
+
+对选定CI的实际Linux tar核对SHA-256 `69598933e8be83b713f64fef70ab47a9ca0e12e85b9f34fa0fe0ce2f9e1eb51e` 后，在WSL Ubuntu26.04自建临时目录解压，运行包内 `source/tests/package_smoke.py` 和 `source/tests/linux_install_smoke.py --portable` 全部通过。包含14个定时器真实IRQ、两看门狗超时复位和IRQ0、V2真实Boot/App及CRC、ADC/DAC/SPI、三镜像与工程恢复，以及便携会话生命周期。
+
+再通过同一冻结内核公开HTTP接口载入保存的原始DEMO1工程，直接运行、复位、工程导出恢复三轮均执行超过100万条指令，LED状态为亮、灭、亮、灭、亮、亮，诊断为空。全部自建进程、临时目录和独立配置已清理，验收用时111.241秒。证据为 `artifacts/v06-same-linux-wsl.json` 及 `artifacts/v06-frozen-linux-user-demo.json`。
+
+## Packages与远端旧分发清理
+
+Packages工作流 `44007852329` 的两个平台发布和清理job均成功。Windows/Linux两个OCI包均推送0.6.0及latest标签，随后按0.6.0回拉，将安装文件提取后逐项检查SHA-256通过。
+
+首轮清理在公开更新源检查门槛退出，日志为 `artifacts/v06-packages-prune-attempt1.log`，该轮没有执行删除。相同源码重跑该job后，真实公开检查及远端清理全部通过。首轮仅记录通用错误，具体HTTP原因无法从该日志复核。
+
+清理artifact为 `14295741222`，外层ZIP SHA-256为 `5052a17c5b3d4e84a54e2e164c6437120e8187fc825aabe08165067462b58f2e`。下载后已核对摘要、CRC及唯一文件名，归档报告为 `docs/releases/cleanup-v0.6.0.json`，其SHA-256为 `e9d282c9386070057d49ee9f3e8548c093e52c43b97c74d3a8cbea7d9501027f`。报告 `executed=true`、`verified=true`，删除0.5.1的五个软件附件、一份摘要清单及两个旧Packages版本，合计8项。旧版源码、标签、公告及验证说明保留。
+
+## 密集中断暂停的补充复核
+
+标签自动触发的冗余CI `44007298699` 首轮Windows检查有一项 `pause_ms < 2000` 墙钟断言失败，其余定时器、看门狗和实际固件检查通过，原日志保留在 `artifacts/v06-tag-ci-windows-attempt1.log`。相同源码重跑后，两个源码检查及两个重复打包验收job全部成功。发行文件始终来自此前全部成功的选定CI `44003765945`。
+
+随后保持原断言和每个子进程10秒时限，对同一密集SysTick、暂停、恢复和关闭场景连续复核30轮，30/30通过。暂停耗时最小2.379毫秒，中位32.717毫秒，最近秩P95为171.859毫秒，最大207.893毫秒。每轮至少执行1005条密集区间指令和233次ISR tick，最长单轮0.792秒，源码哈希前后一致。记录为 `artifacts/v06-dense-systick-pause-30.json` 和日志。首轮CI没有输出实际暂停时长或线程栈，其单次原因仍无法从该记录确定。
+
+## 正式软件内更新发现的重启缺陷
+
+实际已注册的0.5.1通过自己的更新HTTP API下载0.6.0安装器，完整接收85,675,415字节，SHA-256为 `48cb8cf1f4cfbac91e345dfe6f92669982d1a33201f50ed2cc1b5957241be664`，与选定CI一致。安装器退出码为0，实际软件文件已替换。随后的新冻结内核自动重启寻找旧PyInstaller临时目录中的 `python313.dll` 而失败，故本轮真实自动重启验收失败，报告为 `artifacts/v06-production-upgrade.json`。
+
+干净Explorer进程重新启动同一0.6.0软件后，内核健康，用户当前DEMO2的 `e5990ebf…` 原HEX和12根连线已恢复运行。注册表初次读端仍见0.5.1及前日写入时间，与安装日志重新写键的记录存在作用域差异，原始只读证据保存在 `artifacts/v06-production-registry-audit.json`。
+
+再次保存当前工程并正常关闭后，使用同一已核对SHA-256的官方0.6.0安装器从干净环境重装，退出码0，HKCU登记已为0.6.0，安装日期20261117，目录仍为 `D:\CIMC Studio`，证据为 `artifacts/v06-clean-reinstall-registration.json` 和对应日志。随后Explorer重新启动并恢复同一DEMO2及12根连线，运行健康。初次注册表作用域差异的原因仍未证实，版本宏保持原实现。软件内重启缺陷继续在0.6.1修复并重新执行正式升级验收，本地旧分发清理随该验收完成后执行。
 
 ## 功能时钟范围
 

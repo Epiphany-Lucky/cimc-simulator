@@ -31,8 +31,8 @@ def configure(context, errors, commands):
     context.on('request', lambda request: commands.append(request.url)
                if request.method == 'POST' and urlsplit(request.url).path == '/api/command' else None)
     context.route('**/api/updates**', lambda route: route.fulfill(content_type='application/json', body=json.dumps({
-        'status': 'ok', 'message': '当前已是最新版本', 'currentVersion': '0.6.0',
-        'latestVersion': '0.6.0', 'available': False, 'assets': {}})))
+        'status': 'ok', 'message': '当前已是最新版本', 'currentVersion': '0.6.1',
+        'latestVersion': '0.6.1', 'available': False, 'assets': {}})))
 
 
 def set_server(context, color):

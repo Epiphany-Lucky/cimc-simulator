@@ -202,8 +202,10 @@ class SelfUpdater:
                 self._state.update(status='error', errorCode='checksum_mismatch', message='安装包校验失败，请重新下载。')
                 raise ValueError(self._state['message'])
             command = self._installer_command()
+            environment = browser_environment()
+            environment['PYINSTALLER_RESET_ENVIRONMENT'] = '1'
             options = {'stdin': subprocess.DEVNULL, 'stdout': subprocess.DEVNULL, 'stderr': subprocess.DEVNULL,
-                       'env': browser_environment(), 'cwd': str(self.download.parent)}
+                       'env': environment, 'cwd': str(self.download.parent)}
             if self.platform == 'win32':
                 options['creationflags'] = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
             else:

@@ -174,6 +174,20 @@ class DownloadTests(unittest.TestCase):
         self.assertEqual(self.updater.state()['status'], 'ready')
         self.assertFalse(self.updater.state()['willExit'])
 
+    def test_installer_requests_fresh_frozen_environment_without_mutating_parent(self):
+        self.finish()
+        inherited = {'_PYI_ARCHIVE_FILE': r'C:\CIMC Studio\CIMC-Engine.exe',
+                     '_PYI_APPLICATION_HOME_DIR': r'C:\Temp\_MEI_old_removed',
+                     '_PYI_PARENT_PROCESS_LEVEL': '1', 'PYINSTALLER_RESET_ENVIRONMENT': '0'}
+        with patch.dict(os.environ, inherited):
+            self.updater.install()
+            environment = self.launcher.call_args.kwargs['env']
+            self.assertEqual(environment['PYINSTALLER_RESET_ENVIRONMENT'], '1')
+            for name, value in inherited.items():
+                self.assertEqual(os.environ[name], value)
+                if name.startswith('_PYI_'):
+                    self.assertEqual(environment[name], value)
+
     def test_missing_verified_file_allows_redownload(self):
         state = self.finish()
         Path(state['filePath']).unlink()
