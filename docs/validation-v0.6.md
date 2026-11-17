@@ -38,7 +38,7 @@ GD32F470xx数据手册Rev2.2第3.10节将定时器分为14个TIMER、24位SysTic
 | GitHub源码、标签与五种分发 | 固定ca91源码、注释标签及公开发行448041269完成，五软件及三验证/摘要附件共8项，公开五文件HEAD和摘要通过 | CI 44003765945、草稿44007328118、artifacts/v06-public-download-heads.json |
 | 旧版更新识别和公开下载 | 匿名源码版本比较、四入口HEAD及五文件摘要通过，实际0.5.1下载0.6.0完成 | artifacts/v06-public-update-check.json、artifacts/v06-public-download-heads.json、artifacts/v06-production-upgrade.json |
 | 两平台Packages推送与回拉 | Windows/Linux的0.6.0及latest均推送，按0.6.0回拉并核对全部文件摘要通过 | Packages工作流44007852329 |
-| 旧版分发清理 | 远端6个旧分发/摘要附件及2个旧Packages版本删除并复验通过，本地清理延期至0.6.1完整验收 | docs/releases/cleanup-v0.6.0.json、artifacts/v06-cleanup-archive.json |
+| 旧版分发清理 | 远端8项通过，本地旧分发已随0.6.1完整验收后统一清理 | docs/releases/cleanup-v0.6.0.json、docs/validation-v0.6.1.md |
 
 ## 看门狗实际固件
 
@@ -150,7 +150,9 @@ Packages工作流 `44007852329` 的两个平台发布和清理job均成功。Win
 
 干净Explorer进程重新启动同一0.6.0软件后，内核健康，用户当前DEMO2的 `e5990ebf…` 原HEX和12根连线已恢复运行。注册表初次读端仍见0.5.1及前日写入时间，与安装日志重新写键的记录存在作用域差异，原始只读证据保存在 `artifacts/v06-production-registry-audit.json`。
 
-再次保存当前工程并正常关闭后，使用同一已核对SHA-256的官方0.6.0安装器从干净环境重装，退出码0，HKCU登记已为0.6.0，安装日期20261117，目录仍为 `D:\CIMC Studio`，证据为 `artifacts/v06-clean-reinstall-registration.json` 和对应日志。随后Explorer重新启动并恢复同一DEMO2及12根连线，运行健康。初次注册表作用域差异的原因仍未证实，版本宏保持原实现。软件内重启缺陷继续在0.6.1修复并重新执行正式升级验收，本地旧分发清理随该验收完成后执行。
+再次保存当前工程并正常关闭后，使用同一已核对SHA-256的官方0.6.0安装器从干净环境重装，退出码0，HKCU登记已为0.6.0，安装日期20261117，目录仍为 `D:\CIMC Studio`，证据为 `artifacts/v06-clean-reinstall-registration.json` 和对应日志。随后Explorer重新启动并恢复同一DEMO2及12根连线，运行健康。初次注册表作用域差异的原因仍未证实，版本宏保持原实现。该次重装建立了后续0.6.1真实升级的健康基线。
+
+后续0.6.1已通过真实旧冻结环境重启、正式0.6.0到0.6.1自动升级及工程恢复，9文件与选定CI一致，旧分发完成统一清理。最终结果见 [0.6.1验收](validation-v0.6.1.md)。
 
 ## 功能时钟范围
 

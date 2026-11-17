@@ -10,6 +10,7 @@
 6. 只有新Release、更新接口及两平台Packages验证成功后，才清理已被取代的旧安装分发文件、旧Release安装附件/校验清单和旧Packages版本。只操作已枚举并确认属于本项目的旧语义版本；保护当前版本、更新版本及无法识别的文件/标签。
 7. 本地清理仅在本项目artifacts目录下进行，先解析绝对路径并检查范围；不得清理任意用户安装位置或终止用户未保存的会话。
    使用`scripts/prune-local-installers.ps1 -CurrentVersion <版本> -PublicationReport <远端cleanup-report.json>`先预览，再加`-Execute`执行；只有同版远端发布/清理成功的报告才接受执行。保留安装测试日志和截图。
+   每轮同时核对`github-windows-v<主.次.补丁>`和`github-linux-v<主.次.补丁>`完整三段版本缓存、Windows/Linux CI外层ZIP，以及`installer-smoke-*`、`update-restart-smoke-*`中的旧TestId安装器。对标准清单未覆盖的已确认旧目标，结合当轮extra报告核对实际版本、SHA-256及完整清单后一并清理。
 8. Git提交/源码标签、CHANGELOG、更新公告、验收记录及构建工具缓存继续保留，用于追溯与重建。不得把旧源码记录误认成旧安装包。
 9. 如发布、验证或清理受阻，报告具体已完成与未完成项，不声称全部清理或全部验收通过。
 
