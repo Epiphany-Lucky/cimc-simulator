@@ -40,3 +40,4 @@
 | 定时器观察界面 | 扩展 | web/index.html, web/app.js, web/styles.css | 底部定时器页读取14实例、通道及SysTick/看门狗状态，实际Keil固件入口复用导入和运行命令 |
 | 主题颜色用户偏好 | 扩展 | engine/preferences.py, engine/server.py, web/app.js | 六种强调色通过用户配置保存，浏览器偏好及动态端口启动使用同一颜色设置 |
 | 按键短按响应 | 修复并扩展 | web/board-v1.json, scripts/generate-board-v1.py, web/app.js, tests/key_ui_smoke.py | 两板统一功能时钟推进量，真实DEMO2按10ms扫描周期执行；按下/松开串行发送，保留本地即时反馈与鼠标捕获/键盘失焦释放 |
+| 串口终端参数 | 扩展 | engine/simulator.py, web/index.html, web/app.js, tests/test_serial_settings.py | 通道级手动参数或自动跟随，读取真实 USART/APB 参数、拦截不匹配的收发、工程保存与旧工程兼容 |

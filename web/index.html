@@ -34,7 +34,7 @@
   </defs></svg>
 
   <header class="topbar">
-    <a class="brand" href="#workbench" aria-label="CIMC Studio 首页"><span class="brand-mark"><svg><use href="#i-chip"/></svg></span><span>CIMC <strong>Studio</strong></span><span class="version">Preview 0.6.1</span></a>
+    <a class="brand" href="#workbench" aria-label="CIMC Studio 首页"><span class="brand-mark"><svg><use href="#i-chip"/></svg></span><span>CIMC <strong>Studio</strong></span><span class="version">Preview 0.7.0</span></a>
     <div class="topbar-right"><span class="local-badge"><span></span>本地 · 纯仿真</span><button class="text-button" id="exit-app-button" hidden title="停止仿真并退出本次应用会话"><svg><use href="#i-close"/></svg>退出应用</button><button class="text-button" id="help-button"><svg><use href="#i-book"/></svg>使用指南</button><button class="avatar" id="about-button" aria-label="关于 CIMC Studio">C</button></div>
   </header>
 
@@ -120,6 +120,10 @@
       <div class="panel active" id="panel-serial" role="tabpanel">
         <div class="serial-toolbar"><div class="channel-tabs" aria-label="串口通道"><button class="active" data-channel="ch340">USB · CH340</button><button data-channel="rs232">RS232</button><button data-channel="rs485">RS485</button><button data-channel="ttl">TTL · USART2</button></div><div class="serial-options"><label class="serial-mode-control">H6 接口<select id="serial-mode" aria-label="选择 H6 串口接口"><option value="rs485">RS485</option><option value="rs232">RS232</option></select></label><span class="serial-mode-label" id="serial-mode-label">内部通信</span><label class="toggle-label"><input id="auto-scroll" type="checkbox" checked><span>自动滚动</span></label></div></div>
         <div class="channel-note" id="channel-note" hidden></div>
+        <div class="serial-settings-strip">
+          <button type="button" class="button secondary" id="serial-settings-open" aria-haspopup="dialog" aria-controls="serial-settings-dialog" disabled><svg aria-hidden="true"><use href="#i-settings"/></svg>串口参数</button>
+          <p id="serial-settings-summary" role="status">等待仿真内核连接</p>
+        </div>
         <div class="v2-protocol" id="v2-protocol" hidden>
           <label>设备 ID <input id="v2-device-id" type="number" min="1" max="65535" value="1" aria-label="V2 协议设备 ID"></label>
           <select id="v2-command" aria-label="V2 协议命令"><option value="0104">读取版本</option><option value="0201">读取 PC0</option><option value="0202">读取 PC1</option><option value="0302">开启自动采样</option><option value="0303">停止自动采样</option><option value="0501">进入 Bootloader</option><option value="0502">准备接收升级包</option><option value="0503">写入应用并重启</option></select>
@@ -148,6 +152,32 @@
   <input type="file" id="firmware-set-files" accept=".hex,.bin" multiple hidden>
   <input type="file" id="project-file" accept=".json" hidden>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <dialog id="serial-settings-dialog" class="dialog serial-settings-dialog" aria-labelledby="serial-settings-title" aria-describedby="serial-settings-firmware">
+    <form id="serial-settings-form" novalidate>
+      <div class="serial-settings-heading">
+        <div><h2 id="serial-settings-title">串口参数</h2><p id="serial-settings-channel"></p></div>
+        <button type="button" class="icon-button" data-close aria-label="关闭串口参数"><svg aria-hidden="true"><use href="#i-close"/></svg></button>
+      </div>
+      <p id="serial-settings-firmware">等待固件初始化</p>
+      <label class="field-label">参数模式
+        <select id="serial-settings-mode" autofocus><option value="auto">自动跟随固件</option><option value="manual">手动设置</option></select>
+      </label>
+      <fieldset class="serial-settings-fields" id="serial-settings-manual" aria-label="手动参数" hidden disabled>
+        <label class="field-label">波特率（bps）
+          <select id="serial-baud-rate"><option value="1200">1200</option><option value="2400">2400</option><option value="4800">4800</option><option value="9600">9600</option><option value="19200">19200</option><option value="38400">38400</option><option value="57600">57600</option><option value="115200" selected>115200</option><option value="230400">230400</option><option value="460800">460800</option><option value="921600">921600</option><option value="1000000">1000000</option><option value="2000000">2000000</option><option value="custom">自定义</option></select>
+        </label>
+        <label class="field-label" id="serial-baud-custom-field" hidden>自定义波特率（bps）
+          <input id="serial-baud-custom" type="number" inputmode="numeric" min="1" max="12000000" step="1" required disabled>
+        </label>
+        <label class="field-label">数据位 <select id="serial-data-bits"><option value="7">7 位</option><option value="8" selected>8 位</option></select></label>
+        <label class="field-label">校验位 <select id="serial-parity"><option value="none">无校验</option><option value="even">偶校验</option><option value="odd">奇校验</option></select></label>
+        <label class="field-label">停止位 <select id="serial-stop-bits"><option value="0.5">0.5 位</option><option value="1" selected>1 位</option><option value="1.5">1.5 位</option><option value="2">2 位</option></select></label>
+      </fieldset>
+      <p id="serial-settings-error" role="alert" hidden></p>
+      <div class="dialog-actions"><button class="button secondary" type="button" data-close>取消</button><button class="button primary" type="submit" id="serial-settings-apply">应用参数</button></div>
+    </form>
+  </dialog>
 
   <dialog id="firmware-set-dialog" class="dialog firmware-set-dialog" aria-labelledby="firmware-set-title">
     <form id="firmware-set-form">
@@ -185,7 +215,7 @@
       <label class="theme-choice"><input type="radio" name="theme-color" value="rose"><span class="theme-swatch theme-rose" aria-hidden="true"></span><span>玫红</span></label>
       <label class="theme-choice"><input type="radio" name="theme-color" value="amber"><span class="theme-swatch theme-amber" aria-hidden="true"></span><span>琥珀</span></label>
     </div></fieldset>
-    <section class="update-card" aria-label="软件更新"><div class="update-heading"><strong id="update-current">当前版本 0.6.1</strong><button class="button secondary" id="check-updates">检查更新</button></div><p id="update-status" role="status">更新来自本项目的 GitHub 发行版。</p><div id="update-downloads" class="update-downloads" hidden></div><div id="update-actions" hidden><progress id="update-progress" max="100" value="0" aria-label="更新下载进度"></progress><p id="update-install-status" role="status"></p><button id="download-update" class="button primary">下载更新</button><button id="install-update" class="button primary" hidden>安装并重启</button><button id="update-save-project" class="text-button">保存当前工程</button></div><p class="update-note">在此下载并校验更新，保存工程后点击安装。Linux 系统安装会请求系统授权。</p></section>
+    <section class="update-card" aria-label="软件更新"><div class="update-heading"><strong id="update-current">当前版本 0.7.0</strong><button class="button secondary" id="check-updates">检查更新</button></div><p id="update-status" role="status">更新来自本项目的 GitHub 发行版。</p><div id="update-downloads" class="update-downloads" hidden></div><div id="update-actions" hidden><progress id="update-progress" max="100" value="0" aria-label="更新下载进度"></progress><p id="update-install-status" role="status"></p><button id="download-update" class="button primary">下载更新</button><button id="install-update" class="button primary" hidden>安装并重启</button><button id="update-save-project" class="text-button">保存当前工程</button></div><p class="update-note">在此下载并校验更新，保存工程后点击安装。Linux 系统安装会请求系统授权。</p></section>
     <button class="button primary full-width" data-close>完成</button></dialog>
 
   <dialog id="info-dialog" class="dialog"><div class="dialog-heading"><span class="eyebrow" id="info-eyebrow">BOARD PROFILE</span><button class="icon-button" data-close aria-label="关闭详情"><svg><use href="#i-close"/></svg></button></div><h2 id="info-title">开发板信息</h2><div id="info-content" class="info-content"></div><button class="button primary full-width" data-close>知道了</button></dialog>

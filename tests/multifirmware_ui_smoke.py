@@ -62,10 +62,27 @@ with sync_playwright() as p:
             assert box and box['x'] >= 0 and box['y'] >= 0, (selector, box)
             assert box['x'] + box['width'] <= width + 1 and box['y'] + box['height'] <= height + 1, (width, height, selector, box)
 
+    def set_terminal_baud(baud):
+        page.locator('#serial-settings-open').click()
+        page.locator('#serial-settings-mode').select_option('manual' if baud else 'auto')
+        if baud:
+            page.locator('#serial-baud-rate').select_option(str(baud))
+        page.locator('#serial-settings-apply').click()
+        expect(page.locator('#serial-settings-dialog')).not_to_be_visible()
+
     def run_from_bootloader(number, letter, vector, led_index):
         page.locator('#run-button').click()
         wait_for_terminal_text(page, 'SELECT 1 OR 2')
         page.locator('#serial-newline').uncheck()
+        if number == '1':
+            set_terminal_baud(9600)
+            wait_state("s.serialCompatibility.ch340 === false")
+            page.locator('#serial-input').fill('2')
+            page.locator('#serial-send').click()
+            blocked = wait_state("s.diagnostics.some(entry => entry.code === 'serial-config' && entry.channel === 'ch340')")
+            assert blocked['currentVectorAddress'] == '0x08000000'
+            set_terminal_baud(115200)
+            wait_state("s.serialCompatibility.ch340 === true")
         page.locator('#serial-input').fill(number)
         page.locator('#serial-send').click()
         wait_for_terminal_text(page, f'JUMP APP {letter}')
@@ -74,6 +91,8 @@ with sync_playwright() as p:
         expect(page.locator('#leds .led-light').nth(led_index)).to_have_class('led-light on')
         # The reset selection remains Bootloader; this VTOR change came from ARM code.
         assert state()['bootAddress'] == '0x08000000'
+        if number == '1':
+            set_terminal_baud(None)
 
     opener = page.locator('#firmware-set-open')
     dialog = page.locator('#firmware-set-dialog')

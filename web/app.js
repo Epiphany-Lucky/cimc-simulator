@@ -6,6 +6,9 @@
   const API = location.protocol === 'file:' ? 'http://127.0.0.1:8765' : '';
   let connected = false, state = null, board = null, selectedPin = null, sessionExited = false;
   let activePanel = 'serial', channel = 'ch340', pendingFile = null, busy = false;
+  let serialSettingsTarget = null, serialSettingsSaving = false;
+  const defaultSerialFrame = { baudRate: 115200, dataBits: 8, parity: 'none', stopBits: 1 };
+  const serialParityCode = { none: 'N', even: 'E', odd: 'O' };
   let toastTimer, pollTimer, pollInProgress = false, serialCutoff = -1, diagnosticCutoff = 0;
   let lastWires = '', lastSerial = '', lastDiagnostics = '', lastOled = '';
   let adcPreview = 1.65, adcPending = null, adcSending = false, adcDragging = false, adcDragOrigin = null;
@@ -82,6 +85,7 @@
       if (location.protocol === 'file:') $('connection-message').textContent = '请运行启动器，使用浏览器打开 http://127.0.0.1:8765。HTML 文件仍可查看界面。';
       $('oled-live').classList.remove('on');
       updateEnabled();
+      updateSerialSettingsStatus();
     } finally {
       pollInProgress = false;
       if (!sessionExited) pollTimer = setTimeout(poll, connected ? (document.hidden ? 700 : 130) : 1600);
@@ -97,6 +101,7 @@
     $('run-button').disabled = !connected || !hasFirmware() || state?.status === 'faulted' || busy;
     $('serial-send').disabled = !connected || !hasFirmware() || !channelMapping(channel) || busy;
     $('serial-mode').disabled = !connected || busy;
+    $('serial-settings-open').disabled = !connected || !state?.serialSettings || !channelMapping(channel) || busy;
     const adcReady = connected && !!state?.adc;
     $('adc-slider').disabled = !adcReady;
     $('board-select').disabled = !connected || busy;
@@ -172,6 +177,107 @@
     const message = board?.id === 'cimc-v2' ? v2Notes[channel] || '' : channel.startsWith('rs') ? `H6 当前选择 ${(state?.serialMode || 'rs485').toUpperCase()}。RS232 / RS485 共用 USART1；通过右侧接口选择切换，页签只切换终端视图。` : channel === 'ch340' ? 'H7 · CH340 固定连接 USART0，无需手动接线。' : 'CN1 · USART2：PB10 TX / PB11 RX，TTL 调试通道。';
     $('channel-note').textContent = message;
     $('channel-note').hidden = !message;
+    updateSerialSettingsStatus();
+  }
+
+  function serialFrameLabel(frame) {
+    return `${frame.baudRate} bps ${frame.dataBits}${serialParityCode[frame.parity]}${frame.stopBits}`;
+  }
+
+  function updateSerialSettingsStatus() {
+    const summary = $('serial-settings-summary');
+    let mode = 'unavailable';
+    let message = '等待仿真内核连接';
+    if (connected) {
+      message = '当前通道参数不可用';
+      if (state?.serialSettings && channelMapping(channel)) {
+        const manual = state.serialSettings[channel];
+        const firmware = state.serialParameters?.[channel];
+        const compatibility = state.serialCompatibility?.[channel];
+        mode = !firmware ? 'waiting' : !manual ? 'auto' : compatibility === false ? 'mismatch' : 'matched';
+        const terminal = manual ? `手动 ${serialFrameLabel(manual)}` : '自动跟随';
+        const detected = firmware ? `固件 ${serialFrameLabel(firmware)}` : '等待固件初始化';
+        message = `${terminal} · ${detected}${mode === 'mismatch' ? ' · 参数不匹配' : ''}`;
+      }
+    }
+    if (summary.dataset.state !== mode) summary.dataset.state = mode;
+    if (summary.textContent !== message) summary.textContent = message;
+    if (!$('serial-settings-dialog').open || !serialSettingsTarget) return;
+
+    const targetCurrent = connected && board?.id === serialSettingsTarget.boardId;
+    const firmware = targetCurrent && state?.serialParameters?.[serialSettingsTarget.channel];
+    const detail = !targetCurrent ? '当前板卡连接已变化，请重新打开串口参数。' : firmware ? `固件 ${serialFrameLabel(firmware)}` : '等待固件初始化';
+    if ($('serial-settings-firmware').textContent !== detail) $('serial-settings-firmware').textContent = detail;
+    $('serial-settings-apply').disabled = serialSettingsSaving || !targetCurrent;
+  }
+
+  function updateSerialSettingsForm() {
+    const manual = $('serial-settings-mode').value === 'manual';
+    const custom = manual && $('serial-baud-rate').value === 'custom';
+    const fields = $('serial-settings-manual');
+    fields.hidden = !manual;
+    fields.disabled = !manual || serialSettingsSaving;
+    $('serial-baud-custom-field').hidden = !custom;
+    $('serial-baud-custom').disabled = !custom;
+    $('serial-settings-mode').disabled = serialSettingsSaving;
+    $('serial-settings-form').setAttribute('aria-busy', String(serialSettingsSaving));
+    $('serial-settings-dialog').querySelectorAll('[data-close]').forEach(button => { button.disabled = serialSettingsSaving; });
+    updateSerialSettingsStatus();
+  }
+
+  function openSerialSettings() {
+    if ($('serial-settings-open').disabled || serialSettingsSaving) return;
+    serialSettingsTarget = { boardId: board?.id, channel };
+    const manual = state.serialSettings[channel];
+    const frame = manual || state.serialParameters?.[channel] || defaultSerialFrame;
+    const baudRate = frame.baudRate <= 12000000 ? frame.baudRate : defaultSerialFrame.baudRate;
+    const preset = $('serial-baud-rate');
+    preset.value = [...preset.options].some(option => option.value === String(baudRate)) ? String(baudRate) : 'custom';
+    $('serial-baud-custom').value = String(baudRate);
+    $('serial-data-bits').value = frame.dataBits === 7 ? '7' : '8';
+    $('serial-parity').value = frame.parity;
+    $('serial-stop-bits').value = String(frame.stopBits);
+    $('serial-settings-mode').value = manual ? 'manual' : 'auto';
+    $('serial-settings-channel').textContent = document.querySelector('[data-channel].active').textContent.trim();
+    setSerialSettingsError('');
+    $('serial-settings-dialog').showModal();
+    updateSerialSettingsForm();
+  }
+
+  function setSerialSettingsError(message) {
+    const error = $('serial-settings-error');
+    error.textContent = message;
+    error.hidden = !message;
+  }
+
+  async function applySerialSettings(event) {
+    event.preventDefault();
+    if ($('serial-settings-apply').disabled || !serialSettingsTarget) return;
+    setSerialSettingsError('');
+    let settings = null;
+    if ($('serial-settings-mode').value === 'manual') {
+      const preset = $('serial-baud-rate').value;
+      const custom = $('serial-baud-custom');
+      const baudRate = preset === 'custom' ? custom.valueAsNumber : Number(preset);
+      if (!Number.isInteger(baudRate) || baudRate < 1 || baudRate > 12000000) {
+        setSerialSettingsError('波特率须为 1 到 12000000 之间的整数。');
+        custom.focus();
+        return;
+      }
+      settings = { baudRate, dataBits: Number($('serial-data-bits').value), parity: $('serial-parity').value, stopBits: Number($('serial-stop-bits').value) };
+    }
+    serialSettingsSaving = true;
+    updateSerialSettingsForm();
+    try {
+      const result = await api('/api/command', { action: 'serial_settings', channel: serialSettingsTarget.channel, settings });
+      renderState(result.state || result);
+      $('serial-settings-dialog').close();
+    } catch (error) {
+      setSerialSettingsError(error.message);
+    } finally {
+      serialSettingsSaving = false;
+      updateSerialSettingsForm();
+    }
   }
 
   function setBoard(profile) {
@@ -752,6 +858,12 @@
   $('oled-capture').addEventListener('click',() => { const a = node('a'); a.href = $('oled-canvas').toDataURL('image/png'); a.download = `oled-${stamp()}.png`; a.click(); toast('OLED 像素截图已保存。'); });
   document.querySelectorAll('[data-panel]').forEach(b => b.addEventListener('click',() => activatePanel(b.dataset.panel)));
   document.querySelectorAll('[data-channel]').forEach(b => b.addEventListener('click',() => { channel = b.dataset.channel; document.querySelectorAll('[data-channel]').forEach(x => x.classList.toggle('active',x === b)); updateEnabled(); updateChannelNote(); renderSerial(true); }));
+  $('serial-settings-open').addEventListener('click', openSerialSettings);
+  $('serial-settings-mode').addEventListener('change', updateSerialSettingsForm);
+  $('serial-baud-rate').addEventListener('change', updateSerialSettingsForm);
+  $('serial-settings-form').addEventListener('input', () => setSerialSettingsError(''));
+  $('serial-settings-form').addEventListener('submit', applySerialSettings);
+  $('serial-settings-dialog').addEventListener('cancel', event => { if (serialSettingsSaving) event.preventDefault(); });
   $('serial-mode').addEventListener('change',async e => {
     const mode = e.target.value;
     if (await command('serial_mode',{mode})) toast(`H6 已选择 ${mode.toUpperCase()}，板载固定连线保持不变。`);
@@ -802,7 +914,13 @@
 
   document.querySelectorAll('[data-nav]').forEach(b => b.addEventListener('click',() => { document.querySelectorAll('[data-nav]').forEach(x => x.classList.toggle('active',x === b)); const target = b.dataset.nav; if (target === 'workbench') $('workbench').scrollIntoView({behavior:'smooth'}); else { activatePanel(target); $('console-card').scrollIntoView({behavior:'smooth',block:'start'}); } }));
   document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click',() => b.closest('dialog')?.close()));
-  document.querySelectorAll('dialog').forEach(dialog => dialog.addEventListener('click',e => { if (e.target !== dialog || (dialog.id === 'firmware-set-dialog' && firmwareSetBusy)) return; const r = dialog.getBoundingClientRect(); if (e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom) dialog.close(); }));
+  document.querySelectorAll('dialog').forEach(dialog => dialog.addEventListener('click', e => {
+    if (e.target !== dialog) return;
+    if (dialog.id === 'firmware-set-dialog' && firmwareSetBusy) return;
+    if (dialog.id === 'serial-settings-dialog' && serialSettingsSaving) return;
+    const bounds = dialog.getBoundingClientRect();
+    if (e.clientX < bounds.left || e.clientX > bounds.right || e.clientY < bounds.top || e.clientY > bounds.bottom) dialog.close();
+  }));
   $('help-button').addEventListener('click',() => $('help-dialog').showModal());
   $('exit-app-button').addEventListener('click',async () => {
     if (!state?.engine?.desktopSession || !connected) return;

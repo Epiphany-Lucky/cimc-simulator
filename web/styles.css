@@ -208,3 +208,18 @@ body.firmware-set-open{overflow:hidden}
 .timer-channel span,.timer-system span,.timer-basic-note{color:#737d8d;font-size:12px}
 .timer-system-list{border-top:1px solid #edf0f5;padding-top:18px}
 @media(max-width:600px){.timer-toolbar{padding:14px}.timer-table-scroll{margin:0 14px}.timer-channel-heading{margin-left:14px;margin-right:14px}.timer-channel-list,.timer-system-list{margin-left:14px;margin-right:14px}}
+
+.serial-settings-strip{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;padding:0 22px 9px}
+.serial-settings-strip .button{min-height:28px;padding:4px 8px;border-radius:6px;font-size:10px;gap:4px}
+.serial-settings-strip svg{width:13px;height:13px}
+#serial-settings-summary{margin:0;color:#626c7a;font-size:11px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+#serial-settings-summary[data-state="mismatch"]{color:#93531d;font-weight:600}
+.serial-settings-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
+.serial-settings-heading h2{margin:0}
+.serial-settings-heading p{font-size:11px;color:#6f7886;margin-top:5px}
+.serial-settings-dialog #serial-settings-firmware{color:#526277;font-variant-numeric:tabular-nums;background:#f5f7fb;border-radius:8px;padding:8px 11px;margin:0 0 14px}
+.serial-settings-dialog .field-label>select,.serial-settings-dialog .field-label>input{width:100%;min-width:0;min-height:35px;border:1px solid #dce3ed;border-radius:7px;background:#fcfdff;padding:6px 9px;color:#42576c;font:12px var(--font)}
+.serial-settings-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;min-width:0;padding:0;margin:14px 0 0;border:0}
+#serial-baud-custom-field{grid-column:1/-1}
+.serial-settings-dialog #serial-settings-error{margin-top:14px;border-radius:7px;background:#fff4eb;color:#93531d;padding:8px 10px;overflow-wrap:anywhere}
+@media(max-width:760px){.serial-settings-strip{padding-right:15px;padding-left:15px}}

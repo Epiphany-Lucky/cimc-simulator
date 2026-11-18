@@ -36,7 +36,7 @@ def registry_entry(key_name):
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('package',type=Path)
-    parser.add_argument('--version',default='0.6.1')
+    parser.add_argument('--version',default='0.7.0')
     parser.add_argument('--skip-desktop',action='store_true',help='For CI runners without an interactive WebView2 desktop')
     args=parser.parse_args()
     if os.name!='nt':parser.error('This acceptance test requires Windows')

@@ -34,8 +34,25 @@ CCM_SIZE = 0x10000
 GPIO = {f'P{chr(65+i)}':0x40020000+i*0x400 for i in range(9)}
 UART = {'USART0':0x40011000,'USART1':0x40004400,'USART2':0x40004800,'UART3':0x40004C00,'UART4':0x40005000,'USART5':0x40011400,'UART6':0x40007800,'UART7':0x40007C00}
 UART_IRQ = dict(zip(UART, (37, 38, 39, 52, 53, 71, 82, 83)))
+UART_FRAME_FIELDS = ('dataBits', 'parity', 'stopBits')
+UART_STOP_BITS = (1, 0.5, 2, 1.5)  # USART_CTL1.STB / USART_CR2.STOP encoding.
 CORE_REGS = [UC_ARM_REG_R0, UC_ARM_REG_R1, UC_ARM_REG_R2, UC_ARM_REG_R3, UC_ARM_REG_R12, UC_ARM_REG_LR, UC_ARM_REG_PC, UC_ARM_REG_XPSR]
 
+
+def validate_serial_settings(value):
+    """Validate and copy a terminal frame independently of the firmware state."""
+    if not isinstance(value, dict) or value.keys() != {'baudRate', *UART_FRAME_FIELDS}:
+        raise ValueError('串口参数必须包含波特率、数据位、校验位和停止位')
+    baud, data_bits, parity, stop_bits = (value[key] for key in ('baudRate', *UART_FRAME_FIELDS))
+    if type(baud) is not int or not 1 <= baud <= 12_000_000:
+        raise ValueError('串口波特率必须为 1～12000000 的整数')
+    if type(data_bits) is not int or data_bits not in (7, 8):
+        raise ValueError('串口数据位只支持 7 或 8 位')
+    if parity not in ('none', 'even', 'odd'):
+        raise ValueError('串口校验位只支持无校验、偶校验或奇校验')
+    if type(stop_bits) not in (int, float) or stop_bits not in UART_STOP_BITS:
+        raise ValueError('串口停止位只支持 0.5、1、1.5 或 2 位')
+    return dict(value)
 
 
 
@@ -125,6 +142,7 @@ class Simulator:
         self._slice_timed_out=False
         self.wires=[]
         self.serial_mode='rs485'
+        self.serial_settings={}
         self._connection_cache={}
         self.logs=[]
         self.diagnostics=[]
@@ -179,6 +197,7 @@ class Simulator:
             self.board=board
             self.wires=[]
             self.serial_mode='rs485'
+            self.serial_settings.clear()
             self._connection_cache.clear()
             self._install_program(None,None)
 
@@ -209,7 +228,8 @@ class Simulator:
         self.rx={p:deque() for p in UART}
         self.uart_idle={p:False for p in UART}
         self.uart_status_read={p:False for p in UART}
-        self.uart_pending={p:bytearray() for p in UART}
+        self.serial_pending={channel:bytearray() for channel in self.board['serialMappings']}
+        self._serial_warnings={}
         o=self.board.get('oled',{})
         self.oled=OLED(o.get('width',128),o.get('height',32))
         self.i2c={'active':False,'count':0,'value':0,'phase':'address','selected':False,'ack':False,'ack_clock':False,'control':0,'scl':1,'sda':1}
@@ -280,9 +300,64 @@ class Simulator:
         self.logs.append({'id':self.sequence,'channel':channel,'direction':direction,'text':bytes(data).decode('utf-8','replace'),'hex':' '.join(f'{b:02X}' for b in data),'time':time.strftime('%H:%M:%S')})
         self.logs=self.logs[-300:]
 
+    def _uart_parameters(self,uart):
+        base=UART[uart]
+        control=self.regs.get(base+12,0)
+        baud_register=self.regs.get(base+8,0)&0xFFFF
+        mantissa=baud_register>>4
+        if not control&(1<<13) or not mantissa:return None
+        oversample=8 if control&(1<<15) else 16
+        divisor=mantissa*oversample+(baud_register&(oversample-1))
+        peripheral_clock=self.hclk_frequency()//self.apb_clock_ratio(uart in ('USART0','USART5'))[1]
+        parity_enabled=bool(control&(1<<10))
+        parity=('odd' if control&(1<<9) else 'even') if parity_enabled else 'none'
+        data_bits=8+bool(control&(1<<12))-parity_enabled
+        stop_bits=UART_STOP_BITS[(self.regs.get(base+16,0)>>12)&3]
+        return {'baudRate':peripheral_clock/divisor,'dataBits':data_bits,'parity':parity,'stopBits':stop_bits}
+
+    @staticmethod
+    def _serial_compatible(settings,parameters):
+        if settings is None or parameters is None:return None
+        # Baud register rounding introduces a small mismatch even for equal
+        # nominal rates. Use a functional 3% tolerance against the terminal rate.
+        baud=settings['baudRate']
+        return (abs(baud-parameters['baudRate'])<=baud*.03 and
+                all(settings[key]==parameters[key] for key in UART_FRAME_FIELDS))
+
+    def _serial_accepts(self,channel,uart):
+        settings=self.serial_settings.get(channel)
+        if settings is None:return True
+        parameters=self._uart_parameters(uart)
+        if self._serial_compatible(settings,parameters):
+            self._serial_warnings.pop(channel,None)
+            return True
+        if channel not in self._serial_warnings or self._serial_warnings[channel]!=parameters:
+            self._serial_warnings[channel]=parameters
+            def format_frame(frame):
+                return f"{frame['baudRate']:.0f} 波特，{frame['dataBits']}{frame['parity'][0].upper()}{frame['stopBits']:g}"
+            actual=format_frame(parameters) if parameters else '尚未配置有效波特率'
+            self.diagnose(f'{channel.upper()} 串口参数不匹配，数据未传输（终端 {format_frame(settings)}，固件 {actual}）',
+                          'warning',channel=channel,code='serial-config')
+        return False
+
+    def _flush_serial_channel(self,channel):
+        pending=self.serial_pending[channel]
+        self._serial_log(channel,'tx',pending)
+        pending.clear()
+
     def _flush_uart(self):
-        for uart,b in self.uart_pending.items():
-            if b:self._serial_log(self._channel(uart),'tx',b);b.clear()
+        for channel,pending in self.serial_pending.items():
+            if pending:self._flush_serial_channel(channel)
+
+    def _set_serial_settings(self,channel,value):
+        if not isinstance(channel,str) or channel not in self.board['serialMappings']:
+            raise ValueError('未核验的串口映射')
+        settings=None if value is None else validate_serial_settings(value)
+        if settings==self.serial_settings.get(channel):return
+        self._flush_serial_channel(channel)
+        self._serial_warnings.pop(channel,None)
+        if settings is None:self.serial_settings.pop(channel,None)
+        else:self.serial_settings[channel]=settings
 
     def load(self,raw,name,address=FLASH):
         im=parse_image(raw,name,address)
@@ -629,9 +704,15 @@ class Simulator:
                 o=a-b
                 if o==4:
                     if self.regs.get(b+12,0)&((1<<13)|(1<<3))!=((1<<13)|(1<<3)):return
-                    if self._uart_transmit_enabled(uart):
-                        self.uart_pending[uart].append(v&255)
-                        if v&255==10 or len(self.uart_pending[uart])>=512:self._serial_log(self._channel(uart),'tx',self.uart_pending[uart]);self.uart_pending[uart].clear()
+                    channel=self._uart_tx_channel(uart)
+                    if channel is not None:
+                        pending=self.serial_pending[channel]
+                        if self._serial_accepts(channel,uart):
+                            bits=self.serial_settings.get(channel,{}).get('dataBits',8)
+                            byte=v&((1<<bits)-1)
+                            pending.append(byte)
+                            if byte==10 or len(pending)>=512:self._flush_serial_channel(channel)
+                        elif pending:self._flush_serial_channel(channel)
                 elif o==12 and v&(((1<<6)|(1<<7)) if self.board['id']=='cimc-v2' else ((1<<4)|(1<<5)|(1<<6)|(1<<7))):
                     self.diagnose(f'{uart} 中断模式尚未实现；本版本支持轮询收发')
                 elif o==20 and v&((1<<6)|(1<<7)):
@@ -658,11 +739,12 @@ class Simulator:
         if a in (0xE000ED04,0xE000ED08,0xE000ED0C,0xE000ED10,0xE000ED14,0xE000ED18,0xE000ED1C,0xE000ED20,0xE000ED24,0xE000ED28,0xE000ED2C,0xE000ED88):return
         return self._unsupported(a,'写入')
 
-    def _uart_transmit_enabled(self,uart):
+    def _uart_tx_channel(self,uart):
         channel=self._channel(uart)
-        if channel is None:return False
+        if channel is None:return None
         m=self.board['serialMappings'][channel]
-        return not m.get('dePin') or self.net_level(m['dePin'])==m.get('deActive',1)
+        if not m.get('dePin') or self.net_level(m['dePin'])==m.get('deActive',1):return channel
+        return None
 
     def _code_hook(self,uc,address,size,user):
         if self.pending_reset or self.cpu_sleeping:
@@ -1048,6 +1130,7 @@ class Simulator:
             cpu=self._make_cpu(program)
             board=self._load_board('cimc-v2')
             with self.lock:
+                if board['id']!=self.board['id']:self.serial_settings.clear()
                 self.board=board
                 self.wires=[];self.serial_mode='rs485';self._connection_cache.clear()
                 self._install_program(program,cpu)
@@ -1078,6 +1161,9 @@ class Simulator:
                 if action=='adc_voltage':self.adc.set_voltage(data.get('voltage'),data.get('channel',10))
                 elif action=='v2_wiring':self.apply_reference_wiring()
                 elif action=='serial_mode':self.set_serial_mode(data.get('mode'))
+                elif action=='serial_settings':
+                    if 'settings' not in data:raise ValueError('缺少串口参数')
+                    self._set_serial_settings(data.get('channel'),data['settings'])
                 elif action=='run':
                     if not self.uc:raise ValueError('请先载入固件')
                     if self.status=='faulted':raise ValueError('请先复位或载入其他固件')
@@ -1111,8 +1197,9 @@ class Simulator:
                         self.diagnose('RS485 方向端子未连接或未配置接收电平，本次接收未送入 MCU','warning')
                     elif self.regs.get(UART[uart]+12,0)&((1<<13)|(1<<2))!=((1<<13)|(1<<2)):
                         self.diagnose(f'{uart} 尚未启用接收，本次输入未送入 MCU','warning')
-                    else:
-                        self.rx[uart].extend(raw)
+                    elif raw and self._serial_accepts(channel,uart):
+                        bits=self.serial_settings.get(channel,{}).get('dataBits',8)
+                        self.rx[uart].extend((byte&0x7F for byte in raw) if bits==7 else raw)
                         self.uart_idle[uart]=False
                         self._refresh_uart_irq(uart)
                 elif action=='wire_add':
@@ -1178,6 +1265,10 @@ class Simulator:
         if not isinstance(raw,list) or len(raw)>200 or any(not isinstance(w,dict) for w in raw):raise ValueError('工程跳线列表无效')
         mode=project.get('serialMode','rs485')
         if mode not in ('rs485','rs232'):raise ValueError('无效的串口模式')
+        settings=project.get('serialSettings',{}) if project['version']==3 else {}
+        if not isinstance(settings,dict) or not settings.keys()<=board['serialMappings'].keys():
+            raise ValueError('工程串口参数列表无效')
+        settings={channel:validate_serial_settings(frame) for channel,frame in settings.items()}
         voltage=project.get('adcVoltage',self.adc.voltage)
         if isinstance(voltage,bool) or not isinstance(voltage,(int,float)) or not math.isfinite(voltage) or not 0<=voltage<=3.3:raise ValueError('工程 ADC 电压无效')
         adc1=project.get('adc1Voltage',1.65)
@@ -1233,6 +1324,8 @@ class Simulator:
                 self.image=flash_data
                 self.flash_dirty=bool(snapshot_error)
                 if snapshot_error:self.diagnose('Flash 快照无法启动：'+snapshot_error)
+        self.serial_settings=settings
+        self._serial_warnings.clear()
         self.set_serial_mode(mode,update_wires=False)
         self.adc.set_voltage(voltage)
         if board['id']=='cimc-v2':
@@ -1246,6 +1339,7 @@ class Simulator:
                     'wires':list(self.wires),'firmware':self.firmware,
                     'firmwareSet':self.program.exported() if self.program else None,
                     **({'internalFlashData':base64.b64encode(self.internal_flash).decode('ascii')} if self.flash_dirty else {}),
+                    **({'serialSettings':{channel:dict(frame) for channel,frame in self.serial_settings.items()}} if self.serial_settings else {}),
                     'serialMode':self.serial_mode,'adcVoltage':self.adc.voltage,
                     **({'adc1Voltage':self.adc.current_voltage} if self.board['id']=='cimc-v2' else {})}
 
@@ -1258,4 +1352,13 @@ class Simulator:
             pc=self.uc.reg_read(UC_ARM_REG_PC) if self.uc else 0
             sp=self.uc.reg_read(UC_ARM_REG_SP) if self.uc else 0
             oled_visible=self.oled.on and self._oled_powered()
-            return {'status':self.status,'firmware':self.firmware,'firmwares':[im.metadata() for im in self.program.images] if self.program else [],'bootAddress':f'0x{self.program.boot_address:08X}' if self.program else None,'currentVectorAddress':f"0x{self.regs.get(0xE000ED08,0):08X}" if self.uc else None,'cpu':{'pc':f'0x{pc:08X}','sp':f'0x{sp:08X}','instructions':self.instructions,'model':'Cortex-M4 / Unicorn 2.1.4'},'board':self.board,'leds':leds,'keys':list(self.keys),'oled':{'width':self.oled.width,'height':self.oled.height,'pixels':self.oled.pixels() if oled_visible else [0]*(self.oled.width*self.oled.height),'on':oled_visible},'wires':list(self.wires),'managedWires':self.managed_wires(),'serialMode':self.serial_mode,'adc':self.adc.state(),'flash':self.flash.state(),'internalFlash':self.fmc.state(),'analog':self.v2_devices.state(),'timers':self.timers.state(),'watchdogs':self.watchdogs.state(),'systick':{**self.systick,'inputClockHz':self.hclk_frequency()//(1 if self.systick['ctrl']&4 else 8)},'clock':{'hclkHz':self.hclk_frequency(),'apb1Hz':self.hclk_frequency()//self.apb_clock_ratio()[1],'apb2Hz':self.hclk_frequency()//self.apb_clock_ratio(True)[1],'ticks':self.timing_ticks,'crystalHz':25000000},'serial':list(self.logs),'diagnostics':list(self.diagnostics),'engine':{'version':VERSION,'mode':'functional','cycleAccurate':False,'clockTicksPerInstruction':self.board.get('clockTicksPerInstruction',1),'supported':('TIMER0–13, FWDGT/WWDGT, GPIO, USART RX/IDLE IRQ, GPIO I2C OLED, SysTick, internal Flash, ADC PC0/PC1/PC2, DAC PA4, SPI0 GD25Q40E' if self.board['id']=='cimc-v2' else 'TIMER0–13, FWDGT/WWDGT, GPIO, polling USART, GPIO I2C OLED, basic SysTick, software ADC, SPI1 GD25Q40E')}}
+            serial_parameters={channel:self._uart_parameters(mapping['uart'])
+                               for channel,mapping in self.board['serialMappings'].items()}
+            serial_state={
+                'serialSettings':{channel:dict(frame) for channel,frame in self.serial_settings.items()},
+                'serialParameters':{channel:{**frame,'baudRate':round(frame['baudRate'])} if frame else None
+                                    for channel,frame in serial_parameters.items()},
+                'serialCompatibility':{channel:self._serial_compatible(self.serial_settings.get(channel),frame)
+                                       for channel,frame in serial_parameters.items()},
+            }
+            return {'status':self.status,'firmware':self.firmware,'firmwares':[im.metadata() for im in self.program.images] if self.program else [],'bootAddress':f'0x{self.program.boot_address:08X}' if self.program else None,'currentVectorAddress':f"0x{self.regs.get(0xE000ED08,0):08X}" if self.uc else None,'cpu':{'pc':f'0x{pc:08X}','sp':f'0x{sp:08X}','instructions':self.instructions,'model':'Cortex-M4 / Unicorn 2.1.4'},'board':self.board,'leds':leds,'keys':list(self.keys),'oled':{'width':self.oled.width,'height':self.oled.height,'pixels':self.oled.pixels() if oled_visible else [0]*(self.oled.width*self.oled.height),'on':oled_visible},'wires':list(self.wires),'managedWires':self.managed_wires(),'serialMode':self.serial_mode,**serial_state,'adc':self.adc.state(),'flash':self.flash.state(),'internalFlash':self.fmc.state(),'analog':self.v2_devices.state(),'timers':self.timers.state(),'watchdogs':self.watchdogs.state(),'systick':{**self.systick,'inputClockHz':self.hclk_frequency()//(1 if self.systick['ctrl']&4 else 8)},'clock':{'hclkHz':self.hclk_frequency(),'apb1Hz':self.hclk_frequency()//self.apb_clock_ratio()[1],'apb2Hz':self.hclk_frequency()//self.apb_clock_ratio(True)[1],'ticks':self.timing_ticks,'crystalHz':25000000},'serial':list(self.logs),'diagnostics':list(self.diagnostics),'engine':{'version':VERSION,'mode':'functional','cycleAccurate':False,'clockTicksPerInstruction':self.board.get('clockTicksPerInstruction',1),'supported':('TIMER0–13, FWDGT/WWDGT, GPIO, USART RX/IDLE IRQ, GPIO I2C OLED, SysTick, internal Flash, ADC PC0/PC1/PC2, DAC PA4, SPI0 GD25Q40E' if self.board['id']=='cimc-v2' else 'TIMER0–13, FWDGT/WWDGT, GPIO, polling USART, GPIO I2C OLED, basic SysTick, software ADC, SPI1 GD25Q40E')}}
