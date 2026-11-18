@@ -130,11 +130,18 @@ class EngineTests(unittest.TestCase):
         self.assertLessEqual(ticks,101)
         self.assertNotEqual(self.s.status,'faulted',self.s.diagnostics)
 
-    def test_uart_interrupt_enable_stops_instead_of_fake_progress(self):
-        self.s.command({'action':'demo'})
-        self.s._write(UART['USART0']+12,(1<<13)|(1<<5))
-        self.assertEqual(self.s.status,'faulted')
-        self.assertIn('中断模式尚未实现',self.s.diagnostics[-1]['message'])
+    def test_unimplemented_uart_transmit_interrupts_and_dma_stop_execution(self):
+        for register, flags, diagnostic in (
+            (12, (1<<13)|(1<<6), '发送中断模式尚未实现'),
+            (12, (1<<13)|(1<<7), '发送中断模式尚未实现'),
+            (20, 1<<6, 'DMA 模式尚未实现'),
+            (20, 1<<7, 'DMA 模式尚未实现'),
+        ):
+            with self.subTest(register=register, flags=flags):
+                self.s.command({'action':'demo'})
+                self.s._write(UART['USART0']+register,flags)
+                self.assertEqual(self.s.status,'faulted')
+                self.assertIn(diagnostic,self.s.diagnostics[-1]['message'])
 
     def test_project_roundtrip_and_atomic_rejection(self):
         self.s.command({'action':'demo'})

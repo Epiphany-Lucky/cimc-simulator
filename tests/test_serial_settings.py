@@ -3,12 +3,13 @@ import base64
 import copy
 import json
 from pathlib import Path
+import struct
 import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'engine'))
-from simulator import GPIO, UART, Simulator
+from simulator import FLASH, GPIO, SRAM, UART, UART_IRQ, Simulator
 
 
 def frame(baud=115200, data=8, parity='none', stop=1):
@@ -122,6 +123,34 @@ class SerialSettingsTests(unittest.TestCase):
         self.s.state()
         self.assertEqual(self.s._read(usart+4),ord('Y'))
         self.assertEqual(self.tx(), ['Y'])
+
+    def test_v1_rxne_and_idle_execute_real_usart_exception_handler(self):
+        usart = UART['USART0']
+        irq = UART_IRQ['USART0']
+        image = bytearray(0x140)
+        struct.pack_into('<II', image, 0, SRAM+0x10000, FLASH+0x101)
+        struct.pack_into('<I', image, (16+irq)*4, FLASH+0x121)
+        struct.pack_into('<H', image, 0x100, 0xE7FE)  # Idle loop: b .
+        # Thumb ISR reads SR then DR, records the status and RXNE data in SRAM,
+        # counts each entry, and returns via BX LR. The IDLE entry clears SR/DR
+        # without overwriting the byte from the preceding RXNE entry.
+        struct.pack_into('<12HII', image, 0x120, 0x4805, 0x6801, 0x6842, 0x4B05,
+                         0x6019, 0x0689, 0xD500, 0x605A, 0x6899, 0x3101, 0x6099, 0x4770,
+                         usart, SRAM)
+        self.s.load(bytes(image),'usart-rx-irq.bin')
+        self.s._write(GPIO['PA'], (2<<18)|(2<<20))
+        self.s._write(GPIO['PA']+36, (7<<4)|(7<<8))
+        self.s._write(usart+8,139)
+        self.s._write(usart+12,(1<<13)|(1<<5)|(1<<4)|(1<<3)|(1<<2))
+        self.s._write(0xE000E104,1<<(irq-32))
+        self.send(b'Z')
+        self.assertEqual(self.s._eligible_exception(),16+irq)
+        self.s.run_chunk(100)
+        status, byte, entries = struct.unpack('<III', self.s.uc.mem_read(SRAM,12))
+        self.assertEqual((status&(0x20|0x10),byte,entries),(0x10,ord('Z'),2))
+        self.assertFalse(self.s.uart_idle['USART0'])
+        self.assertFalse(self.s.uart_irqs)
+        self.assertNotEqual(self.s.status,'faulted',self.s.diagnostics)
 
     def test_configuration_survives_firmware_reset_and_project_roundtrip(self):
         previous=self.s.project()
