@@ -1,0 +1,111 @@
+{
+  "format": "cimc-remote-installer-cleanup-v1",
+  "repository": "Epiphany-Lucky/cimc-simulator",
+  "currentVersion": "0.7.1",
+  "executed": true,
+  "releaseAssets": [
+    {
+      "tag": "v0.7.0",
+      "name": "CIMC-Studio-0.7.0-html-local.zip",
+      "id": 763553157
+    },
+    {
+      "tag": "v0.7.0",
+      "name": "CIMC-Studio-0.7.0-linux-x64.tar.gz",
+      "id": 763553158
+    },
+    {
+      "tag": "v0.7.0",
+      "name": "CIMC-Studio-0.7.0-Setup-x64.exe",
+      "id": 763553155
+    },
+    {
+      "tag": "v0.7.0",
+      "name": "CIMC-Studio-0.7.0-win-x64.zip",
+      "id": 763553156
+    },
+    {
+      "tag": "v0.7.0",
+      "name": "cimc-studio_0.7.0_amd64.deb",
+      "id": 763553159
+    },
+    {
+      "tag": "v0.7.0",
+      "name": "SHA256SUMS-0.7.0.txt",
+      "id": 763553288
+    }
+  ],
+  "packageVersions": {
+    "cimc-studio-windows": [
+      {
+        "id": 1589698554,
+        "tags": [
+          "0.7.0"
+        ]
+      }
+    ],
+    "cimc-studio-linux": [
+      {
+        "id": 1589697421,
+        "tags": [
+          "0.7.0"
+        ]
+      }
+    ]
+  },
+  "deleted": [
+    {
+      "kind": "releaseAsset",
+      "tag": "v0.7.0",
+      "name": "CIMC-Studio-0.7.0-html-local.zip",
+      "id": 763553157
+    },
+    {
+      "kind": "releaseAsset",
+      "tag": "v0.7.0",
+      "name": "CIMC-Studio-0.7.0-linux-x64.tar.gz",
+      "id": 763553158
+    },
+    {
+      "kind": "releaseAsset",
+      "tag": "v0.7.0",
+      "name": "CIMC-Studio-0.7.0-Setup-x64.exe",
+      "id": 763553155
+    },
+    {
+      "kind": "releaseAsset",
+      "tag": "v0.7.0",
+      "name": "CIMC-Studio-0.7.0-win-x64.zip",
+      "id": 763553156
+    },
+    {
+      "kind": "releaseAsset",
+      "tag": "v0.7.0",
+      "name": "cimc-studio_0.7.0_amd64.deb",
+      "id": 763553159
+    },
+    {
+      "kind": "releaseAsset",
+      "tag": "v0.7.0",
+      "name": "SHA256SUMS-0.7.0.txt",
+      "id": 763553288
+    },
+    {
+      "kind": "packageVersion",
+      "package": "cimc-studio-windows",
+      "id": 1589698554,
+      "tags": [
+        "0.7.0"
+      ]
+    },
+    {
+      "kind": "packageVersion",
+      "package": "cimc-studio-linux",
+      "id": 1589697421,
+      "tags": [
+        "0.7.0"
+      ]
+    }
+  ],
+  "verified": true
+}
