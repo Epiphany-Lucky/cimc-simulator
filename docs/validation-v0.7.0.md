@@ -28,3 +28,20 @@
 正式 0.6.1 会话的运行诊断与用户截图对应。当前 HEX 的 SHA-256 为 `365eb7dea0d47386c0447501d4a3028c29d0d3a7db788773dbca39c5b79beb3b`。故障点为 PC `0x080019AC`，累计 7102 条指令。`Core/Src/usart.c:54` 启动 HAL 接收中断，链接映射把该 PC 对应到 `UART_Start_Receive_IT`。日志记录 `USART0 中断模式尚未实现`。前一节串口参数验收使用 20:23 只含发送功能的 DEMO3 构建。
 
 接入共用 RXNE/IDLE 路径后，同一 HEX 在 V1 和原 12 条接线下继续执行。手动 `115200 8N1` 的 KEY1 按下产生 `HELLO`。输入 `DEMO3 RX IRQ` 后，固件中断回调将 12 字节写入实际缓冲区，主任务随后发出 `uart data: DEMO3 RX IRQ`。测试使用短帧。原工程的接收下标和 16 位超时变量仍由固件代码管理。
+
+| 检查 | 结果 | 本机证据 |
+| --- | --- | --- |
+| 0.6.1 隔离复现 | 同一 HEX 与接线复现 7102 指令后中止 | `artifacts/demo3-rx-interrupt-baseline-v061.json` |
+| 最终源码和 Windows 本机冻结包 | 自动模式回显 `IRQ42`，手动 115200/8N1 两次回显 `MATCH71`、`REARM26`。9600 拦截输入，KEY1 仍输出 `HELLO` | `artifacts/demo3-rx-interrupt-source-4bfa681-v070.json`、`artifacts/demo3-rx-interrupt-frozen-win-v070.json` |
+| 真实异常测试 | V1 的 Cortex-M4 处理程序接收 RXNE 字节并清除 IDLE。TXE/TC 中断及 DMA 仍报告未支持 | `tests/test_engine.py`、`tests/test_serial_settings.py` |
+| 最终本机 Windows 源码及原生安装 | 253 项中 243 项通过，10 项 Linux 专用检查跳过。隔离安装、原生窗口、固件、重装、卸载和用户文件保留通过 | `artifacts/v070-final-windows-build.log`、`artifacts/installer-smoke-473db80779a3/result.json` |
+
+## 最终分发构建
+
+产品提交 `4bfa681b17619401587b4c145846cafcb423cb57` 的 [选定 CI 44312504894](https://github.com/Epiphany-Lucky/cimc-simulator/actions/runs/44312504894) 四个作业通过。Windows 和 Ubuntu 源码检查分别通过 243 项和 253 项。Windows 安装后的真实固件、重装和卸载通过。Ubuntu 22.04 与 Debian 12 通过安装、固件、生命周期与卸载，Ubuntu 安装版工作台还执行了串口配置、多固件等 Chromium 验收。
+
+从选定 CI 的 Windows ZIP 提取 407 个文件。在该冻结内核再现同一 DEMO3 的短帧回显、波特率失配拦截和 KEY1 输出，CPU 累计执行 1,590,208 条指令。原 12 条跳线、测试固件及内核摘要保持一致。报告为 `artifacts/demo3-rx-interrupt-frozen-ci-win-44312504894.json`，归档与源码对应关系见同名前缀的 `-provenance.json`。
+
+同一选定 Linux tar 在 Ubuntu WSL 用 117.697 秒完成完整固件、便携生命周期与原 DEMO1 恢复。实际 DEMO3 同 HEX 在 9600 下不回显，切到 115200/8N1 后连续收到 `uart data: ABC` 和 `uart data: XYZ`。报告为 `artifacts/v070-same-linux-wsl.json` 和 `artifacts/v070-frozen-linux-demo3-rx.json`。
+
+普通 main 推送 CI `44312409798` 首次 Windows 检查在密集 SysTick 暂停时间的 2 秒断言失败。同一提交重新运行后通过。额外本机运行同一有界场景 30 次全部通过，最大暂停耗时 70.218 ms。首次 CI 日志没有暂停时长与线程栈，无法确定当次原因。记录分别为 `artifacts/v070-main-push-windows-attempt1.log`、`artifacts/v070-dense-systick-pause-30.json`。
