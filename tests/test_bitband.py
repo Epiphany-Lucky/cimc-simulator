@@ -58,6 +58,22 @@ class PeripheralBitbandTests(unittest.TestCase):
             alias_offset = (0x40023800 - 0x40000000) * 32 + bit * 4
             self.assertEqual(self.simulator._bitband_target(alias_offset, 4), (0x40023800, bit))
 
+    def test_power_ready_bits_follow_overdrive_control_on_both_boards(self):
+        control, status = 0x40007000, 0x40007004
+        for board_id in ('cimc-v1', 'cimc-v2'):
+            with self.subTest(board=board_id):
+                self.simulator.select_board(board_id)
+                self.assertEqual(self.simulator._read(status), 0)
+                self.simulator._write(status, 0x100)  # Preserve the wake-up pin configuration.
+                self.simulator._write(control, 0xC000)
+                self.assertEqual(self.simulator._read(status), 0x100)
+                self.simulator._write(control, 0x1C000)  # Enable high-drive mode.
+                self.assertEqual(self.simulator._read(status), 0x10100)
+                self.simulator._write(control, 0x3C000)  # Switch the regulator to high-drive mode.
+                self.assertEqual(self.simulator._read(status), 0x30100)
+                self.simulator._write(control, 0xC000)
+                self.assertEqual(self.simulator._read(status), 0x100)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -619,9 +619,10 @@ class Simulator:
             if o==0x74:v|=(v&1)<<1
             return v
         if a==0x40023C00:return self.regs.get(a,0)
-        if a==0x40007004 and self.board['id']=='cimc-v2':
+        if a==0x40007004:
+            # The PMU control and ready bits share this layout on V1 and V2.
             return self.regs.get(a,0)|(self.regs.get(0x40007000,0)&0x30000)
-        if a in (0x40007000,0x40007004):return self.regs.get(a,0)
+        if a==0x40007000:return self.regs.get(a,0)
         if a==0xE000E010:
             v=self.systick['ctrl']|(0x10000 if self.systick['flag'] else 0);self.systick['flag']=False;return v
         if a==0xE000E014:return self.systick['reload']

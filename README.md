@@ -2,13 +2,13 @@
 
 面向 CIMC 工业嵌入式训练的本地固件仿真工作台。支持 **GD32F470 V1.0 与 CIMC V2.0**；Windows 安装版、Ubuntu/Debian 安装版与 HTML 网页共用界面和本地执行内核。
 
-当前版本为 **[0.7.0，开发预览](https://github.com/Epiphany-Lucky/cimc-simulator/releases/tag/v0.7.0)**。串口终端支持为各通道设置波特率、数据位、校验位和停止位，并显示固件运行时的串口参数。详情见 [0.7.0 公告](docs/releases/v0.7.0.md) 与 [验收记录](docs/validation-v0.7.0.md)，在线发布状态以发行页为准。
+当前版本为 **[0.7.1，开发预览](https://github.com/Epiphany-Lucky/cimc-simulator/releases/tag/v0.7.1)**。V1 补齐 PMU 高驱动就绪状态，修复使用 180 MHz Over-Drive 的固件在初始化时停住的问题。详情见 [0.7.1 公告](docs/releases/v0.7.1.md) 与 [验收记录](docs/validation-v0.7.1.md)，在线发布状态以发行页为准。
 
 ![V1.0 工作台](docs/ui-preview.png)
 
 ## 使用 Windows 版
 
-1. 从 [公开 Releases](https://github.com/Epiphany-Lucky/cimc-simulator/releases) 下载所需版本安装器；0.7.0 的文件名为 `CIMC-Studio-0.7.0-Setup-x64.exe`，运行安装向导（当前用户安装）。实际可下载版本以发行页为准。
+1. 从 [公开 Releases](https://github.com/Epiphany-Lucky/cimc-simulator/releases) 下载所需版本安装器；0.7.1 的文件名为 `CIMC-Studio-0.7.1-Setup-x64.exe`，运行安装向导（当前用户安装）。实际可下载版本以发行页为准。
 2. 从开始菜单或可选桌面快捷方式启动 CIMC Studio；关闭窗口时停止自己启动的仿真服务。仍可使用完整解压的 Windows 便携 ZIP。
 3. 先载入“示例固件”验证环境，再导入自己的 HEX 或 BIN；Bootloader 与多个应用使用固件卡中的“多固件”入口。
 4. 按实际排针添加虚拟跳线，运行固件，操作 KEY，观察 LED/OLED，并使用内置串口面板收发数据。
@@ -17,10 +17,10 @@ EXE 使用系统 Edge WebView2 Runtime；若没有该运行时，会打开相同
 
 ## 使用 Ubuntu / Debian 版
 
-从对应版本发行页下载 `cimc-studio_0.7.0_amd64.deb`，在下载目录运行：
+从对应版本发行页下载 `cimc-studio_0.7.1_amd64.deb`，在下载目录运行：
 
 ```bash
-sudo apt install ./cimc-studio_0.7.0_amd64.deb
+sudo apt install ./cimc-studio_0.7.1_amd64.deb
 ```
 
 安装后从应用菜单打开 **CIMC Studio**，同一工作台显示在系统默认浏览器中。随包已带 Python/Unicorn，不需要安装开发环境。目标为 Ubuntu 22.04+ / Debian 12+ 的 amd64 图形桌面；需有可用的图形浏览器。提供同版本 Linux tar.gz 便携目录。
@@ -73,7 +73,7 @@ KEY按下和松开按顺序提交，界面立即显示反馈，鼠标移出释�
 
 侧栏“设置”提供 **检查更新、下载更新、安装并重启**。启动时及使用期间每6小时检查本项目发行版，可关闭提醒。下载在应用内进行，显示进度并检查大小与 SHA-256。保存工程后点击安装，Windows 退出应用、沿用实际安装路径覆盖并重新启动，Linux 系统安装请求系统授权。便携 Linux 包可打开已校验文件夹。窄屏可从右上角“C → 软件更新与设置”进入。
 
-源码仓库和 Releases 公开。仓库关联的 Windows/Linux GHCR Packages **目前仍为私有**，不能匿名拉取；对应版本使用 `ghcr.io/epiphany-lucky/cimc-studio-windows:0.7.0`、`ghcr.io/epiphany-lucky/cimc-studio-linux:0.7.0`及`latest`。它们是安装文件的版本化分发容器；直接安装推荐公开 Releases 的 EXE/DEB。发布和旧分发清理的实际结果见本版验收记录，源码标签及公告保留。提取方式见 [安装说明](docs/install.md#github-packages)。
+源码仓库和 Releases 公开。仓库关联的 Windows/Linux GHCR Packages **目前仍为私有**，不能匿名拉取；对应版本使用 `ghcr.io/epiphany-lucky/cimc-studio-windows:0.7.1`、`ghcr.io/epiphany-lucky/cimc-studio-linux:0.7.1`及`latest`。它们是安装文件的版本化分发容器；直接安装推荐公开 Releases 的 EXE/DEB。发布和旧分发清理的实际结果见本版验收记录，源码标签及公告保留。提取方式见 [安装说明](docs/install.md#github-packages)。
 
 ## 开发环境
 
@@ -84,10 +84,10 @@ KEY按下和松开按顺序提交，界面立即显示反馈，鼠标移出释�
 - 桌面运行：`dotnet run --project desktop/CimcLab.csproj`。
 - 测试：`.venv/Scripts/python.exe -m unittest discover -s tests -v`。
 - Windows目录打包：`powershell -File scripts/build.ps1`；安装器：`powershell -File scripts/build-windows-installer.ps1`。
-- Linux打包：在Ubuntu22.04的Python3.13构建环境中先安装 `engine/requirements.txt` 和 `requirements-dev.txt`，再执行 `bash scripts/build-linux.sh 0.7.0`，不可用Windows PyInstaller交叉生成Linux内核。
+- Linux打包：在Ubuntu22.04的Python3.13构建环境中先安装 `engine/requirements.txt` 和 `requirements-dev.txt`，再执行 `bash scripts/build-linux.sh 0.7.1`，不可用Windows PyInstaller交叉生成Linux内核。
 - Bootloader 验收固件重编：`powershell -File firmware/build-boot-probes.ps1`；读取 `firmware/boot-probes-manifest.json` 核对实际工具版本和产物 SHA-256。
 
-Windows 打包还需 Visual Studio C++ 构建工具。脚本会按 PyInstaller 官方说明为 Unicorn 重新编译 Python 打包启动程序（`--no-cfg`），不修改系统安全设置；该程序与上述 MCU Bootloader 固件是两个不同组件。发行包另有真实运行检查：`.venv/Scripts/python.exe tests/package_smoke.py artifacts/CIMC-Studio-0.7.0-html-local`。
+Windows 打包还需 Visual Studio C++ 构建工具。脚本会按 PyInstaller 官方说明为 Unicorn 重新编译 Python 打包启动程序（`--no-cfg`），不修改系统安全设置；该程序与上述 MCU Bootloader 固件是两个不同组件。发行包另有真实运行检查：`.venv/Scripts/python.exe tests/package_smoke.py artifacts/CIMC-Studio-0.7.1-html-local`。
 
 示例固件源代码及实际构建信息保存在 `firmware/`。示例输出也必须经过 ARM 机器码执行路径，界面不生成预设成功回复。
 
@@ -99,7 +99,7 @@ V1 的 RS232 和 RS485 通过模式开关自动按原图切换 H6，共用 USART
 
 在串口终端选择通道后打开“串口参数”。自动模式跟随固件，手动模式按所选参数检查收发，出现不匹配时给出提示。各通道的手动参数随工程保存。
 
-功能和逐项验收范围见 [本版记录](docs/validation-v0.7.0.md)。内核共用真实 ARM、GPIO、SysTick 和 TIMER0～TIMER13，板卡外设按 V1/V2 原图与现有模型连接。ADC 旋钮可调 0–3.3 V，采样值在固件实际转换后更新。外置 GD25Q40E 容量另为 512 KiB，MCU 复位保留其会话内容，关闭服务后清空，它独立于 MCU 内部 Flash。定时器 DMA 请求涉及的完整 DMA 控制器、硬件 I²C、SD、RTOS 和实板时序需要独立实现及验收。
+功能和逐项验收范围见 [本版记录](docs/validation-v0.7.1.md)。内核共用真实 ARM、GPIO、SysTick 和 TIMER0～TIMER13，板卡外设按 V1/V2 原图与现有模型连接。ADC 旋钮可调 0–3.3 V，采样值在固件实际转换后更新。外置 GD25Q40E 容量另为 512 KiB，MCU 复位保留其会话内容，关闭服务后清空，它独立于 MCU 内部 Flash。定时器 DMA 请求涉及的完整 DMA 控制器、硬件 I²C、SD、RTOS 和实板时序需要独立实现及验收。
 
 Windows 窗口根据显示器工作区与 DPI 自动限制尺寸，网页适配短屏笔记本；核心操作、OLED 和 ADC 在小尺寸视口保持可见。
 
@@ -111,7 +111,7 @@ Windows 窗口根据显示器工作区与 DPI 自动限制尺寸，网页适配�
 - `feature/...`：后续功能分支，经验证后合并。
 - `v0.x.y`：对应 Releases 的版本标签。
 - [CHANGELOG](CHANGELOG.md)：记录新增、修复及已知限制。
-- [串口参数实施设计](docs/implementation-v0.7.0.md)
+- [V1 高驱动就绪修复](docs/validation-v0.7.1.md)
 - GitHub Actions 在 Windows/Ubuntu 上执行测试；标签和手动打包工作流生成并验收两种系统安装包。
 
 不提交虚拟环境、密钥、生成日志或无关个人资料。大体积发行文件放在 Releases，不塞进 Git 历史。

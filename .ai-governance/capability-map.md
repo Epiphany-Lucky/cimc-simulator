@@ -42,3 +42,4 @@
 | 按键短按响应 | 修复并扩展 | web/board-v1.json, scripts/generate-board-v1.py, web/app.js, tests/key_ui_smoke.py | 两板统一功能时钟推进量，真实DEMO2按10ms扫描周期执行；按下/松开串行发送，保留本地即时反馈与鼠标捕获/键盘失焦释放 |
 | 串口终端参数 | 扩展 | engine/simulator.py, web/index.html, web/app.js, tests/test_serial_settings.py | 通道级手动参数或自动跟随，读取真实 USART/APB 参数、拦截不匹配的收发、工程保存与旧工程兼容 |
 | V1 USART RXNE/IDLE | 扩展 | engine/simulator.py | 复用 V2 已有的接收 FIFO 与 NVIC 模型，验证 V1 上 HAL 接收中断、回显与原轮询发送 |
+| PMU 高驱动就绪 | 扩展 | engine/simulator.py, tests/test_bitband.py | V1/V2 共用已有控制位映射及状态读取，覆盖 HAL Over-Drive 启动与控制位复位，无电压上升时序模型 |
