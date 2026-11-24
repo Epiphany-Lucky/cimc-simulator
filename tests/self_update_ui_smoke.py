@@ -11,7 +11,7 @@ RELEASE = 'https://github.com/Epiphany-Lucky/cimc-simulator/releases/tag/v9.0.0'
 
 
 def fixture(can_install=True):
-    return {'status': 'ok', 'message': '发现新版本 9.0.0', 'currentVersion': '0.7.1',
+    return {'status': 'ok', 'message': '发现新版本 9.0.0', 'currentVersion': '0.8.0',
             'latestVersion': '9.0.0', 'available': True, 'releaseUrl': RELEASE,
             'platform': 'windows' if can_install else 'linux', 'assets': {},
             'updater': {'token': 'test-update-token', 'canInstall': can_install,

@@ -115,9 +115,9 @@ class EngineTests(unittest.TestCase):
 
     def test_unknown_mmio_stops(self):
         self.s.command({'action':'demo'})
-        self.s._read(0x40026000)
+        self.s._read(0x400260D0)
         self.assertEqual(self.s.status,'faulted')
-        self.assertIn('0x40026000',self.s.diagnostics[-1]['message'])
+        self.assertIn('0x400260D0',self.s.diagnostics[-1]['message'])
 
     def test_systick_executes_real_exception_handler(self):
         self.s.load((ROOT/'firmware/systick.hex').read_bytes(),'systick.hex')
@@ -134,7 +134,6 @@ class EngineTests(unittest.TestCase):
         for register, flags, diagnostic in (
             (12, (1<<13)|(1<<6), '发送中断模式尚未实现'),
             (12, (1<<13)|(1<<7), '发送中断模式尚未实现'),
-            (20, 1<<6, 'DMA 模式尚未实现'),
             (20, 1<<7, 'DMA 模式尚未实现'),
         ):
             with self.subTest(register=register, flags=flags):

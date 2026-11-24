@@ -10,13 +10,15 @@
 powershell -NoProfile -File firmware\build.ps1 -Target bitband_probe
 ```
 
-2026-11-16 实际使用 MDK Plus 5.40 / Arm Compiler for Embedded 6.22，链接布局复用 `keil.sct`。初始 MSP 为 `0x20010000`，向量表位于 `0x08000000`。保留 `.axf/.map/.hex/.bin` 以核对编译结果。
+使用 MDK Plus 5.40 / Arm Compiler for Embedded 6.22 构建，链接布局复用 `keil.sct`。初始 MSP 为 `0x20010000`，向量表位于 `0x08000000`。仓库保留 `.map/.hex/.bin` 以核对编译结果。
+
+源码摘要按 Git 的 LF 换行计算，HEX 摘要按 Keil 导出的 CRLF 换行计算。
 
 | 文件 | SHA-256 |
 |---|---|
-| `bitband_probe.c` | `25e1d245512b644cf84ff99b142da5264aa7ed525c780b7c16adc0968bef50a7` |
-| `bitband_probe.hex` | `dfdc196044e364c3ca56f7ea1b956fe780a474cfaa5c4bafae71671875505b45` |
-| `bitband_probe.bin` | `c9282ead38f3b1ea55ceaf37ff6b918ebd9ef00b9252cef00b7d7969fe7fc51f` |
+| `bitband_probe.c` | `f7dae0c107de738c73183be3caaea30310053587e7d502f6048f2d51df0712f2` |
+| `bitband_probe.hex` | `4e26cc50a10a9af9bf0455a4a392d9f0b4183d2ee0b3ad76b5ec49d462ccc72e` |
+| `bitband_probe.bin` | `65053555a5a49db737b39739a7cc26a86392f7702275900e79a66103b31c69cc` |
 
 ## 正常运行结果
 
@@ -40,7 +42,7 @@ SRAM 邮箱基址为 `0x20000000`，每项为 32 位小端整数。索引 15 在
 
 | 索引 15 的值 | 实际访问 | 预期结果 |
 |---|---|---|
-| 1 | 从 DMA 未实现寄存器的别名读取 | 诊断 `0x40026000`，终止运行 |
+| 1 | 从 DMA0 寄存器块之后的保留地址的位带别名读取 | 诊断 `0x400260D0`，终止运行 |
 | 2 | 向同一未实现寄存器的别名写入 | 终止运行，原寄存器未写入 |
 | 3、4 | 未按字对齐的别名读取、写入 | 终止运行并显示对齐诊断 |
 | 5、6 | 字节读取、半字写入 | 终止运行并显示当前访问宽度限制 |

@@ -12,7 +12,7 @@ typedef unsigned char u8;
 #define RCC_CR 0x40023800u
 #define RCC_PLLCFGR 0x40023804u
 #define GPIOD 0x40020C00u
-#define UNKNOWN_ALIAS 0x424C0000u /* DMA at 0x40026000 is not implemented. */
+#define UNKNOWN_ALIAS 0x424C1A00u /* Reserved address 0x400260D0 beyond DMA0 registers. */
 
 void Reset_Handler(void) {
     u32 index;

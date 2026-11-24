@@ -43,3 +43,4 @@
 | 串口终端参数 | 扩展 | engine/simulator.py, web/index.html, web/app.js, tests/test_serial_settings.py | 通道级手动参数或自动跟随，读取真实 USART/APB 参数、拦截不匹配的收发、工程保存与旧工程兼容 |
 | V1 USART RXNE/IDLE | 扩展 | engine/simulator.py | 复用 V2 已有的接收 FIFO 与 NVIC 模型，验证 V1 上 HAL 接收中断、回显与原轮询发送 |
 | PMU 高驱动就绪 | 扩展 | engine/simulator.py, tests/test_bitband.py | V1/V2 共用已有控制位映射及状态读取，覆盖 HAL Over-Drive 启动与控制位复位，无电压上升时序模型 |
+| 串口接收 DMA | 新增并复用 NVIC | engine/dma.py, engine/simulator.py, tests/test_dma.py | 两控制器 16 路寄存器与 GD32F470 的 USART/UART 接收请求映射，复用串口线路、真实 SRAM 和 NVIC，支持直接普通/循环接收 |

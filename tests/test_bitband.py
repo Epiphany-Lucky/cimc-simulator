@@ -41,8 +41,8 @@ class PeripheralBitbandTests(unittest.TestCase):
                 result = self.run_fixture(mode)
                 self.assertEqual(self.simulator.status, 'faulted')
                 self.assertEqual(result[0], 0)
-                self.assertIn('0x40026000', self.simulator.diagnostics[-1]['message'])
-                self.assertNotIn(0x40026000, self.simulator.regs)
+                self.assertIn('0x400260D0', self.simulator.diagnostics[-1]['message'])
+                self.assertNotIn(0x400260D0, self.simulator.regs)
 
     def test_model_diagnoses_unaligned_or_narrow_alias_accesses(self):
         for mode in (3, 4, 5, 6):

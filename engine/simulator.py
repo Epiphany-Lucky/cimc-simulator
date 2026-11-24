@@ -24,6 +24,7 @@ from fmc import InternalFlash
 from v2_devices import V2Devices
 from timers import TimerBank
 from watchdogs import Watchdogs
+from dma import DmaBank, DMAR
 
 FLASH = 0x08000000
 FLASH_SIZE = 0x80000
@@ -155,6 +156,7 @@ class Simulator:
         self.flash=SpiFlashDevice(self)
         self.fmc=InternalFlash(self)
         self.v2_devices=V2Devices(self)
+        self.dma=DmaBank(self,UART,SRAM,SRAM_SIZE)
         self._reset_devices()
         self.worker=threading.Thread(target=self._worker,daemon=True)
         self.worker.start()
@@ -240,6 +242,7 @@ class Simulator:
         self.nvic_enable=0
         self.nvic_pending=0
         self.uart_irqs=0
+        self.dma.reset()
         self.active_exception=0
         self.pending_reset=False
         self._flash_write_pages=set()
@@ -556,6 +559,7 @@ class Simulator:
 
     def _read(self,a):
         self._sync_timing()
+        if self.dma.contains(a):return self.dma.read(a)
         if self.timers.contains(a):
             value=self.timers.read(a)
             self._refresh_timing_deadline()
@@ -644,6 +648,7 @@ class Simulator:
             self._refresh_timing_deadline()
 
     def _write_register(self,a,v,size=4,byte_offset=0):
+        if self.dma.contains(a):return self.dma.write(a,v,size,byte_offset)
         if self.timers.contains(a):return self.timers.write(a,v,size,byte_offset)
         if self.watchdogs.contains(a):return self.watchdogs.write(a,v,size,byte_offset)
         if a==0xE000ED0C:
@@ -716,9 +721,11 @@ class Simulator:
                         elif pending:self._flush_serial_channel(channel)
                 elif o==12 and v&((1<<6)|(1<<7)):
                     self.diagnose(f'{uart} 发送中断模式尚未实现；支持 RXNE/IDLE 接收中断及轮询收发')
-                elif o==20 and v&((1<<6)|(1<<7)):
-                    self.diagnose(f'{uart} DMA 模式尚未实现')
+                elif o==20 and v&(1<<7):
+                    self.diagnose(f'{uart} 发送 DMA 模式尚未实现')
                 elif o not in (0,8,12,16,20,24):return self._unsupported(a,'写入')
+                if o in (12,20) and self.regs.get(b+20,0)&DMAR:
+                    self.dma.service_rx(uart)
                 self._refresh_uart_irq(uart)
                 return
         if 0x40023800<=a<=0x40023898:
@@ -726,6 +733,7 @@ class Simulator:
                 if v&(1<<24):self.reset_flags=0
                 self.regs[a]=(v&0xFFFFFF)|self.reset_flags
             self.timers.notify_rcu_write(a,self.regs[a])
+            self.dma.notify_rcu_write(a,self.regs[a])
             self.watchdogs.notify_rcu_write(a,self.regs[a])
             self.adc.notify_rcu_write(a,v)
             self.v2_devices.notify_rcu_write(a,v)
@@ -764,7 +772,7 @@ class Simulator:
         # Most instructions have no pending exception. Keep that path free of
         # native register reads and priority selection calls.
         pending=self.systick['pending'] or (self.nvic_enable and
-            (self.nvic_pending|self.uart_irqs|self.timer_irqs|self.watchdog_irqs)&self.nvic_enable)
+            (self.nvic_pending|self.uart_irqs|self.timer_irqs|self.watchdog_irqs|self.dma.irqs)&self.nvic_enable)
         if pending and self._eligible_exception():
             uc.emu_stop();return
         hint=None
@@ -868,7 +876,7 @@ class Simulator:
         self._enter_exception(15)
 
     def _pending_irqs(self):
-        return self.nvic_pending|self.uart_irqs|self.timer_irqs|self.watchdog_irqs
+        return self.nvic_pending|self.uart_irqs|self.timer_irqs|self.watchdog_irqs|self.dma.irqs
 
     def _refresh_uart_irq(self, uart):
         bit=1<<UART_IRQ[uart]
@@ -893,7 +901,7 @@ class Simulator:
 
     def _eligible_exception(self,*,ignore_primask=False):
         if not (self.systick['pending'] or (self.nvic_enable and
-            (self.nvic_pending|self.uart_irqs|self.timer_irqs|self.watchdog_irqs)&self.nvic_enable)):return 0
+            (self.nvic_pending|self.uart_irqs|self.timer_irqs|self.watchdog_irqs|self.dma.irqs)&self.nvic_enable)):return 0
         if not self.uc or (not ignore_primask and self.uc.reg_read(UC_ARM_REG_PRIMASK)) or self.uc.reg_read(UC_ARM_REG_FAULTMASK):return 0
         candidate=self._pending_exception()
         if not candidate:return 0
@@ -1202,6 +1210,7 @@ class Simulator:
                         bits=self.serial_settings.get(channel,{}).get('dataBits',8)
                         self.rx[uart].extend((byte&0x7F for byte in raw) if bits==7 else raw)
                         self.uart_idle[uart]=False
+                        self.dma.service_rx(uart)
                         self._refresh_uart_irq(uart)
                 elif action=='wire_add':
                     wire=self.validate_wire(data,self.wires)
@@ -1362,4 +1371,4 @@ class Simulator:
                 'serialCompatibility':{channel:self._serial_compatible(self.serial_settings.get(channel),frame)
                                        for channel,frame in serial_parameters.items()},
             }
-            return {'status':self.status,'firmware':self.firmware,'firmwares':[im.metadata() for im in self.program.images] if self.program else [],'bootAddress':f'0x{self.program.boot_address:08X}' if self.program else None,'currentVectorAddress':f"0x{self.regs.get(0xE000ED08,0):08X}" if self.uc else None,'cpu':{'pc':f'0x{pc:08X}','sp':f'0x{sp:08X}','instructions':self.instructions,'model':'Cortex-M4 / Unicorn 2.1.4'},'board':self.board,'leds':leds,'keys':list(self.keys),'oled':{'width':self.oled.width,'height':self.oled.height,'pixels':self.oled.pixels() if oled_visible else [0]*(self.oled.width*self.oled.height),'on':oled_visible},'wires':list(self.wires),'managedWires':self.managed_wires(),'serialMode':self.serial_mode,**serial_state,'adc':self.adc.state(),'flash':self.flash.state(),'internalFlash':self.fmc.state(),'analog':self.v2_devices.state(),'timers':self.timers.state(),'watchdogs':self.watchdogs.state(),'systick':{**self.systick,'inputClockHz':self.hclk_frequency()//(1 if self.systick['ctrl']&4 else 8)},'clock':{'hclkHz':self.hclk_frequency(),'apb1Hz':self.hclk_frequency()//self.apb_clock_ratio()[1],'apb2Hz':self.hclk_frequency()//self.apb_clock_ratio(True)[1],'ticks':self.timing_ticks,'crystalHz':25000000},'serial':list(self.logs),'diagnostics':list(self.diagnostics),'engine':{'version':VERSION,'mode':'functional','cycleAccurate':False,'clockTicksPerInstruction':self.board.get('clockTicksPerInstruction',1),'supported':('TIMER0–13, FWDGT/WWDGT, GPIO, USART RX/IDLE IRQ, GPIO I2C OLED, SysTick, internal Flash, ADC PC0/PC1/PC2, DAC PA4, SPI0 GD25Q40E' if self.board['id']=='cimc-v2' else 'TIMER0–13, FWDGT/WWDGT, GPIO, USART RX/IDLE IRQ, GPIO I2C OLED, basic SysTick, software ADC, SPI1 GD25Q40E')}}
+            return {'status':self.status,'firmware':self.firmware,'firmwares':[im.metadata() for im in self.program.images] if self.program else [],'bootAddress':f'0x{self.program.boot_address:08X}' if self.program else None,'currentVectorAddress':f"0x{self.regs.get(0xE000ED08,0):08X}" if self.uc else None,'cpu':{'pc':f'0x{pc:08X}','sp':f'0x{sp:08X}','instructions':self.instructions,'model':'Cortex-M4 / Unicorn 2.1.4'},'board':self.board,'leds':leds,'keys':list(self.keys),'oled':{'width':self.oled.width,'height':self.oled.height,'pixels':self.oled.pixels() if oled_visible else [0]*(self.oled.width*self.oled.height),'on':oled_visible},'wires':list(self.wires),'managedWires':self.managed_wires(),'serialMode':self.serial_mode,**serial_state,'adc':self.adc.state(),'flash':self.flash.state(),'internalFlash':self.fmc.state(),'analog':self.v2_devices.state(),'timers':self.timers.state(),'watchdogs':self.watchdogs.state(),'systick':{**self.systick,'inputClockHz':self.hclk_frequency()//(1 if self.systick['ctrl']&4 else 8)},'clock':{'hclkHz':self.hclk_frequency(),'apb1Hz':self.hclk_frequency()//self.apb_clock_ratio()[1],'apb2Hz':self.hclk_frequency()//self.apb_clock_ratio(True)[1],'ticks':self.timing_ticks,'crystalHz':25000000},'serial':list(self.logs),'diagnostics':list(self.diagnostics),'engine':{'version':VERSION,'mode':'functional','cycleAccurate':False,'clockTicksPerInstruction':self.board.get('clockTicksPerInstruction',1),'supported':('TIMER0–13, FWDGT/WWDGT, GPIO, USART RX/IDLE IRQ + RX DMA, GPIO I2C OLED, SysTick, internal Flash, ADC PC0/PC1/PC2, DAC PA4, SPI0 GD25Q40E' if self.board['id']=='cimc-v2' else 'TIMER0–13, FWDGT/WWDGT, GPIO, USART RX/IDLE IRQ + RX DMA, GPIO I2C OLED, basic SysTick, software ADC, SPI1 GD25Q40E')}}
