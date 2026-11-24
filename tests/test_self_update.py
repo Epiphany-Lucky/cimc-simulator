@@ -246,10 +246,14 @@ class UpdateHttpTests(unittest.TestCase):
                 headers = {'Content-Type': 'application/json'}
                 if origin:
                     headers['Origin'] = origin
-                request = Request(url+'/api/updates/install', json.dumps({'token': token}).encode(), headers)
-                with self.subTest(origin=origin, token=token), self.assertRaises(HTTPError) as result:
-                    urlopen(request, timeout=2)
-                self.assertEqual(result.exception.code, 403)
+                # Origin rejection happens before the body is read. An empty
+                # POST avoids racing a refused response against unread TCP data.
+                body = json.dumps({'token': token}).encode() if origin == url else b''
+                request = Request(url+'/api/updates/install', body, headers)
+                with self.subTest(origin=origin, token=token):
+                    with self.assertRaises(HTTPError) as result:
+                        urlopen(request, timeout=2)
+                    self.assertEqual(result.exception.code, 403)
             updater.install.assert_not_called()
             request = Request(url+'/api/updates/install', b'{"token":"test-token"}',
                               {'Content-Type': 'application/json', 'Origin': url})
