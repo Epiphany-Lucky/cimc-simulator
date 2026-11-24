@@ -44,3 +44,4 @@
 | V1 USART RXNE/IDLE | 扩展 | engine/simulator.py | 复用 V2 已有的接收 FIFO 与 NVIC 模型，验证 V1 上 HAL 接收中断、回显与原轮询发送 |
 | PMU 高驱动就绪 | 扩展 | engine/simulator.py, tests/test_bitband.py | V1/V2 共用已有控制位映射及状态读取，覆盖 HAL Over-Drive 启动与控制位复位，无电压上升时序模型 |
 | 串口接收 DMA | 新增并复用 NVIC | engine/dma.py, engine/simulator.py, tests/test_dma.py | 两控制器 16 路寄存器与 GD32F470 的 USART/UART 接收请求映射，复用串口线路、真实 SRAM 和 NVIC，支持直接普通/循环接收 |
+| 串口工作台分行 | 扩展 | web/app.js, tests/serial_log_ui_smoke.py | 复用已有日志字节和 ID，跨轮询接续同通道 TX，统一文本显示与导出分行 |

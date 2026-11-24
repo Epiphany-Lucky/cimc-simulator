@@ -564,6 +564,48 @@
   function empty(icon, title, subtitle) { const e = node('div','empty-state'); const i = node('span','empty-icon'); i.innerHTML = svg(icon); e.append(i,node('p','',title),node('span','',subtitle)); return e; }
   function logTime(value) { if (!value) return '—'; if (typeof value === 'string' && /^\d\d:\d\d/.test(value)) return value; const date = new Date(typeof value === 'number' && value < 1e12 ? value * 1000 : value); return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleTimeString('en-GB', { hour12:false }); }
   function serialEntries() { return (state?.serial || []).filter((entry,index) => (entry.channel || 'ch340').toLowerCase() === channel && (Number(entry.id) || index) > serialCutoff); }
+
+  function serialLogRows(entries, finalizeOpen = false) {
+    const rows = [], pending = new Map();
+    const rowByteLimit = 4096;
+    for (const entry of entries) {
+      const key = (entry.channel || 'ch340').toLowerCase();
+      let row = pending.get(key);
+      const hex = typeof entry.hex === 'string' ? entry.hex.trim() : '';
+      if ((entry.direction || 'rx').toLowerCase() !== 'tx' || !/^[\da-f]{2}(?:\s+[\da-f]{2})*$/i.test(hex)) {
+        if (row) row.complete = true;
+        pending.delete(key);
+        rows.push({ entry });
+        continue;
+      }
+      for (const pair of hex.split(/\s+/)) {
+        const byte = parseInt(pair, 16);
+        if (!row || (row.bytes.length >= rowByteLimit && byte !== 10)) {
+          // Carry UTF-8 state across bounded rows of the same byte stream.
+          const decoder = row?.decoder || new TextDecoder('utf-8', { ignoreBOM: true });
+          row = { entry, bytes: [], decoder, complete: false };
+          pending.set(key, row);
+          rows.push(row);
+        }
+        row.bytes.push(byte);
+        if (byte === 10) {
+          row.complete = true;
+          pending.delete(key);
+          row = null;
+        }
+      }
+    }
+    if (finalizeOpen) for (const row of pending.values()) row.complete = true;
+    return rows.map(({ entry, bytes, decoder, complete }) => {
+      if (!bytes) return entry;
+      return {
+        ...entry,
+        text: decoder.decode(Uint8Array.from(bytes), { stream: !complete }).replace(/\r?\n$/, ''),
+        hex: bytes.map(byte => byte.toString(16).padStart(2, '0').toUpperCase()).join(' '),
+      };
+    });
+  }
+
   function renderSerial(force = false) {
     const entries = serialEntries().slice(-350);
     const signature = JSON.stringify(entries);
@@ -572,7 +614,7 @@
     const terminal = $('terminal'); const oldTop = terminal.scrollTop;
     terminal.replaceChildren();
     if (!entries.length) terminal.append(empty('terminal','等待第一条消息','运行固件后，在这里与开发板对话。'));
-    entries.forEach(entry => {
+    serialLogRows(entries).forEach(entry => {
       const direction = (entry.direction || 'rx').toLowerCase();
       const row = node('div','log-line');
       const content = $('serial-format').value === 'hex' ? entry.hex || entry.text || '' : entry.text ?? entry.hex ?? '';
@@ -1013,7 +1055,7 @@
   });
   $('import-project').addEventListener('click',() => $('project-file').click());
   $('project-file').addEventListener('change',async e => { const file=e.target.files[0];if(!file)return;try { const project=JSON.parse(await file.text());if(await command('project_load',{project})){serialCutoff=-1;diagnosticCutoff=0;toast(project.version >= 3 ? '固件与接线工程已恢复。' : '旧版接线工程已恢复。');} }catch(error){toast(`无法打开工程文件：${error.message}`,true);}finally{e.target.value='';} });
-  $('export-button').addEventListener('click',async () => { if(activePanel==='timers'){saveFile(`cimc-timers-${stamp()}.json`,JSON.stringify({clock:state?.clock,timers:state?.timers,systick:state?.systick,watchdogs:state?.watchdogs},null,2));return;} if(activePanel==='wires'){$('save-project').click();return;} if(activePanel==='diagnostics'){saveFile(`cimc-diagnostics-${stamp()}.json`,JSON.stringify(state?.diagnostics||[],null,2));return;} const lines=(state?.serial||[]).map(e=>`[${logTime(e.time)}] [${e.channel}] [${e.direction}] ${e.text??e.hex??''}`);saveFile(`cimc-serial-${stamp()}.txt`,lines.join('\n'),'text/plain;charset=utf-8');toast('串口日志已导出。'); });
+  $('export-button').addEventListener('click',async () => { if(activePanel==='timers'){saveFile(`cimc-timers-${stamp()}.json`,JSON.stringify({clock:state?.clock,timers:state?.timers,systick:state?.systick,watchdogs:state?.watchdogs},null,2));return;} if(activePanel==='wires'){$('save-project').click();return;} if(activePanel==='diagnostics'){saveFile(`cimc-diagnostics-${stamp()}.json`,JSON.stringify(state?.diagnostics||[],null,2));return;} const lines=serialLogRows(state?.serial||[], true).map(e=>`[${logTime(e.time)}] [${e.channel}] [${e.direction}] ${e.text??e.hex??''}`);saveFile(`cimc-serial-${stamp()}.txt`,lines.join('\n'),'text/plain;charset=utf-8');toast('串口日志已导出。'); });
   $('clear-button').addEventListener('click',() => { if(activePanel==='wires'){toast('请使用每条跳线旁的删除按钮，避免误删接线。');return;} if(activePanel==='diagnostics'){diagnosticCutoff=(state?.diagnostics||[]).length;renderDiagnostics(true);return;} serialCutoff=Math.max(-1,...(state?.serial||[]).map((e,i)=>Number(e.id)||i));renderSerial(true);toast('已清空当前日志显示。'); });
 
   function applyPreferences() {
