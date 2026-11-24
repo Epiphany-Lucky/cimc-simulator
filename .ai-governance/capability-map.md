@@ -45,3 +45,4 @@
 | PMU 高驱动就绪 | 扩展 | engine/simulator.py, tests/test_bitband.py | V1/V2 共用已有控制位映射及状态读取，覆盖 HAL Over-Drive 启动与控制位复位，无电压上升时序模型 |
 | 串口接收 DMA | 新增并复用 NVIC | engine/dma.py, engine/simulator.py, tests/test_dma.py | 两控制器 16 路寄存器与 GD32F470 的 USART/UART 接收请求映射，复用串口线路、真实 SRAM 和 NVIC，支持直接普通/循环接收 |
 | 串口工作台分行 | 扩展 | web/app.js, tests/serial_log_ui_smoke.py | 复用已有日志字节和 ID，跨轮询接续同通道 TX，统一文本显示与导出分行 |
+| SDIO 与虚拟 TF 卡 | 新增并集成 | engine/sdio.py, engine/simulator.py, engine/server.py, web/app.js | V1/V2 共用原图固定网络及 PE2 检测，ARM 固件经 SDIO 轮询 FIFO 访问会话镜像，工作台支持只读挂载及独立导出 |

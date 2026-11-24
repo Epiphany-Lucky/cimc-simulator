@@ -25,6 +25,7 @@ from v2_devices import V2Devices
 from timers import TimerBank
 from watchdogs import Watchdogs
 from dma import DmaBank, DMAR
+from sdio import SdioDevice, is_sdio_fifo
 
 FLASH = 0x08000000
 FLASH_SIZE = 0x80000
@@ -37,6 +38,10 @@ UART = {'USART0':0x40011000,'USART1':0x40004400,'USART2':0x40004800,'UART3':0x40
 UART_IRQ = dict(zip(UART, (37, 38, 39, 52, 53, 71, 82, 83)))
 UART_FRAME_FIELDS = ('dataBits', 'parity', 'stopBits')
 UART_STOP_BITS = (1, 0.5, 2, 1.5)  # USART_CTL1.STB / USART_CR2.STOP encoding.
+SDIO_PINS = (('PD2','SD_CMD'), ('PC12','SD_CLK'), ('PC8','SD_DAT0'),
+             ('PC9','SD_DAT1'), ('PC10','SD_DAT2'), ('PC11','SD_DAT3'))
+SDIO_NETS = {terminal for _,terminal in SDIO_PINS} | {'SD_CD'}
+POWER_NETS = {'DGND','AGND','GND','0V','3V3','3.3V','VCC','5V'}
 CORE_REGS = [UC_ARM_REG_R0, UC_ARM_REG_R1, UC_ARM_REG_R2, UC_ARM_REG_R3, UC_ARM_REG_R12, UC_ARM_REG_LR, UC_ARM_REG_PC, UC_ARM_REG_XPSR]
 
 
@@ -157,6 +162,7 @@ class Simulator:
         self.fmc=InternalFlash(self)
         self.v2_devices=V2Devices(self)
         self.dma=DmaBank(self,UART,SRAM,SRAM_SIZE)
+        self.sdio=SdioDevice(self)
         self._reset_devices()
         self.worker=threading.Thread(target=self._worker,daemon=True)
         self.worker.start()
@@ -243,6 +249,7 @@ class Simulator:
         self.nvic_pending=0
         self.uart_irqs=0
         self.dma.reset()
+        self.sdio.reset()
         self.active_exception=0
         self.pending_reset=False
         self._flash_write_pages=set()
@@ -295,6 +302,20 @@ class Simulator:
         if direction=='rx':
             sources=[other for other,desc in self.board['serialMappings'].items() if desc['rxTerminal'] in nets]
             if len(sources)>1:return False
+        return True
+
+    def _sdio_path(self,wide=False):
+        for pin,terminal in SDIO_PINS if wide else SDIO_PINS[:3]:
+            port=pin[:2];index=int(pin[2:])
+            if (self.gpio_state[port]['mode']>>(2*index))&3!=2:return False
+            af=self.regs.get(GPIO[port]+(32 if index<8 else 36),0)
+            if (af>>(4*(index%8)))&15!=12:return False
+            nets=self.connected(pin)
+            if terminal not in nets or nets & POWER_NETS or len(nets & SDIO_NETS)!=1:return False
+            for net in nets-{pin}:
+                if net[:2] in GPIO and net[2:].isdigit():
+                    other=int(net[2:])
+                    if other<16 and (self.gpio_state[net[:2]]['mode']>>(2*other))&3==1:return False
         return True
 
     def _serial_log(self,channel,direction,data):
@@ -516,6 +537,8 @@ class Simulator:
     def _mmio_read(self,uc,offset,size,base):
         try:
             address=base+offset
+            if is_sdio_fifo(address&~3) and (address&3 or size!=4):
+                raise ValueError('SDIO FIFO 要求字对齐 32 位访问')
             v=self._read(address&~3)
             return (v>>((address&3)*8))&((1<<(8*size))-1)
         except Exception as e:self.diagnose('外设读取失败：'+str(e));return 0
@@ -540,6 +563,7 @@ class Simulator:
         if self.status=='faulted':return 0
         try:
             address,bit=self._bitband_target(offset,size)
+            if is_sdio_fifo(address):raise ValueError('SDIO FIFO 不支持位带访问')
             return (self._read(address)>>bit)&1
         except Exception as error:
             self.diagnose('外设位带读取失败：'+str(error));return 0
@@ -548,6 +572,7 @@ class Simulator:
         if self.status=='faulted':return
         try:
             address,bit=self._bitband_target(offset,size)
+            if is_sdio_fifo(address):raise ValueError('SDIO FIFO 不支持位带访问')
             previous=self._read(address)
             if self.status=='faulted':return
             self._write(address,(previous&~(1<<bit))|((value&1)<<bit))
@@ -559,6 +584,7 @@ class Simulator:
 
     def _read(self,a):
         self._sync_timing()
+        if self.sdio.contains(a):return self.sdio.read(a)
         if self.dma.contains(a):return self.dma.read(a)
         if self.timers.contains(a):
             value=self.timers.read(a)
@@ -648,6 +674,10 @@ class Simulator:
             self._refresh_timing_deadline()
 
     def _write_register(self,a,v,size=4,byte_offset=0):
+        if self.sdio.contains(a):
+            if is_sdio_fifo(a) and (size!=4 or byte_offset):
+                raise ValueError('SDIO FIFO 要求字对齐 32 位访问')
+            return self.sdio.write(a,v,size,byte_offset)
         if self.dma.contains(a):return self.dma.write(a,v,size,byte_offset)
         if self.timers.contains(a):return self.timers.write(a,v,size,byte_offset)
         if self.watchdogs.contains(a):return self.watchdogs.write(a,v,size,byte_offset)
@@ -734,6 +764,7 @@ class Simulator:
                 self.regs[a]=(v&0xFFFFFF)|self.reset_flags
             self.timers.notify_rcu_write(a,self.regs[a])
             self.dma.notify_rcu_write(a,self.regs[a])
+            self.sdio.notify_rcu_write(a,self.regs[a])
             self.watchdogs.notify_rcu_write(a,self.regs[a])
             self.adc.notify_rcu_write(a,v)
             self.v2_devices.notify_rcu_write(a,v)
@@ -1054,6 +1085,7 @@ class Simulator:
         o=self.board.get('oled',{})
         for pull in self.board.get('fixedPulls',[]):
             if pull['net'] in nets:weak.append(pull['level'])
+        if include_device and 'SD_CD' in nets and self.sdio.inserted:strong.append(0)
         if include_device and self.i2c['ack'] and self.i2c.get('ack_drive') and o.get('sda') in nets:strong.append(0)
         if o.get('sda') in nets or o.get('scl') in nets:weak.append(1)
         if 0 in strong and 1 in strong:
@@ -1121,6 +1153,15 @@ class Simulator:
         self.timers.sample_inputs()
         self._refresh_timing_deadline()
 
+    def mount_sd(self,raw,name,read_only):
+        with self.lock:
+            self.sdio.mount(raw,name,read_only)
+            return self.state()
+
+    def export_sd(self):
+        with self.lock:
+            return self.sdio.export()
+
     def command(self,data):
         action=data.get('action','')
         if action=='load':
@@ -1180,6 +1221,7 @@ class Simulator:
                 elif action=='pause':
                     if self.status=='running':self.status='paused'
                 elif action=='reset':self.reset()
+                elif action=='sd_eject':self.sdio.eject()
                 elif action=='step':
                     if not self.uc:raise ValueError('请先载入固件')
                     self.status='paused';self.run_chunk(1)
@@ -1371,4 +1413,4 @@ class Simulator:
                 'serialCompatibility':{channel:self._serial_compatible(self.serial_settings.get(channel),frame)
                                        for channel,frame in serial_parameters.items()},
             }
-            return {'status':self.status,'firmware':self.firmware,'firmwares':[im.metadata() for im in self.program.images] if self.program else [],'bootAddress':f'0x{self.program.boot_address:08X}' if self.program else None,'currentVectorAddress':f"0x{self.regs.get(0xE000ED08,0):08X}" if self.uc else None,'cpu':{'pc':f'0x{pc:08X}','sp':f'0x{sp:08X}','instructions':self.instructions,'model':'Cortex-M4 / Unicorn 2.1.4'},'board':self.board,'leds':leds,'keys':list(self.keys),'oled':{'width':self.oled.width,'height':self.oled.height,'pixels':self.oled.pixels() if oled_visible else [0]*(self.oled.width*self.oled.height),'on':oled_visible},'wires':list(self.wires),'managedWires':self.managed_wires(),'serialMode':self.serial_mode,**serial_state,'adc':self.adc.state(),'flash':self.flash.state(),'internalFlash':self.fmc.state(),'analog':self.v2_devices.state(),'timers':self.timers.state(),'watchdogs':self.watchdogs.state(),'systick':{**self.systick,'inputClockHz':self.hclk_frequency()//(1 if self.systick['ctrl']&4 else 8)},'clock':{'hclkHz':self.hclk_frequency(),'apb1Hz':self.hclk_frequency()//self.apb_clock_ratio()[1],'apb2Hz':self.hclk_frequency()//self.apb_clock_ratio(True)[1],'ticks':self.timing_ticks,'crystalHz':25000000},'serial':list(self.logs),'diagnostics':list(self.diagnostics),'engine':{'version':VERSION,'mode':'functional','cycleAccurate':False,'clockTicksPerInstruction':self.board.get('clockTicksPerInstruction',1),'supported':('TIMER0–13, FWDGT/WWDGT, GPIO, USART RX/IDLE IRQ + RX DMA, GPIO I2C OLED, SysTick, internal Flash, ADC PC0/PC1/PC2, DAC PA4, SPI0 GD25Q40E' if self.board['id']=='cimc-v2' else 'TIMER0–13, FWDGT/WWDGT, GPIO, USART RX/IDLE IRQ + RX DMA, GPIO I2C OLED, basic SysTick, software ADC, SPI1 GD25Q40E')}}
+            return {'status':self.status,'firmware':self.firmware,'firmwares':[im.metadata() for im in self.program.images] if self.program else [],'bootAddress':f'0x{self.program.boot_address:08X}' if self.program else None,'currentVectorAddress':f"0x{self.regs.get(0xE000ED08,0):08X}" if self.uc else None,'cpu':{'pc':f'0x{pc:08X}','sp':f'0x{sp:08X}','instructions':self.instructions,'model':'Cortex-M4 / Unicorn 2.1.4'},'board':self.board,'leds':leds,'keys':list(self.keys),'oled':{'width':self.oled.width,'height':self.oled.height,'pixels':self.oled.pixels() if oled_visible else [0]*(self.oled.width*self.oled.height),'on':oled_visible},'wires':list(self.wires),'managedWires':self.managed_wires(),'serialMode':self.serial_mode,**serial_state,'adc':self.adc.state(),'flash':self.flash.state(),'sdCard':self.sdio.state(),'internalFlash':self.fmc.state(),'analog':self.v2_devices.state(),'timers':self.timers.state(),'watchdogs':self.watchdogs.state(),'systick':{**self.systick,'inputClockHz':self.hclk_frequency()//(1 if self.systick['ctrl']&4 else 8)},'clock':{'hclkHz':self.hclk_frequency(),'apb1Hz':self.hclk_frequency()//self.apb_clock_ratio()[1],'apb2Hz':self.hclk_frequency()//self.apb_clock_ratio(True)[1],'ticks':self.timing_ticks,'crystalHz':25000000},'serial':list(self.logs),'diagnostics':list(self.diagnostics),'engine':{'version':VERSION,'mode':'functional','cycleAccurate':False,'clockTicksPerInstruction':self.board.get('clockTicksPerInstruction',1),'supported':('TIMER0–13, FWDGT/WWDGT, GPIO, USART RX/IDLE IRQ + RX DMA, GPIO I2C OLED, SDIO polling, SysTick, internal Flash, ADC PC0/PC1/PC2, DAC PA4, SPI0 GD25Q40E' if self.board['id']=='cimc-v2' else 'TIMER0–13, FWDGT/WWDGT, GPIO, USART RX/IDLE IRQ + RX DMA, GPIO I2C OLED, SDIO polling, basic SysTick, software ADC, SPI1 GD25Q40E')}}

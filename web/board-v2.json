@@ -4543,6 +4543,48 @@
       "resistanceOhms": 10000,
       "component": "R28",
       "evidence": "V2 schematic p2 R28, 10k to 3V3"
+    },
+    {
+      "net": "SD_DAT0",
+      "level": 1,
+      "resistanceOhms": 10000,
+      "component": "R9",
+      "evidence": "V2 schematic p2 R9, 10k to 3V3"
+    },
+    {
+      "net": "SD_DAT1",
+      "level": 1,
+      "resistanceOhms": 10000,
+      "component": "R16",
+      "evidence": "V2 schematic p2 R16, 10k to 3V3"
+    },
+    {
+      "net": "SD_DAT2",
+      "level": 1,
+      "resistanceOhms": 10000,
+      "component": "R18",
+      "evidence": "V2 schematic p2 R18, 10k to 3V3"
+    },
+    {
+      "net": "SD_DAT3",
+      "level": 1,
+      "resistanceOhms": 10000,
+      "component": "R19",
+      "evidence": "V2 schematic p2 R19, 10k to 3V3"
+    },
+    {
+      "net": "SD_CMD",
+      "level": 1,
+      "resistanceOhms": 10000,
+      "component": "R20",
+      "evidence": "V2 schematic p2 R20, 10k to 3V3"
+    },
+    {
+      "net": "SD_CD",
+      "level": 1,
+      "resistanceOhms": 10000,
+      "component": "R21",
+      "evidence": "V2 schematic p2 R21, 10k to 3V3"
     }
   ]
 }

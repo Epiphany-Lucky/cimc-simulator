@@ -3,7 +3,7 @@
 # PYTHON=/path/to/build-venv/bin/python bash scripts/build-linux.sh [version]
 set -euo pipefail
 
-version=${1:-0.8.1}
+version=${1:-0.9.0}
 if [[ $# -gt 1 || ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
     echo 'Usage: build-linux.sh [MAJOR.MINOR.PATCH]' >&2
     exit 2

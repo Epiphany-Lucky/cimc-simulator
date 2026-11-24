@@ -9,9 +9,10 @@ from pathlib import Path
 import sys
 import threading
 import webbrowser
-from urllib.parse import urlparse, unquote
+from urllib.parse import parse_qs, urlparse, unquote
 
 from simulator import Simulator
+from sdio import MAX_SD_IMAGE_BYTES
 from desktop_session import APP_ID, DesktopSession, open_browser
 from updates import UpdateChecker
 from app_version import VERSION
@@ -54,6 +55,7 @@ def serve(args,session):
     updater=SelfUpdater(updates,args.root)
     preferences=Preferences()
     stop_event=threading.Event()
+    sd_upload=threading.Lock()
     launch_errors=[]
 
     def decorate(state):
@@ -64,11 +66,12 @@ def serve(args,session):
     class Handler(BaseHTTPRequestHandler):
         def log_message(self,*args):pass
 
-        def _send(self,status,body,content_type='application/json; charset=utf-8'):
+        def _send(self,status,body,content_type='application/json; charset=utf-8',content_disposition=None):
             if not isinstance(body,bytes):body=json.dumps(body,ensure_ascii=False).encode('utf-8')
             self.send_response(status)
             self.send_header('Content-Type',content_type)
             self.send_header('Content-Length',str(len(body)))
+            if content_disposition:self.send_header('Content-Disposition',content_disposition)
             self.send_header('Cache-Control','no-store')
             self.send_header('X-Content-Type-Options','nosniff')
             self.send_header('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'")
@@ -83,6 +86,39 @@ def serve(args,session):
             origin=self.headers.get('Origin')
             return not origin or origin in {'http://'+v for v in valid}
 
+        def _mount_sd(self,query):
+            origin='http://'+self.headers['Host']
+            if self.headers.get('Origin')!=origin or self.headers.get_content_type()!='application/octet-stream':
+                return self._send(403,{'error':'请从工作台上传 TF 卡镜像'})
+            if not sd_upload.acquire(blocking=False):
+                return self._send(409,{'error':'已有 TF 卡镜像正在上传'})
+            try:
+                length=int(self.headers.get('Content-Length','0'))
+                if length>MAX_SD_IMAGE_BYTES:
+                    return self._send(413,{'error':'TF 卡镜像超过 128 MiB'})
+                if length<=0 or length%512 or self.headers.get('Transfer-Encoding'):
+                    raise ValueError('TF 卡镜像须包含完整的 512 字节扇区')
+                options=parse_qs(query,keep_blank_values=True,max_num_fields=2)
+                read_only=options.get('readOnly',['0'])
+                names=options.get('name',[''])
+                if read_only not in (['0'],['1']) or len(names)!=1:
+                    raise ValueError('TF 卡挂载参数无效')
+                name=names[0].replace('\\','/').rsplit('/',1)[-1]
+                name=''.join(c for c in name if c.isprintable())[:128] or 'sd-card.img'
+                old_timeout=self.connection.gettimeout()
+                try:
+                    self.connection.settimeout(30)
+                    raw=self.rfile.read(length)
+                finally:
+                    self.connection.settimeout(old_timeout)
+                if len(raw)!=length:raise ValueError('TF 卡镜像上传不完整')
+                if session:session.touch()
+                self._send(200,decorate(simulator.mount_sd(raw,name,read_only==['1'])))
+            except ValueError as error:self._send(400,{'error':str(error)})
+            except TimeoutError:self._send(408,{'error':'TF 卡镜像上传超时'})
+            except ConnectionError:pass
+            finally:sd_upload.release()
+
         def do_GET(self):
             if not self._allowed():return self._send(403,{'error':'Only local same-origin requests are allowed'})
             path=urlparse(self.path).path
@@ -90,6 +126,11 @@ def serve(args,session):
                 if session:session.touch()
                 return self._send(200,decorate(simulator.state()))
             if path=='/api/project':return self._send(200,simulator.project())
+            if path=='/api/sd-card':
+                if session:session.touch()
+                try:raw=simulator.export_sd()
+                except ValueError as error:return self._send(404,{'error':str(error)})
+                return self._send(200,raw,'application/octet-stream','attachment; filename="cimc-tf.img"')
             if path=='/api/updates':
                 result=updates.check(force=urlparse(self.path).query=='force=1')
                 result['platform']='windows' if sys.platform=='win32' else 'linux'
@@ -109,7 +150,9 @@ def serve(args,session):
 
         def do_POST(self):
             if not self._allowed():return self._send(403,{'error':'Only local same-origin requests are allowed'})
-            path=urlparse(self.path).path
+            parsed=urlparse(self.path)
+            path=parsed.path
+            if path=='/api/sd-card':return self._mount_sd(parsed.query)
             update_action=path in ('/api/updates/download','/api/updates/install','/api/updates/open')
             if path not in ('/api/command','/api/session/quit','/api/preferences') and not update_action:return self._send(404,{'error':'Not found'})
             if path=='/api/preferences' and (not self.headers.get('Origin') or self.headers.get_content_type()!='application/json'):

@@ -58,6 +58,12 @@
 .flash-stats{display:flex;justify-content:space-between;gap:7px;flex-wrap:wrap;margin-top:10px;color:#8b94a1;font-size:9px}
 .flash-stats b{font:9px var(--mono);color:#536b86;font-weight:500}
 .flash-foot{font-size:9px;line-height:1.6;color:#9ca5b1;margin-top:7px}
+.sd-card-name{color:#617487;font-size:10px;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sd-card-option{width:max-content;margin-top:10px;font-size:10px;color:#526678}
+.sd-card-option input{accent-color:var(--blue)}
+.sd-card-actions{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;margin-top:7px}
+.sd-card-actions .button{min-height:28px;padding:5px 9px;font-size:10px}
+.sd-card-actions .text-button{min-height:28px;padding:2px 0;font-size:10px}
 .serial-mode-control{display:flex;align-items:center;gap:6px;white-space:nowrap;color:#737f90}
 .serial-mode-control select{font:10px var(--font);border:1px solid #dce1ea;background:#fff;color:#4e6783;border-radius:6px;padding:5px 7px;max-width:110px}
 .managed-wire-label{margin-left:auto!important;color:#8393a6!important;white-space:nowrap}

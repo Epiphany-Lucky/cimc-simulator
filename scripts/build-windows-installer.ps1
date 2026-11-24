@@ -1,5 +1,5 @@
 param(
-    [ValidatePattern('^\d+\.\d+\.\d+$')][string]$Version = '0.8.1',
+    [ValidatePattern('^\d+\.\d+\.\d+$')][string]$Version = '0.9.0',
     [string]$PackageDirectory,
     [string]$OutputDirectory,
     [ValidatePattern('^[A-Za-z0-9-]{1,48}$')][string]$TestId

@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "id": "cimc-v1",
-  "clockTicksPerInstruction": 240,
   "name": "CIMC GD32F470VET6 V1.0",
   "verified": false,
+  "clockTicksPerInstruction": 240,
   "evidenceStatus": "schematic-verified-scope",
   "viewBox": [
     0,
@@ -1973,65 +1973,51 @@
       "net": "FLASH_CS",
       "level": 1,
       "resistanceOhms": 10000
+    },
+    {
+      "net": "SD_DAT0",
+      "level": 1,
+      "resistanceOhms": 10000,
+      "component": "R9",
+      "evidence": "V1 schematic p2 R9, 10k to 3V3"
+    },
+    {
+      "net": "SD_DAT1",
+      "level": 1,
+      "resistanceOhms": 10000,
+      "component": "R10",
+      "evidence": "V1 schematic p2 R10, 10k to 3V3"
+    },
+    {
+      "net": "SD_DAT2",
+      "level": 1,
+      "resistanceOhms": 10000,
+      "component": "R11",
+      "evidence": "V1 schematic p2 R11, 10k to 3V3"
+    },
+    {
+      "net": "SD_DAT3",
+      "level": 1,
+      "resistanceOhms": 10000,
+      "component": "R12",
+      "evidence": "V1 schematic p2 R12, 10k to 3V3"
+    },
+    {
+      "net": "SD_CMD",
+      "level": 1,
+      "resistanceOhms": 10000,
+      "component": "R13",
+      "evidence": "V1 schematic p2 R13, 10k to 3V3"
+    },
+    {
+      "net": "SD_CD",
+      "level": 1,
+      "resistanceOhms": 10000,
+      "component": "R20",
+      "evidence": "V1 schematic p2 R20, 10k to 3V3"
     }
   ],
   "preservedUnimplementedFixedNets": [
-    {
-      "nodes": [
-        "PE2",
-        "SD_CD"
-      ],
-      "simulated": false,
-      "locked": true
-    },
-    {
-      "nodes": [
-        "PC8",
-        "SD_DAT0"
-      ],
-      "simulated": false,
-      "locked": true
-    },
-    {
-      "nodes": [
-        "PC9",
-        "SD_DAT1"
-      ],
-      "simulated": false,
-      "locked": true
-    },
-    {
-      "nodes": [
-        "PC10",
-        "SD_DAT2"
-      ],
-      "simulated": false,
-      "locked": true
-    },
-    {
-      "nodes": [
-        "PC11",
-        "SD_DAT3"
-      ],
-      "simulated": false,
-      "locked": true
-    },
-    {
-      "nodes": [
-        "PC12",
-        "SD_CLK"
-      ],
-      "simulated": false,
-      "locked": true
-    },
-    {
-      "nodes": [
-        "PD2",
-        "SD_CMD"
-      ],
-      "simulated": false,
-      "locked": true
-    },
     {
       "nodes": [
         "PA0",

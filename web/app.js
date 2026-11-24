@@ -14,6 +14,7 @@
   let adcPreview = 1.65, adcPending = null, adcSending = false, adcDragging = false, adcDragOrigin = null;
   let schematicPage = 1, schematicReturnFocus = null;
   let firmwareDraft = [], firmwareDraftBoot = null, firmwareDraftSequence = 0, firmwareSetBusy = false, firmwareSetReturnFocus = null;
+  let sdCardOperation = '';
   let schematicTitles = ['MCU 与排针','板载外设','电源','串口通信'];
   const heldKeys = new Set();
   const pendingKeyStates = new Map();
@@ -43,8 +44,14 @@
   function channelMapping(name) { return state?.board?.serialMappings?.[name] || board?.serialMappings?.[name] || board?.uart_channels?.[name] || null; }
 
   async function api(path, body) {
-    const options = { cache: 'no-store', signal: AbortSignal.timeout(10000) };
-    if (body !== undefined) { options.method = 'POST'; options.headers = { 'Content-Type': 'application/json' }; options.body = JSON.stringify(body); }
+    const raw = body instanceof Blob;
+    const options = { cache: 'no-store' };
+    if (!raw) options.signal = AbortSignal.timeout(10000);
+    if (body !== undefined) {
+      options.method = 'POST';
+      options.headers = { 'Content-Type': raw ? 'application/octet-stream' : 'application/json' };
+      options.body = raw ? body : JSON.stringify(body);
+    }
     const response = await fetch(API + path, options);
     const text = await response.text();
     let data; try { data = JSON.parse(text); } catch { throw new Error('内核返回了无法识别的数据。'); }
@@ -112,6 +119,7 @@
     document.querySelectorAll('.key').forEach(b => b.disabled = !connected || !hasFirmware());
     document.querySelectorAll('.pin').forEach(b => b.disabled = !connected || b.dataset.connectable === 'false');
     updateFirmwareSetControls();
+    updateSdCard();
   }
 
   function renderState(next) {
@@ -561,6 +569,41 @@
     $('flash-erases').textContent = `${Number(flash.eraseCount || 0).toLocaleString('en-US')} 次`;
   }
 
+  function updateSdCard() {
+    const card = connected ? state?.sdCard : null;
+    const inserted = !!card?.inserted;
+    const locked = !card || busy || !!sdCardOperation;
+    let label = '等待内核连接';
+    if (connected) label = card ? '未挂载镜像' : '当前内核不支持 TF 卡';
+    if (inserted) label = card.readOnly ? '已挂载 · 只读' : '已挂载 · 可写';
+    const status = $('sd-card-status');
+    const visibleStatus = sdCardOperation || label;
+    if (status.textContent !== visibleStatus) status.textContent = visibleStatus;
+    const name = $('sd-card-name');
+    name.textContent = inserted ? card.name || '' : '';
+    name.title = name.textContent;
+    name.hidden = !name.textContent;
+    $('sd-card-capacity').textContent = inserted ? bytesLabel(card.capacityBytes) : '—';
+    $('sd-card-reads').textContent = Number(card?.sectorsRead || 0).toLocaleString('zh-CN');
+    $('sd-card-writes').textContent = Number(card?.sectorsWritten || 0).toLocaleString('zh-CN');
+    $('sd-card-open').textContent = inserted ? '更换镜像' : '挂载镜像';
+    $('sd-card-open').disabled = locked;
+    $('sd-card-read-only').disabled = locked;
+    $('sd-card-export').disabled = locked || !inserted;
+    $('sd-card-eject').disabled = locked || !inserted;
+  }
+
+  async function changeSdCard(message, operation) {
+    if ($('sd-card-open').disabled) return;
+    if (state.sdCard.inserted && state.sdCard.sectorsWritten > 0 &&
+        !window.confirm('当前 TF 卡镜像有写入记录。继续操作会弹出镜像，如需保留修改，请先导出。继续吗？')) return;
+    sdCardOperation = message;
+    updateSdCard();
+    try { await operation(); }
+    catch (error) { toast(error.message, true); }
+    finally { sdCardOperation = ''; updateSdCard(); }
+  }
+
   function empty(icon, title, subtitle) { const e = node('div','empty-state'); const i = node('span','empty-icon'); i.innerHTML = svg(icon); e.append(i,node('p','',title),node('span','',subtitle)); return e; }
   function logTime(value) { if (!value) return '—'; if (typeof value === 'string' && /^\d\d:\d\d/.test(value)) return value; const date = new Date(typeof value === 'number' && value < 1e12 ? value * 1000 : value); return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleTimeString('en-GB', { hour12:false }); }
   function serialEntries() { return (state?.serial || []).filter((entry,index) => (entry.channel || 'ch340').toLowerCase() === channel && (Number(entry.id) || index) > serialCutoff); }
@@ -889,6 +932,29 @@
 
   $('firmware-open').addEventListener('click', () => $('firmware-file').click());
   $('firmware-file').addEventListener('change',e => prepareFile(e.target.files[0]));
+  $('sd-card-open').addEventListener('click', () => $('sd-card-file').click());
+  $('sd-card-file').addEventListener('change', event => {
+    const input = event.currentTarget;
+    const file = input.files[0];
+    input.value = '';
+    if (!file) return;
+    const params = new URLSearchParams({ readOnly: $('sd-card-read-only').checked ? '1' : '0', name: file.name });
+    void changeSdCard('正在挂载镜像…', async () => {
+      const result = await api(`/api/sd-card?${params}`, file);
+      renderState(result.state || result);
+    });
+  });
+  $('sd-card-export').addEventListener('click', () => {
+    const link = node('a');
+    link.href = API + '/api/sd-card';
+    link.download = 'cimc-tf.img';
+    document.body.append(link);
+    link.click();
+    link.remove();
+  });
+  $('sd-card-eject').addEventListener('click', () => {
+    void changeSdCard('正在弹出…', () => command('sd_eject'));
+  });
   $('run-button').addEventListener('click', () => command(isRunning() ? 'pause' : 'run'));
   $('reset-button').addEventListener('click', async () => { releaseKeys(); if (await command('reset')) { serialCutoff = -1; diagnosticCutoff = 0; toast('固件已复位，用户跳线保持不变。'); } });
   $('step-button').addEventListener('click', () => command('step'));

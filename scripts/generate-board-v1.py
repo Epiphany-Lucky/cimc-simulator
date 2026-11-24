@@ -80,8 +80,16 @@ for a,b in [('PB12','FLASH_CS'),('PB13','SPI_SCK'),('PB14','SPI_MISO'),('PB15','
 board['adc']={'pin':'PC0','channel':10,'referenceVoltage':3.3,'component':'VR1','resistanceOhms':10000,'locked':True}
 board['flash']={'model':'GD25Q40E','capacityBytes':524288,'peripheral':'SPI1','cs':'PB12','sck':'PB13','miso':'PB14','mosi':'PB15','locked':True}
 board['fixedPulls']=[{'net':'FLASH_CS','level':1,'resistanceOhms':10000}]
+board['fixedPulls'] += [
+    {'net':net,'level':1,'resistanceOhms':10000,'component':component,
+     'evidence':f'V1 schematic p2 {component}, 10k to 3V3'}
+    for component,net in (('R9','SD_DAT0'),('R10','SD_DAT1'),('R11','SD_DAT2'),
+                          ('R12','SD_DAT3'),('R13','SD_CMD'),('R20','SD_CD'))
+]
+for pin,net in [('PE2','SD_CD'),('PC8','SD_DAT0'),('PC9','SD_DAT1'),('PC10','SD_DAT2'),
+                ('PC11','SD_DAT3'),('PC12','SD_CLK'),('PD2','SD_CMD')]:
+    fixed(net,pin,net)
 board['preservedUnimplementedFixedNets']=[{'nodes':n,'simulated':False,'locked':True} for n in [
- ['PE2','SD_CD'],['PC8','SD_DAT0'],['PC9','SD_DAT1'],['PC10','SD_DAT2'],['PC11','SD_DAT3'],['PC12','SD_CLK'],['PD2','SD_CMD'],
  ['PA0','WK_UP'],['PA13','SWDIO'],['PA14','SWCLK'],['PB2','BOOT1']]]
 for item in board['preservedUnimplementedFixedNets']:fixed(item['nodes'][1],*item['nodes'])
 board['serialJumperPatterns']={'ch340':[['H7.1','H7.3'],['H7.2','H7.4']], 'rs485':[['H6.1','H6.3'],['H6.2','H6.4']], 'rs232':[['H6.3','H6.5'],['H6.4','H6.6']]}

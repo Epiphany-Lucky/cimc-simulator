@@ -103,7 +103,9 @@ board['fixedNets'] += [{'id': 'schematic_' + name, 'nodes': nodes, 'locked': Tru
 board['fixedPulls'] = [
     {'net': net, 'level': 1, 'resistanceOhms': 10000, 'component': component,
      'evidence': f'V2 schematic p2 {component}, 10k to 3V3'}
-    for component, net in (('R26', 'FLASH_CS'), ('R27', 'E_SCL'), ('R28', 'E_SDA'))
+    for component, net in (('R26', 'FLASH_CS'), ('R27', 'E_SCL'), ('R28', 'E_SDA'),
+                           ('R9', 'SD_DAT0'), ('R16', 'SD_DAT1'), ('R18', 'SD_DAT2'),
+                           ('R19', 'SD_DAT3'), ('R20', 'SD_CMD'), ('R21', 'SD_CD'))
 ]
 board['provisionalFixedNets'] = []
 board['fixedVisualWires'] = []
