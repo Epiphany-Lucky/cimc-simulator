@@ -19,3 +19,15 @@
 当前覆盖 SDIO 1 位和 4 位轮询。SDHC、SDXC、SDIO DMA 和 SDIO 中断需要独立实现及验收。
 
 官方在线分发与 SHA-256 清单见 [0.9.0 发行页](https://github.com/Epiphany-Lucky/cimc-simulator/releases/tag/v0.9.0)。
+
+## 发行与安装验证
+
+标签 v0.9.0 指向 6f766a843c871270a2dacc1f4a705252039d63d5。Windows 安装版、便携版、HTML 本地包、Ubuntu/Debian 安装版及 Linux 便携版均来自同一次构建。发行草稿和公开版的五个文件、SHA-256 清单与 CI 产物逐项核对通过。[构建 45399344258](https://github.com/Epiphany-Lucky/cimc-simulator/actions/runs/45399344258)
+
+使用所选 Windows 包验证了原生 WPF/WebView2 启动、原有固件、重装和卸载。Windows 便携版和 HTML 本地包均通过 Edge 的 TF 卡操作及 V1、V2 的 64 MiB FAT32 读写。所选 Linux 便携包在 WSL 通过同样的 V1、V2 FAT32 实测及便携应用生命周期验证。证据分别见 artifacts/v090-ci-wpf-baseline.json、artifacts/v090-sd-firmware-http-ci-win-x64.json、artifacts/v090-sd-firmware-http-ci-html-local.json、artifacts/v090-sd-firmware-http-ci-linux-x64.json 和 artifacts/v090-same-linux-wsl.json。
+
+同一 Windows 安装包的原生 WebView2 工作台通过 1 MiB 文件上传、64 MiB FAT32 挂载和 V1 原驱动读写。用实际固件生成 RESULT.BIN 后校验导出内容，随后验证了弹出的取消与确认。证据见 artifacts/v090-ci-wpf-sd.json。
+
+本机正式安装的 0.8.1 从公开接口发现 0.9.0，下载 SHA-256 为 ea42f46fea1517eae236ca57b706065a3b6ea84ed53409f4833512a54a8805cb 的安装器，成功在原安装位置升级并重启。升级前的 14 个旧引擎进程均保留。升级后用已安装的冻结内核在独立端口再次通过两板 FAT32 验收。证据见 artifacts/v090-production-upgrade.json 和 artifacts/v090-sd-firmware-http-installed-win-x64.json。
+
+Windows、Linux 的 GHCR Packages 发布并重新拉取校验通过。随后清理了 0.8.1 的 6 个旧发行附件、2 个旧 Packages 版本，以及本地 13 个旧分发目标和 2 个空缓存目录。源码标签、历史公告和验收证据保留。[Packages 验证](https://github.com/Epiphany-Lucky/cimc-simulator/actions/runs/45404965353) · [清理报告](releases/cleanup-v0.9.0.json)
